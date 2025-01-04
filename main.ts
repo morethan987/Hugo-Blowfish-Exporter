@@ -77,58 +77,68 @@ export default class HugoBlowfishExporter extends Plugin {
 	}
 	
 	//自定义修正文件中的格式
-	/* 
-	原始内容格式：
-	> [!NOTE] Title
-	> Contents
-	改进后格式：
-	{{< alert >}}
-	Contents
-	{{< /alert >}}
-	*/
 	private async modifyContent(content: string): Promise<string> {
-		try {
-			// 匹配 Obsidian 提示框格式的正则表达式
-			const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
-			
-			// 替换为 Hugo Blowfish 格式
-			let modifiedContent = content.replace(calloutRegex, (match, type, title, contents) => {
-				// 添加类型声明解决 TypeScript 错误
-				const cleanContents = contents
-					.split('\n')
-					.map((line: string) => line.replace(/^>\s?/, '').trim())
-					.filter((line: string) => line.length > 0)
-					.join('\n');
+        try {
+            // 按顺序应用所有转换规则
+            const transformations = [
+                this.transformCallouts,
+                // 在此处添加更多转换规则
+                // this.transformTables,
+                // this.transformImages,
+                // etc...
+            ];
 
-				// 根据不同类型选择不同的提示框样式
-				let contributes = '';
-				switch (type.toLowerCase()) {
-					case 'note':
-						contributes = '';
-						break;
-					case 'warning':
-						contributes = 'cardColor="#FFD700" iconColor="#8B6914" textColor="#f1faee"';
-						break;
-					case 'danger':
-					case 'error':
-						contributes = 'icon="fire" cardColor="#e63946" iconColor="#1d3557" textColor="#f1faee"';
-						break;
-					default:
-						contributes = '';
-				}
+            // 依次应用每个转换
+            let modifiedContent = content;
+            for (const transform of transformations) {
+                modifiedContent = await transform.call(this, modifiedContent);
+            }
 
-				// 生成 Hugo Blowfish 格式的提示框
-				return `{{< alert ${contributes} >}}
-${cleanContents}
+            return modifiedContent;
+        } catch (error) {
+            console.error('Error modifying content:', error);
+            return content;
+        }
+    }
+
+    private async transformCallouts(content: string): Promise<string> {
+        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
+        
+        return content.replace(calloutRegex, (match, type, title, contents) => {
+            const cleanContents = this.cleanCalloutContent(contents);
+            const contributes = this.getCalloutAttributes(type);
+
+            return this.generateCalloutHtml(cleanContents, contributes);
+        });
+    }
+
+    private cleanCalloutContent(contents: string): string {
+        return contents
+            .split('\n')
+            .map((line: string) => line.replace(/^>\s?/, '').trim())
+            .filter((line: string) => line.length > 0)
+            .join('\n');
+    }
+
+    private getCalloutAttributes(type: string): string {
+        switch (type.toLowerCase()) {
+            case 'note':
+                return '';
+            case 'warning':
+                return 'cardColor="#FFD700" iconColor="#8B6914" textColor="#f1faee"';
+            case 'danger':
+            case 'error':
+                return 'icon="fire" cardColor="#e63946" iconColor="#1d3557" textColor="#f1faee"';
+            default:
+                return '';
+        }
+    }
+
+    private generateCalloutHtml(content: string, attributes: string): string {
+        return `{{< alert ${attributes} >}}
+${content}
 {{< /alert >}}`;
-			});
-
-			return modifiedContent;
-		} catch (error) {
-			console.error('Error modifying content:', error);
-			return content; // 如果出错，返回原始内容
-		}
-	}
+    }
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
