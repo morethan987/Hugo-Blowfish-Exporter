@@ -5,9 +5,13 @@ This is a simple plugin to convert your standard Obisidian md file to a Hugo-fri
 
 ## How to use
 
+### Export the opened file
 1. set the output file path in the settings of Obisidian.
 
 2. call the command palette and type `hugo`, then you can see the relevant command.
+
+### Export all the md files in the opend vault
+1. There is a ribbon button you can click.(If you didn't ban that)
 
 ## Attention
 
