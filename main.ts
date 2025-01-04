@@ -83,8 +83,8 @@ export default class HugoBlowfishExporter extends Plugin {
             const transformations = [
                 this.transformCallouts,
                 this.transformImgLink,
-                this.transformMermaid,
-                this.transformMath
+                //this.transformMermaid,
+                //this.transformMath
             ];
 
             // 依次应用每个转换
@@ -147,7 +147,27 @@ ${content}
 	转换后的图片链接：![全局工作理论](全局工作理论.png)
 	*/
 	private async transformImgLink(content: string): Promise<string> {
+        const imgLinkRegex = /!\[\[(.*?)\]\]/g;
         
+        return content.replace(imgLinkRegex, (match, imagePath) => {
+            const cleanImagePath = this.cleanImagePath(imagePath);
+            return this.generateImageHtml(cleanImagePath);
+        });
+    }
+
+    private cleanImagePath(imagePath: string): string {
+        // 移除路径中的特殊字符和空格
+        return imagePath
+            .trim()
+            .replace(/[\r\n]/g, '')  // 移除换行符
+            .split('/')              // 分割路径
+            .pop() || '';            // 获取文件名
+    }
+
+    private generateImageHtml(imagePath: string): string {
+        // 从文件名中提取标题（去除扩展名）
+        const imageTitle = imagePath.replace(/\.[^/.]+$/, "");
+        return `![${imageTitle}](${imagePath})`;
     }
 	// 图片链接转换结束
 	
