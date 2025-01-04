@@ -19,7 +19,7 @@ Now the plugin only support a little function of Obisidian since it already cove
 
 ## Further develop
 
-> You ma think: How shallow the plugin is!
+> You may think: How shallow the plugin is!
 
 **Yes!I think so!**
 
