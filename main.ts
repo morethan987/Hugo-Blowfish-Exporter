@@ -82,10 +82,9 @@ export default class HugoBlowfishExporter extends Plugin {
             // 按顺序应用所有转换规则
             const transformations = [
                 this.transformCallouts,
-                // 在此处添加更多转换规则
-                // this.transformTables,
-                // this.transformImages,
-                // etc...
+                this.transformImgLink,
+                this.transformMermaid,
+                this.transformMath
             ];
 
             // 依次应用每个转换
@@ -101,6 +100,7 @@ export default class HugoBlowfishExporter extends Plugin {
         }
     }
 
+	// callout转换开始
     private async transformCallouts(content: string): Promise<string> {
         const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
         
@@ -138,7 +138,64 @@ export default class HugoBlowfishExporter extends Plugin {
         return `{{< alert ${attributes} >}}
 ${content}
 {{< /alert >}}`;
+	}
+	// callout转换结束
+
+	// 图片链接转换开始
+	/* 
+	原版图片链接：![[全局工作理论.png]]
+	转换后的图片链接：![全局工作理论](全局工作理论.png)
+	*/
+	private async transformImgLink(content: string): Promise<string> {
+        
     }
+	// 图片链接转换结束
+	
+	// mermaid转换开始
+	/* 
+	原版mermaid代码：
+	```mermaid
+graph TD
+
+生物学 --> 化学
+```
+	转换后的mermaid代码：
+	{{< mermaid >}}
+graph LR;
+A[Lemons]-->B[Lemonade];
+B-->C[Profit]
+{{< /mermaid >}}
+
+	*/
+	private async transformMermaid(content: string): Promise<string> {
+        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
+        
+        return content.replace(calloutRegex, (match, type, title, contents) => {
+            const cleanContents = this.cleanCalloutContent(contents);
+            const contributes = this.getCalloutAttributes(type);
+
+            return this.generateCalloutHtml(cleanContents, contributes);
+        });
+    }
+	// mermaid转换结束
+
+	// 数学公式转换开始
+	/* 
+	转换前内联公式：$a^2 + b^2 = c^2$
+	转换后的内联公式：{{< katex >}}\\(a^2 + b^2 = c^2\\){{< /katex >}}
+	块级公式不用转换
+	*/
+	private async transformMath(content: string): Promise<string> {
+        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
+        
+        return content.replace(calloutRegex, (match, type, title, contents) => {
+            const cleanContents = this.cleanCalloutContent(contents);
+            const contributes = this.getCalloutAttributes(type);
+
+            return this.generateCalloutHtml(cleanContents, contributes);
+        });
+	}
+	// 数学公式转换结束
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
