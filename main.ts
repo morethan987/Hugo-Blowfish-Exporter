@@ -7,7 +7,7 @@ interface HugoBlowfishExporterSettings {
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
-	exportPath: './content/posts'
+	exportPath: './output'
 }
 
 export default class HugoBlowfishExporter extends Plugin {
@@ -83,8 +83,8 @@ export default class HugoBlowfishExporter extends Plugin {
             const transformations = [
                 this.transformCallouts,
                 this.transformImgLink,
-                //this.transformMermaid,
-                //this.transformMath
+                this.transformMermaid,
+                this.transformMath
             ];
 
             // 依次应用每个转换
@@ -142,10 +142,6 @@ ${content}
 	// callout转换结束
 
 	// 图片链接转换开始
-	/* 
-	原版图片链接：![[全局工作理论.png]]
-	转换后的图片链接：![全局工作理论](全局工作理论.png)
-	*/
 	private async transformImgLink(content: string): Promise<string> {
         const imgLinkRegex = /!\[\[(.*?)\]\]/g;
         
@@ -172,50 +168,51 @@ ${content}
 	// 图片链接转换结束
 	
 	// mermaid转换开始
-	/* 
-	原版mermaid代码：
-	```mermaid
-graph TD
-
-生物学 --> 化学
-```
-	转换后的mermaid代码：
-	{{< mermaid >}}
-graph LR;
-A[Lemons]-->B[Lemonade];
-B-->C[Profit]
-{{< /mermaid >}}
-
-	*/
-	private async transformMermaid(content: string): Promise<string> {
-        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
+    private async transformMermaid(content: string): Promise<string> {
+        const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g;
         
-        return content.replace(calloutRegex, (match, type, title, contents) => {
-            const cleanContents = this.cleanCalloutContent(contents);
-            const contributes = this.getCalloutAttributes(type);
-
-            return this.generateCalloutHtml(cleanContents, contributes);
+        return content.replace(mermaidRegex, (match, mermaidContent) => {
+            const cleanMermaidContent = this.cleanMermaidContent(mermaidContent);
+            return this.generateMermaidHtml(cleanMermaidContent);
         });
     }
-	// mermaid转换结束
+
+    private cleanMermaidContent(mermaidContent: string): string {
+        return mermaidContent
+            .split('\n')
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 0)
+            .join('\n');
+    }
+
+    private generateMermaidHtml(content: string): string {
+        return `{{< mermaid >}}
+${content}
+{{< /mermaid >}}`;
+    }
+    // mermaid转换结束
 
 	// 数学公式转换开始
-	/* 
-	转换前内联公式：$a^2 + b^2 = c^2$
-	转换后的内联公式：{{< katex >}}\\(a^2 + b^2 = c^2\\){{< /katex >}}
-	块级公式不用转换
-	*/
-	private async transformMath(content: string): Promise<string> {
-        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
+    private async transformMath(content: string): Promise<string> {
+        const inlineMathRegex = /\$([^\$]+?)\$/g;
         
-        return content.replace(calloutRegex, (match, type, title, contents) => {
-            const cleanContents = this.cleanCalloutContent(contents);
-            const contributes = this.getCalloutAttributes(type);
-
-            return this.generateCalloutHtml(cleanContents, contributes);
+        return content.replace(inlineMathRegex, (match, mathContent) => {
+            const cleanMathContent = this.cleanMathContent(mathContent);
+            return this.generateKatexHtml(cleanMathContent);
         });
-	}
-	// 数学公式转换结束
+    }
+
+    private cleanMathContent(mathContent: string): string {
+        return mathContent
+            .trim()
+            .replace(/\s+/g, ' ')  // 将多个空格替换为单个空格
+            .replace(/\\{2,}/g, '\\'); // 将多个反斜杠替换为单个反斜杠
+    }
+
+    private generateKatexHtml(content: string): string {
+        return `{{< katex >}}\\\\(${content}\\\\)`;
+    }
+    // 数学公式转换结束
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -242,7 +239,7 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setName('Export Path')
 			.setDesc('The path where Hugo content files will be exported')
 			.addText(text => text
-				.setPlaceholder('./content/posts')
+				.setPlaceholder('./output')
 				.setValue(this.plugin.settings.exportPath)
 				.onChange(async (value) => {
 					this.plugin.settings.exportPath = value;
