@@ -1,88 +1,80 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import * as path from 'path';
+import * as fs from 'fs';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface HugoBlowfishExporterSettings {
+	exportPath: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
+	exportPath: './content/posts'
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class HugoBlowfishExporter extends Plugin {
+	settings: HugoBlowfishExporterSettings;
 
-	// This function is called when the user enables the plugin
 	async onload() {
 		await this.loadSettings();
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+		// 添加导出按钮到ribbon
+		const ribbonIconEl = this.addRibbonIcon('documents', 'Export to Hugo Blowfish', (evt: MouseEvent) => {
+			new Notice('Starting export...');
+			this.exportToHugo();
 		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+		ribbonIconEl.addClass('hugo-blowfish-exporter-ribbon-class');
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
+		// 添加导出命令
 		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
+			id: 'export-to-hugo-blowfish',
+			name: 'Export current note to Hugo Blowfish',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
+				this.exportCurrentNote(editor, view);
 			}
 		});
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		// 添加设置选项卡
+		this.addSettingTab(new HugoBlowfishExporterSettingTab(this.app, this));
 	}
 
-	// This function is called when the user disables the plugin
-	onunload() {
-
+	private exportToHugo() {
+		// TODO: 实现批量导出功能
+		// 功能描述：将所有某一个文件夹中的笔记导出到指定目录，文件名为原始文件名，内容为笔记内容
+		new Notice('Export functionality will be implemented soon');
 	}
+
+	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
+        try {
+            // 获取当前文件
+            const currentFile = view.file;
+            if (!currentFile) {
+                new Notice('No file is currently open');
+                return;
+            }
+
+            // 获取文件内容
+            const content = await this.app.vault.read(currentFile);
+
+            // 确保导出目录存在
+            const exportDir = path.resolve(this.settings.exportPath);
+            if (!fs.existsSync(exportDir)) {
+                fs.mkdirSync(exportDir, { recursive: true });
+            }
+
+            // 生成输出文件路径
+            const outputPath = path.join(exportDir, `${currentFile.basename}.md`);
+
+            // 写入文件
+            fs.writeFileSync(outputPath,  content, 'utf8');
+
+            new Notice(`Successfully exported to ${outputPath}`);
+        } catch (error) {
+            new Notice(`Export failed: ${error.message}`);
+            console.error('Export error:', error);
+        }
+	}
+	
+	//自定义修正文件中的格式
+	
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -93,43 +85,26 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+class HugoBlowfishExporterSettingTab extends PluginSettingTab {
+	plugin: HugoBlowfishExporter;
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: HugoBlowfishExporter) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
 		const {containerEl} = this;
-
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Export Path')
+			.setDesc('The path where Hugo content files will be exported')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setPlaceholder('./content/posts')
+				.setValue(this.plugin.settings.exportPath)
 				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.exportPath = value;
 					await this.plugin.saveSettings();
 				}));
 	}
