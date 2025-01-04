@@ -1,5 +1,5 @@
 {
-	"id": "exporter-of-hugo-blowfish",
+	"id": "hugo-blowfish-exporter",
 	"name": "Hugo Blowfish Exporter",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
