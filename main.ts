@@ -36,54 +36,65 @@ export default class HugoBlowfishExporter extends Plugin {
 		this.addSettingTab(new HugoBlowfishExporterSettingTab(this.app, this));
 	}
 
+    // 批量导出
 	private async exportToHugo() {
-		try {
-			// 获取所有markdown文件
-			const files = this.app.vault.getMarkdownFiles();
-			if (files.length === 0) {
-				new Notice('No markdown files found');
-				return;
-			}
+        try {
+            // 获取所有markdown文件
+            const files = this.app.vault.getMarkdownFiles();
+            if (files.length === 0) {
+                new Notice('No markdown files found');
+                return;
+            }
 
-			// 确保导出目录存在
-			const exportDir = path.resolve(this.settings.exportPath);
-			if (!fs.existsSync(exportDir)) {
-				fs.mkdirSync(exportDir, { recursive: true });
-			}
+            // 确保导出根目录存在
+            const exportDir = path.resolve(this.settings.exportPath);
+            if (!fs.existsSync(exportDir)) {
+                fs.mkdirSync(exportDir, { recursive: true });
+            }
 
-			// 导出进度计数
-			let successCount = 0;
-			let failCount = 0;
+            // 导出进度计数
+            let successCount = 0;
+            let failCount = 0;
 
-			// 遍历处理所有文件
-			for (const file of files) {
-				try {
-					// 获取文件内容
-					const content = await this.app.vault.read(file);
-					
-					// 处理文件内容
-					const modifiedContent = await this.modifyContent(content);
+            // 遍历处理所有文件
+            for (const file of files) {
+                try {
+                    // 获取文件内容
+                    const content = await this.app.vault.read(file);
+                    
+                    // 处理文件内容
+                    const modifiedContent = await this.modifyContent(content);
 
-					// 生成输出文件路径
-					const outputPath = path.join(exportDir, `${file.basename}.md`);
+                    // 获取文件的相对路径（相对于vault根目录）
+                    const relativePath = file.path;
+                    const dirPath = path.dirname(relativePath);
+                    
+                    // 在导出目录中创建对应的子文件夹
+                    const targetDir = path.join(exportDir, dirPath);
+                    if (!fs.existsSync(targetDir)) {
+                        fs.mkdirSync(targetDir, { recursive: true });
+                    }
 
-					// 写入文件
-					fs.writeFileSync(outputPath, modifiedContent, 'utf8');
-					
-					successCount++;
-				} catch (error) {
-					console.error(`Failed to export ${file.path}:`, error);
-					failCount++;
-				}
-			}
+                    // 生成输出文件路径（保持原始文件夹结构）
+                    const outputPath = path.join(exportDir, relativePath);
 
-			// 显示完成通知
-			new Notice(`Export completed!\nSuccess: ${successCount}\nFailed: ${failCount}`);
-		} catch (error) {
-			new Notice(`Export failed: ${error.message}`);
-			console.error('Export error:', error);
-		}
-	}
+                    // 写入文件
+                    fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+                    
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to export ${file.path}:`, error);
+                    failCount++;
+                }
+            }
+
+            // 显示完成通知
+            new Notice(`Export completed!\nSuccess: ${successCount}\nFailed: ${failCount}`);
+        } catch (error) {
+            new Notice(`Export failed: ${error.message}`);
+            console.error('Export error:', error);
+        }
+    }
 
 	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
         try {
