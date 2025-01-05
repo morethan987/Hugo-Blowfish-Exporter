@@ -208,12 +208,32 @@ export default class HugoBlowfishExporter extends Plugin {
     private getCalloutAttributes(type: string): string {
         switch (type.toLowerCase()) {
             case 'note':
-                return '';
+                return 'icon="pencil"';
+            case 'info':
+                return 'icon="circle-info"';
+            case 'todo':
+                return 'icon="square-check" iconColor="#F0FFFF" cardColor="#4682B4"';
+            case 'tip':
+            case 'hint':
+            case 'important':
+                return 'icon="lightbulb" cardColor="#7FFFD4" textColor="#696969"';
+            case 'success':
+            case 'check':
+            case 'done':
+                return 'icon="check" cardColor="#00EE00" textColor="#F0FFFF" iconColor="#F0FFFF"';
             case 'warning':
-                return 'cardColor="#FFD700" iconColor="#8B6914" textColor="#f1faee"';
+            case 'caution':
+            case 'attention':
+                return 'cardColor="#FFD700" iconColor="#8B6914" textColor="#696969"';
+            case 'question':
+            case 'help':
+            case 'faq':
+                return 'icon="circle-question" cardColor="#FF7F24" textColor="#F0FFFF"';
             case 'danger':
             case 'error':
                 return 'icon="fire" cardColor="#e63946" iconColor="#1d3557" textColor="#f1faee"';
+            case 'example':
+                return 'icon="list" cardColor="#9370DB" iconColor="#8B008B" textColor="#F0FFFF"';
             default:
                 return '';
         }
