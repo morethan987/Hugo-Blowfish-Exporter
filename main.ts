@@ -4,10 +4,12 @@ import * as fs from 'fs';
 
 interface HugoBlowfishExporterSettings {
 	exportPath: string;
+	imageExportPath: string;  // 新增图片导出路径配置
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
-	exportPath: './output'
+	exportPath: './output',
+	imageExportPath: 'static/images'  // 默认图片导出到static/images
 }
 
 export default class HugoBlowfishExporter extends Plugin {
@@ -249,25 +251,48 @@ ${content}
 	// 图片链接转换开始
 	private async transformImgLink(content: string): Promise<string> {
         const imgLinkRegex = /!\[\[(.*?)\]\]/g;
+        const matches = Array.from(content.matchAll(imgLinkRegex));
         
-        return content.replace(imgLinkRegex, (match, imagePath) => {
-            const cleanImagePath = this.cleanImagePath(imagePath);
-            return this.generateImageHtml(cleanImagePath);
-        });
+        let modifiedContent = content;
+        
+        for (const match of matches) {
+            const originalPath = match[1];
+            try {
+                // 获取附件文件
+                const attachmentFile = this.app.vault.getAbstractFileByPath(originalPath);
+                if (attachmentFile instanceof TFile) {
+                    // 构建目标路径
+                    const exportDir = path.resolve(this.settings.exportPath);
+                    const imageExportDir = path.join(exportDir, this.settings.imageExportPath);
+                    
+                    // 确保图片导出目录存在
+                    if (!fs.existsSync(imageExportDir)) {
+                        fs.mkdirSync(imageExportDir, { recursive: true });
+                    }
+                    
+                    // 获取文件内容并复制
+                    const imageData = await this.app.vault.readBinary(attachmentFile);
+                    const targetPath = path.join(imageExportDir, attachmentFile.name);
+                    fs.writeFileSync(targetPath, Buffer.from(imageData));
+                    
+                    // 生成新的图片引用路径（相对于Hugo内容目录）
+                    const hugoImagePath = path.join('', attachmentFile.name).replace(/\\/g, '/');
+                    
+                    // 替换原始链接
+                    modifiedContent = modifiedContent.replace(
+                        `![[${originalPath}]]`,
+                        this.generateImageHtml(hugoImagePath, attachmentFile.name)
+                    );
+                }
+            } catch (error) {
+                console.error(`Failed to process image ${originalPath}:`, error);
+            }
+        }
+        
+        return modifiedContent;
     }
 
-    private cleanImagePath(imagePath: string): string {
-        // 移除路径中的特殊字符和空格
-        return imagePath
-            .trim()
-            .replace(/[\r\n]/g, '')  // 移除换行符
-            .split('/')              // 分割路径
-            .pop() || '';            // 获取文件名
-    }
-
-    private generateImageHtml(imagePath: string): string {
-        // 从文件名中提取标题（去除扩展名）
-        const imageTitle = imagePath.replace(/\.[^/.]+$/, "");
+    private generateImageHtml(imagePath: string, imageTitle: string): string {
         return `![${imageTitle}](${imagePath})`;
     }
 	// 图片链接转换结束
@@ -353,7 +378,7 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Export Path')
+			.setName('Content Export Path')
 			.setDesc('The path where Hugo content files will be exported')
 			.addText(text => text
 				.setPlaceholder('./output')
@@ -362,5 +387,16 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 					this.plugin.settings.exportPath = value;
 					await this.plugin.saveSettings();
 				}));
+
+        new Setting(containerEl)
+            .setName('Images Export Path')
+            .setDesc('The path where images will be exported (relative to export path)')
+            .addText(text => text
+                .setPlaceholder('static/images')
+                .setValue(this.plugin.settings.imageExportPath)
+                .onChange(async (value) => {
+                    this.plugin.settings.imageExportPath = value;
+                    await this.plugin.saveSettings();
+                }));
 	}
 }
