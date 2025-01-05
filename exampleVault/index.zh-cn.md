@@ -26,12 +26,6 @@ authors:
 > [!NOTE] Title
 > Contents
 
-转化后在网页中的效果：
-
-{{< alert >}}
-Contents
-{{< /alert >}}
-
 ### 不同类型
 
 `note` 类型的标注：
@@ -39,33 +33,40 @@ Contents
 > [!note] Title
 > 这是一个 `note` 类型
 
-转化后效果：
-
-{{< alert >}}
-这是一个 `note` 类型
-{{< /alert >}}
-
 `warning` 类型的标注：
 
 > [!warning] Title
-> 这是一个 `warning` 类型
-
-转化后效果：
-
-{{< alert cardColor="#FFD700" iconColor="#8B6914" textColor="#f1faee" >}}
-这是一个 `warning` 类型
-{{< /alert >}}
+> 这是一个 `warning` 类型；别名：`attention` `caution`
 
 `danger` 类型的标注：
 
 > [!danger] Title
 > 这是一个 `danger` 类型；别名：`error`
 
-转化后效果：
+`tip` 类型的标注：
 
-{{< alert icon="fire" cardColor="#e63946" iconColor="#1d3557" textColor="#f1faee" >}}
-这是一个 `danger` 类型；别名：`error`
-{{< /alert >}}
+> [!tip] Title
+> 这是一个 `tip` 类型；别名：`hint` `important`
+
+`todo` 类型的标注：
+
+> [!todo] Title
+> 这是一个 `todo` 类型；别名：`todo`
+
+`check` 类型的标注：
+
+> [!check] Title
+> 这是一个 `check` 类型；别名：`success` `done`
+
+`question` 类型的标注：
+
+> [!question] Title
+> 这是一个 `question` 类型；别名：`help` `fqa`
+
+`example` 类型的标注：
+
+> [!example] Title
+> 这是一个 `example` 类型
 
 ## 数学公式转换测试
 

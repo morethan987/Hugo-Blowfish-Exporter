@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "237a4eeb5abd1bed",
+        "id": "3eb2a759654b80c6",
         "type": "tabs",
         "children": [
           {
-            "id": "339dbc3804121cfd",
+            "id": "7d41d1d9ebd08d4f",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -161,6 +161,13 @@
   },
   "active": "71d85942d599a69c",
   "lastOpenFiles": [
+    "exampleVault/全局工作理论.png",
+    "exampleVault/index.zh-cn.md",
+    "exampleVault/index.en.md",
+    "exampleVault/GRU.png",
+    "exampleVault/测试文件夹/index.zh-cn.md",
+    "exampleVault/测试文件夹/index.en.md",
+    "exampleVault/测试文件夹",
     "exampleVault",
     "新建文件夹",
     "index.zh-cn.md",
