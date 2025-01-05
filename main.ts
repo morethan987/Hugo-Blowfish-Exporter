@@ -127,7 +127,7 @@ export default class HugoBlowfishExporter extends Plugin {
         } catch (error) {
             new Notice(`Export failed: ${error.message}`);
             console.error('Export error:', error);
-        }
+		}
 	}
 	
 	//自定义修正文件中的格式
@@ -279,15 +279,24 @@ ${content}
 
 	// 数学公式转换开始
     private async transformMath(content: string): Promise<string> {
-        // 修改正则表达式以避免匹配双美元符号
-        // 使用负向前瞻(?!\$)确保后面不是美元符号
-        // 使用负向后瞻(?<!\$)确保前面不是美元符号
-        const inlineMathRegex = /(?<!\$)\$(?!\$)([^\$]+?)(?<!\$)\$(?!\$)/g;
+        // 不使用 lookbehind，改用更兼容的方式
+        // 匹配单个 $，但不匹配 $$ 的情况
+        const segments = content.split(/(\$\$[\s\S]+?\$\$|\$[^\$]+?\$)/g);
         
-        return content.replace(inlineMathRegex, (match, mathContent) => {
-            const cleanMathContent = this.cleanMathContent(mathContent);
-            return this.generateKatexHtml(cleanMathContent);
-        });
+        return segments.map((segment, index) => {
+            // 如果是双美元符号包裹的内容，保持原样
+            if (segment.startsWith('$$')) {
+                return segment;
+            }
+            // 如果是单美元符号包裹的内容
+            if (segment.startsWith('$') && segment.endsWith('$')) {
+                const mathContent = segment.slice(1, -1);
+                const cleanMathContent = this.cleanMathContent(mathContent);
+                return this.generateKatexHtml(cleanMathContent);
+            }
+            // 其他内容保持不变
+            return segment;
+        }).join('');
     }
 
     private cleanMathContent(mathContent: string): string {
