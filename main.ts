@@ -145,14 +145,45 @@ export default class HugoBlowfishExporter extends Plugin {
 
 	// callout转换开始
     private async transformCallouts(content: string): Promise<string> {
-        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
-        
-        return content.replace(calloutRegex, (match, type, title, contents) => {
-            const cleanContents = this.cleanCalloutContent(contents);
-            const contributes = this.getCalloutAttributes(type);
+        // 识别代码块的位置
+        const codeBlockPositions: {start: number, end: number}[] = [];
+        const codeBlockRegex = /```[\s\S]*?```/g;
+        let match: RegExpExecArray | null;
+        while ((match = codeBlockRegex.exec(content)) !== null) {
+            codeBlockPositions.push({
+                start: match.index,
+                end: match.index + match[0].length
+            });
+        }
 
-            return this.generateCalloutHtml(cleanContents, contributes);
-        });
+        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
+        let result = '';
+        let lastIndex = 0;
+
+        while ((match = calloutRegex.exec(content)) !== null) {
+            // 检查当前匹配是否在任何代码块内
+            const isInCodeBlock = codeBlockPositions.some(pos => 
+                match !== null && match.index >= pos.start && match.index < pos.end
+            );
+
+            if (isInCodeBlock) {
+                // 如果在代码块内，保持原样
+                result += content.slice(lastIndex, match.index + match[0].length);
+            } else {
+                // 如果不在代码块内，进行转换
+                result += content.slice(lastIndex, match.index);
+                const type = match[1];
+                const contents = match[3];
+                const cleanContents = this.cleanCalloutContent(contents);
+                const contributes = this.getCalloutAttributes(type);
+                result += this.generateCalloutHtml(cleanContents, contributes);
+            }
+            lastIndex = match.index + match[0].length;
+        }
+
+        // 添加剩余内容
+        result += content.slice(lastIndex);
+        return result;
     }
 
     private cleanCalloutContent(contents: string): string {
@@ -237,7 +268,10 @@ ${content}
 
 	// 数学公式转换开始
     private async transformMath(content: string): Promise<string> {
-        const inlineMathRegex = /\$([^\$]+?)\$/g;
+        // 修改正则表达式以避免匹配双美元符号
+        // 使用负向前瞻(?!\$)确保后面不是美元符号
+        // 使用负向后瞻(?<!\$)确保前面不是美元符号
+        const inlineMathRegex = /(?<!\$)\$(?!\$)([^\$]+?)(?<!\$)\$(?!\$)/g;
         
         return content.replace(inlineMathRegex, (match, mathContent) => {
             const cleanMathContent = this.cleanMathContent(mathContent);
