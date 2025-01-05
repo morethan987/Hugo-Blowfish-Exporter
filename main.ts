@@ -256,11 +256,19 @@ ${content}
         let modifiedContent = content;
         
         for (const match of matches) {
-            const originalPath = match[1];
+            // 获取原始的wiki链接内容
+            const wikiPath = match[1];
             try {
+                // 获取附件地址
+                const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.png$/, '.png');
+
                 // 获取附件文件
-                const attachmentFile = this.app.vault.getAbstractFileByPath(originalPath);
+                const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
                 if (attachmentFile instanceof TFile) {
+                    // 获取相对于vault根目录的路径
+                    const relativePath = attachmentFile.path.replace(/\\/g, '/');
+                    console.log('Image relative path:', relativePath);
+                    
                     // 构建目标路径
                     const exportDir = path.resolve(this.settings.exportPath);
                     const imageExportDir = path.join(exportDir, this.settings.imageExportPath);
@@ -275,17 +283,17 @@ ${content}
                     const targetPath = path.join(imageExportDir, attachmentFile.name);
                     fs.writeFileSync(targetPath, Buffer.from(imageData));
                     
-                    // 生成新的图片引用路径（相对于Hugo内容目录）
-                    const hugoImagePath = path.join('', attachmentFile.name).replace(/\\/g, '/');
+                    // 生成新的图片引用路径（使用正斜杠）
+                    const hugoImagePath = `${this.settings.imageExportPath}/${attachmentFile.name}`.replace(/^\//, '');
                     
-                    // 替换原始链接
+                    // 替换原始wiki链接
                     modifiedContent = modifiedContent.replace(
-                        `![[${originalPath}]]`,
+                        `![[${wikiPath}]]`,
                         this.generateImageHtml(hugoImagePath, attachmentFile.name)
                     );
                 }
             } catch (error) {
-                console.error(`Failed to process image ${originalPath}:`, error);
+                console.error(`Failed to process image ${wikiPath}:`, error);
             }
         }
         
@@ -390,7 +398,7 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Images Export Path')
-            .setDesc('The path where images will be exported (relative to export path)')
+            .setDesc('The path where images will be exported (relative to export path). If you want to export images to the root of the export path, send nothing.')
             .addText(text => text
                 .setPlaceholder('static/images')
                 .setValue(this.plugin.settings.imageExportPath)
