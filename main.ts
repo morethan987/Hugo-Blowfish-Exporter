@@ -51,6 +51,12 @@ export default class HugoBlowfishExporter extends Plugin {
 
                 // 创建进度条通知
                 const progressNotice = new Notice('', 0);
+
+                // 确保导出目录存在
+                const exportDir = path.resolve(this.settings.exportPath);
+                if (!fs.existsSync(exportDir)) {
+                    fs.mkdirSync(exportDir, { recursive: true });
+                }
                 let processedCount = 0;
                 let successCount = 0;
                 let failCount = 0;
