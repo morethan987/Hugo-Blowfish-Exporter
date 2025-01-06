@@ -3,13 +3,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 interface HugoBlowfishExporterSettings {
-	exportPath: string;
-	imageExportPath: string;  // 新增图片导出路径配置
+	exportPath: string; // 导出路径配置
+    imageExportPath: string;  // 图片导出路径配置
+    blogPath: string; // 博客文章存放文件夹配置配置
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
 	exportPath: './output',
-	imageExportPath: 'static/images'  // 默认图片导出到static/images
+    imageExportPath: 'static/images',
+    blogPath: 'posts'
 }
 
 export default class HugoBlowfishExporter extends Plugin {
@@ -199,7 +201,7 @@ export default class HugoBlowfishExporter extends Plugin {
                 }
 
                 // 构建Hugo的引用链接
-                const hugoLink = `[${displayText}]({{< ref "/blog/${metadata.frontmatter.slug}" >}})`;
+                const hugoLink = `[${displayText}]({{< ref "/${this.settings.blogPath}/${metadata.frontmatter.slug}" >}})`;
                 modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
             } catch (error) {
                 new Notice(`❌ 处理链接失败: ${targetFile}\n${error.message}`);
@@ -571,11 +573,23 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('image-path-setting');
+        
+        new Setting(containerEl)
+            .setName('博客存放文件夹')
+            .setDesc('设置博客存放文件夹（相对于content文件夹）')
+            .addText(text => text
+                .setPlaceholder('posts')
+                .setValue(this.plugin.settings.blogPath)
+                .onChange(async (value) => {
+                    this.plugin.settings.blogPath = value;
+                    await this.plugin.saveSettings();
+                }))
+            .settingEl.addClass('blog-path-setting');
 
         // 添加样式
         const style = document.createElement('style');
         style.textContent = `
-            .export-path-setting, .image-path-setting {
+            .export-path-setting, .image-path-setting, .blog-path-setting {
                 padding: 12px;
                 border-radius: 8px;
                 background-color: var(--background-secondary);
