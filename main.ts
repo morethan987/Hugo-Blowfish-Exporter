@@ -154,6 +154,7 @@ export default class HugoBlowfishExporter extends Plugin {
         try {
             // 按顺序应用所有转换规则
             const transformations = [
+                this.transformWikiLinks,  // 添加这一行
                 this.transformCallouts,
                 this.transformImgLink,
                 this.transformMermaid,
@@ -172,6 +173,51 @@ export default class HugoBlowfishExporter extends Plugin {
             return content;
         }
     }
+
+    // 非展示性wiki链接转换
+    private async transformWikiLinks(content: string): Promise<string> {
+        const wikiLinkRegex = /\[\[(.*?)\|(.*?)\]\]/g;
+        let modifiedContent = content;
+        
+        const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
+            const [fullMatch, targetFile, displayText] = match;
+            try {
+                // 查找目标文件
+                const file = this.app.metadataCache.getFirstLinkpathDest(targetFile, '');
+                if (!file) {
+                    console.warn(`未找到文件: ${targetFile}`);
+                    return;
+                }
+
+                // 获取文件的元数据
+                const metadata = this.app.metadataCache.getFileCache(file);
+                let slug = '';
+
+                // 尝试从frontmatter中获取slug
+                if (metadata?.frontmatter?.slug) {
+                    slug = metadata.frontmatter.slug;
+                } else {
+                    // 如果没有slug，使用文件名转换为slug格式
+                    slug = targetFile.toLowerCase()
+                        .replace(/\s+/g, '-')     // 空格转换为连字符
+                        .replace(/[^a-z0-9-]/g, '')  // 移除非字母数字和连字符的字符
+                        .replace(/-+/g, '-')      // 多个连字符转换为单个
+                        .replace(/^-|-$/g, '');   // 移除开头和结尾的连字符
+                }
+
+                // 构建Hugo的引用链接
+                const hugoLink = `[${displayText}]({{< ref "/blog/${slug}" >}})`;
+                modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
+            } catch (error) {
+                console.error(`处理wiki链接时出错: ${error}`);
+            }
+        });
+
+        await Promise.all(promises);
+        return modifiedContent;
+    }
+
+    // 非展示性wiki链接转换开始
 
 	// callout转换开始
     private async transformCallouts(content: string): Promise<string> {
