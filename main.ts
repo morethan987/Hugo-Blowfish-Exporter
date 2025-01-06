@@ -174,7 +174,7 @@ export default class HugoBlowfishExporter extends Plugin {
         }
     }
 
-    // 非展示性wiki链接转换
+    // 非展示性wiki链接转换开始
     private async transformWikiLinks(content: string): Promise<string> {
         const wikiLinkRegex = /\[\[(.*?)\|(.*?)\]\]/g;
         let modifiedContent = content;
@@ -210,8 +210,7 @@ export default class HugoBlowfishExporter extends Plugin {
         await Promise.all(promises);
         return modifiedContent;
     }
-
-    // 非展示性wiki链接转换开始
+    // 非展示性wiki链接转换结束
 
 	// callout转换开始
     private async transformCallouts(content: string): Promise<string> {
