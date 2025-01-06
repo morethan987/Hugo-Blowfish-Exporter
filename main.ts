@@ -185,31 +185,25 @@ export default class HugoBlowfishExporter extends Plugin {
                 // 查找目标文件
                 const file = this.app.metadataCache.getFirstLinkpathDest(targetFile, '');
                 if (!file) {
-                    console.warn(`未找到文件: ${targetFile}`);
+                    new Notice(`❌ 未找到文件: ${targetFile}`);
                     return;
                 }
 
                 // 获取文件的元数据
                 const metadata = this.app.metadataCache.getFileCache(file);
-                let slug = '';
-
-                // 尝试从frontmatter中获取slug
-                if (metadata?.frontmatter?.slug) {
-                    slug = metadata.frontmatter.slug;
-                } else {
-                    // 如果没有slug，使用文件名转换为slug格式
-                    slug = targetFile.toLowerCase()
-                        .replace(/\s+/g, '-')     // 空格转换为连字符
-                        .replace(/[^a-z0-9-]/g, '')  // 移除非字母数字和连字符的字符
-                        .replace(/-+/g, '-')      // 多个连字符转换为单个
-                        .replace(/^-|-$/g, '');   // 移除开头和结尾的连字符
+                
+                // 检查是否存在slug
+                if (!metadata?.frontmatter?.slug) {
+                    new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
+                    return;
                 }
 
                 // 构建Hugo的引用链接
-                const hugoLink = `[${displayText}]({{< ref "/blog/${slug}" >}})`;
+                const hugoLink = `[${displayText}]({{< ref "/blog/${metadata.frontmatter.slug}" >}})`;
                 modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
             } catch (error) {
-                console.error(`处理wiki链接时出错: ${error}`);
+                new Notice(`❌ 处理链接失败: ${targetFile}\n${error.message}`);
+                console.error(`处理wiki链接时出错:`, error);
             }
         });
 
