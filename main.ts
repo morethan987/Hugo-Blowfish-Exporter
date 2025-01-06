@@ -116,38 +116,39 @@ export default class HugoBlowfishExporter extends Plugin {
 
 	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
         try {
-            // 获取当前文件
             const currentFile = view.file;
             if (!currentFile) {
-                new Notice('No file is currently open');
+                new Notice('没有打开的文件');
                 return;
             }
 
-            // 获取文件内容
-			const content = await this.app.vault.read(currentFile);
-			
-			//自定义修正文件中的格式
-			const modifiedContent = await this.modifyContent(content);
+            // 打开文件名询问对话框
+            new ExportNameModal(this.app, currentFile.basename, async (fileName) => {
+                try {
+                    const content = await this.app.vault.read(currentFile);
+                    const modifiedContent = await this.modifyContent(content);
 
-            // 确保导出目录存在
-            const exportDir = path.resolve(this.settings.exportPath);
-            if (!fs.existsSync(exportDir)) {
-                fs.mkdirSync(exportDir, { recursive: true });
-            }
+                    const exportDir = path.resolve(this.settings.exportPath);
+                    if (!fs.existsSync(exportDir)) {
+                        fs.mkdirSync(exportDir, { recursive: true });
+                    }
 
-            // 生成输出文件路径
-            const outputPath = path.join(exportDir, `${currentFile.basename}.md`);
+                    // 使用用户输入的文件名
+                    const outputPath = path.join(exportDir, `${fileName}.md`);
 
-            // 写入文件
-            fs.writeFileSync(outputPath,  modifiedContent, 'utf8');
-
-            new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
+                    fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+                    new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
+                } catch (error) {
+                    new Notice(`❌ 导出失败: ${error.message}`, 5000);
+                    console.error('Export error:', error);
+                }
+            }).open();
         } catch (error) {
             new Notice(`❌ 导出失败: ${error.message}`, 5000);
             console.error('Export error:', error);
-		}
-	}
-	
+        }
+    }
+
 	//自定义修正文件中的格式
 	private async modifyContent(content: string): Promise<string> {
         try {
@@ -413,6 +414,79 @@ class ConfirmationModal extends Modal {
             this.onConfirm();
             this.close();
         };
+    }
+
+    onClose() {
+        const {contentEl} = this;
+        contentEl.empty();
+    }
+}
+
+class ExportNameModal extends Modal {
+    private fileName: string;
+    private onSubmit: (fileName: string) => void;
+    private inputEl: HTMLInputElement;
+
+    constructor(app: App, defaultFileName: string, onSubmit: (fileName: string) => void) {
+        super(app);
+        this.fileName = defaultFileName;
+        this.onSubmit = onSubmit;
+    }
+
+    onOpen() {
+        const {contentEl} = this;
+        contentEl.empty();
+
+        contentEl.createEl('h2', {text: '导出文件'});
+
+        // 创建输入框
+        const inputContainer = contentEl.createDiv();
+        inputContainer.style.margin = '1em 0';
+
+        const label = inputContainer.createEl('label', {text: '请输入导出文件名：'});
+        label.style.display = 'block';
+        label.style.marginBottom = '0.5em';
+
+        this.inputEl = inputContainer.createEl('input', {
+            type: 'text',
+            value: this.fileName
+        });
+        this.inputEl.style.width = '100%';
+        this.inputEl.style.marginBottom = '1em';
+
+        // 创建按钮容器
+        const buttonContainer = contentEl.createDiv();
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'flex-end';
+        buttonContainer.style.gap = '10px';
+
+        // 添加取消和确认按钮
+        const cancelButton = buttonContainer.createEl('button', {text: '取消'});
+        const confirmButton = buttonContainer.createEl('button', {text: '确认'});
+        confirmButton.classList.add('mod-cta');
+
+        // 绑定事件
+        cancelButton.onclick = () => this.close();
+        confirmButton.onclick = () => {
+            const fileName = this.inputEl.value.trim();
+            if (fileName) {
+                this.onSubmit(fileName);
+                this.close();
+            } else {
+                new Notice('文件名不能为空');
+            }
+        };
+
+        // 支持回车确认
+        this.inputEl.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                confirmButton.click();
+            }
+        });
+
+        // 自动聚焦输入框并选中文本
+        this.inputEl.focus();
+        this.inputEl.select();
     }
 
     onClose() {
