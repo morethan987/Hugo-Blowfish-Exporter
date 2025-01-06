@@ -40,62 +40,72 @@ export default class HugoBlowfishExporter extends Plugin {
 
     // 批量导出
 	private async exportToHugo() {
-        try {
-            // 获取所有markdown文件
-            const files = this.app.vault.getMarkdownFiles();
-            if (files.length === 0) {
-                new Notice('No markdown files found');
-                return;
-            }
-
-            // 确保导出根目录存在
-            const exportDir = path.resolve(this.settings.exportPath);
-            if (!fs.existsSync(exportDir)) {
-                fs.mkdirSync(exportDir, { recursive: true });
-            }
-
-            // 导出进度计数
-            let successCount = 0;
-            let failCount = 0;
-
-            // 遍历处理所有文件
-            for (const file of files) {
-                try {
-                    // 获取文件内容
-                    const content = await this.app.vault.read(file);
-                    
-                    // 处理文件内容
-                    const modifiedContent = await this.modifyContent(content);
-
-                    // 获取文件的相对路径（相对于vault根目录）
-                    const relativePath = file.path;
-                    const dirPath = path.dirname(relativePath);
-                    
-                    // 在导出目录中创建对应的子文件夹
-                    const targetDir = path.join(exportDir, dirPath);
-                    if (!fs.existsSync(targetDir)) {
-                        fs.mkdirSync(targetDir, { recursive: true });
-                    }
-
-                    // 生成输出文件路径（保持原始文件夹结构）
-                    const outputPath = path.join(exportDir, relativePath);
-
-                    // 写入文件
-                    fs.writeFileSync(outputPath, modifiedContent, 'utf8');
-                    
-                    successCount++;
-                } catch (error) {
-                    console.error(`Failed to export ${file.path}:`, error);
-                    failCount++;
+        // 显示确认对话框
+        new ConfirmationModal(this.app, async () => {
+            try {
+                const files = this.app.vault.getMarkdownFiles();
+                if (files.length === 0) {
+                    new Notice('没有找到Markdown文件');
+                    return;
                 }
-            }
 
-            // 显示完成通知
-            new Notice(`Export completed!\nSuccess: ${successCount}\nFailed: ${failCount}`);
-        } catch (error) {
-            new Notice(`Export failed: ${error.message}`);
-            console.error('Export error:', error);
-        }
+                // 创建进度条通知
+                const progressNotice = new Notice('', 0);
+                let processedCount = 0;
+                let successCount = 0;
+                let failCount = 0;
+
+                // ...existing export logic...
+                for (const file of files) {
+                    try {
+                        // 更新进度条
+                        processedCount++;
+                        const progress = Math.round((processedCount / files.length) * 100);
+                        progressNotice.setMessage(
+                            `正在导出: ${progress}%\n` +
+                            `${file.basename}\n` +
+                            `(${processedCount}/${files.length})`
+                        );
+
+                        // 获取文件内容
+                        const content = await this.app.vault.read(file);
+                        
+                        // 处理文件内容
+                        const modifiedContent = await this.modifyContent(content);
+
+                        // 获取文件的相对路径（相对于vault根目录）
+                        const relativePath = file.path;
+                        const dirPath = path.dirname(relativePath);
+                        
+                        // 在导出目录中创建对应的子文件夹
+                        const targetDir = path.join(exportDir, dirPath);
+                        if (!fs.existsSync(targetDir)) {
+                            fs.mkdirSync(targetDir, { recursive: true });
+                        }
+
+                        // 生成输出文件路径（保持原始文件夹结构）
+                        const outputPath = path.join(exportDir, relativePath);
+
+                        // 写入文件
+                        fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+                        
+                        successCount++;
+                    } catch (error) {
+                        console.error(`导出失败 ${file.path}:`, error);
+                        failCount++;
+                    }
+                }
+
+                // 关闭进度条通知
+                progressNotice.hide();
+
+                // 显示完成通知
+                new Notice(`导出完成!\n✅ 成功: ${successCount}\n❌ 失败: ${failCount}`, 5000);
+            } catch (error) {
+                new Notice(`导出失败: ${error.message}`);
+                console.error('Export error:', error);
+            }
+        }).open();
     }
 
 	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
@@ -125,9 +135,9 @@ export default class HugoBlowfishExporter extends Plugin {
             // 写入文件
             fs.writeFileSync(outputPath,  modifiedContent, 'utf8');
 
-            new Notice(`Successfully exported to ${outputPath}`);
+            new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
         } catch (error) {
-            new Notice(`Export failed: ${error.message}`);
+            new Notice(`❌ 导出失败: ${error.message}`, 5000);
             console.error('Export error:', error);
 		}
 	}
@@ -373,6 +383,38 @@ ${content}
 	}
 }
 
+class ConfirmationModal extends Modal {
+    constructor(app: App, private onConfirm: () => void) {
+        super(app);
+    }
+
+    onOpen() {
+        const {contentEl} = this;
+        contentEl.createEl('h2', {text: '确认导出'});
+        contentEl.createEl('p', {text: '是否确认导出所有文件？此操作可能需要一些时间。'});
+
+        const buttonContainer = contentEl.createDiv();
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'flex-end';
+        buttonContainer.style.gap = '10px';
+
+        const cancelButton = buttonContainer.createEl('button', {text: '取消'});
+        const confirmButton = buttonContainer.createEl('button', {text: '确认'});
+        confirmButton.classList.add('mod-cta');
+
+        cancelButton.onclick = () => this.close();
+        confirmButton.onclick = () => {
+            this.onConfirm();
+            this.close();
+        };
+    }
+
+    onClose() {
+        const {contentEl} = this;
+        contentEl.empty();
+    }
+}
+
 class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 	plugin: HugoBlowfishExporter;
 
@@ -385,26 +427,45 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 		const {containerEl} = this;
 		containerEl.empty();
 
+        containerEl.createEl('h2', {text: 'Hugo Blowfish 导出设置'});
+
 		new Setting(containerEl)
-			.setName('Content Export Path')
-			.setDesc('The path where Hugo content files will be exported')
+			.setName('内容导出路径')
+			.setDesc('设置Hugo内容文件的导出目录路径')
 			.addText(text => text
 				.setPlaceholder('./output')
 				.setValue(this.plugin.settings.exportPath)
 				.onChange(async (value) => {
 					this.plugin.settings.exportPath = value;
 					await this.plugin.saveSettings();
-				}));
+				}))
+            .settingEl.addClass('export-path-setting');
 
         new Setting(containerEl)
-            .setName('Images Export Path')
-            .setDesc('The path where images will be exported (relative to export path). If you want to export images to the root of the export path, send nothing.')
+            .setName('图片导出路径')
+            .setDesc('设置图片文件的导出路径（相对于导出根目录）')
             .addText(text => text
                 .setPlaceholder('static/images')
                 .setValue(this.plugin.settings.imageExportPath)
                 .onChange(async (value) => {
                     this.plugin.settings.imageExportPath = value;
                     await this.plugin.saveSettings();
-                }));
+                }))
+            .settingEl.addClass('image-path-setting');
+
+        // 添加样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .export-path-setting, .image-path-setting {
+                padding: 12px;
+                border-radius: 8px;
+                background-color: var(--background-secondary);
+                margin-bottom: 12px;
+            }
+            .setting-item-control input {
+                width: 100%;
+            }
+        `;
+        containerEl.appendChild(style);
 	}
 }

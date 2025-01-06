@@ -6,3 +6,37 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.hugo-blowfish-exporter-ribbon-class {
+    color: var(--text-accent);
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.hugo-blowfish-exporter-ribbon-class:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.setting-item {
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.setting-item:hover {
+    background-color: var(--background-secondary);
+}
+
+.setting-item-control input {
+    border-radius: 4px;
+    padding: 4px 8px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.setting-item-control input:focus {
+    border-color: var(--text-accent);
+    box-shadow: 0 0 0 2px var(--text-accent-hover);
+}
