@@ -6,12 +6,16 @@ interface HugoBlowfishExporterSettings {
 	exportPath: string; // 导出路径配置
     imageExportPath: string;  // 图片导出路径配置
     blogPath: string; // 博客文章存放文件夹配置配置
+    useDefaultExportName: boolean;  // 是否使用默认导出文件名
+    defaultExportName: string;      // 默认导出文件名
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
 	exportPath: './output',
     imageExportPath: 'static/images',
-    blogPath: 'posts'
+    blogPath: 'posts',
+    useDefaultExportName: false,
+    defaultExportName: '{{title}}'  // 支持使用 {{title}} 作为文件名占位符
 }
 
 export default class HugoBlowfishExporter extends Plugin {
@@ -124,9 +128,13 @@ export default class HugoBlowfishExporter extends Plugin {
                 return;
             }
 
-            // 打开文件名询问对话框
-            new ExportNameModal(this.app, currentFile.basename, async (fileName) => {
+            // 如果启用了默认文件名
+            if (this.settings.useDefaultExportName) {
                 try {
+                    // 替换文件名中的占位符
+                    let fileName = this.settings.defaultExportName;
+                    fileName = fileName.replace('{{title}}', currentFile.basename);
+                    
                     const content = await this.app.vault.read(currentFile);
                     const modifiedContent = await this.modifyContent(content);
 
@@ -135,16 +143,34 @@ export default class HugoBlowfishExporter extends Plugin {
                         fs.mkdirSync(exportDir, { recursive: true });
                     }
 
-                    // 使用用户输入的文件名
                     const outputPath = path.join(exportDir, `${fileName}.md`);
-
                     fs.writeFileSync(outputPath, modifiedContent, 'utf8');
                     new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
                 } catch (error) {
                     new Notice(`❌ 导出失败: ${error.message}`, 5000);
                     console.error('Export error:', error);
                 }
-            }).open();
+            } else {
+                // 如果未启用默认文件名，则使用原有的对话框逻辑
+                new ExportNameModal(this.app, currentFile.basename, async (fileName) => {
+                    try {
+                        const content = await this.app.vault.read(currentFile);
+                        const modifiedContent = await this.modifyContent(content);
+
+                        const exportDir = path.resolve(this.settings.exportPath);
+                        if (!fs.existsSync(exportDir)) {
+                            fs.mkdirSync(exportDir, { recursive: true });
+                        }
+
+                        const outputPath = path.join(exportDir, `${fileName}.md`);
+                        fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+                        new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
+                    } catch (error) {
+                        new Notice(`❌ 导出失败: ${error.message}`, 5000);
+                        console.error('Export error:', error);
+                    }
+                }).open();
+            }
         } catch (error) {
             new Notice(`❌ 导出失败: ${error.message}`, 5000);
             console.error('Export error:', error);
@@ -156,7 +182,8 @@ export default class HugoBlowfishExporter extends Plugin {
         try {
             // 按顺序应用所有转换规则
             const transformations = [
-                this.transformWikiLinks,  // 添加这一行
+                this.transformDispWikiLinks,
+                this.transformWikiLinks,
                 this.transformCallouts,
                 this.transformImgLink,
                 this.transformMermaid,
@@ -175,6 +202,56 @@ export default class HugoBlowfishExporter extends Plugin {
             return content;
         }
     }
+
+    // 展示性wiki链接转换开始
+    private async transformDispWikiLinks(content: string): Promise<string> {
+        // 匹配两种格式：![[file|display]] 和 ![[file]]
+        const wikiLinkRegex = /!\[\[(.*?)(?:\|(.*?))?\]\]/g;
+        let modifiedContent = content;
+        
+        const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
+            const [fullMatch, targetFile, displayText] = match;
+            const actualTarget = targetFile.split('#')[0].split('|')[0].trim(); // 处理可能包含的标题锚点
+            
+            try {
+                // 查找目标文件
+                const file = this.app.metadataCache.getFirstLinkpathDest(actualTarget, '');
+                if (!file) {
+                    console.warn(`未找到文件: ${actualTarget}`);
+                    return;
+                }
+
+                // 检查文件是否为图片
+                const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(
+                    file.extension.toLowerCase()
+                );
+
+                // 如果是图片，跳过处理（让 transformImgLink 处理）
+                if (isImage) {
+                    return;
+                }
+
+                // 获取文件的元数据
+                const metadata = this.app.metadataCache.getFileCache(file);
+                
+                // 检查是否存在slug
+                if (!metadata?.frontmatter?.slug) {
+                    new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
+                    return;
+                }
+
+                // 构建Hugo的引用链接
+                const hugoLink = `{{< article link="/${this.settings.blogPath}/${metadata.frontmatter.slug}/" >}}`;
+                modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
+            } catch (error) {
+                console.error(`处理展示性wiki链接时出错:`, error);
+            }
+        });
+
+        await Promise.all(promises);
+        return modifiedContent;
+    }
+    // 展示性wiki链接转换结束
 
     // 非展示性wiki链接转换开始
     private async transformWikiLinks(content: string): Promise<string> {
@@ -586,10 +663,35 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                 }))
             .settingEl.addClass('blog-path-setting');
 
+        // 添加新的设置项
+        new Setting(containerEl)
+            .setName('使用默认导出文件名')
+            .setDesc('启用后将使用默认文件名直接导出，不再弹出文件名输入框')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.useDefaultExportName)
+                .onChange(async (value) => {
+                    this.plugin.settings.useDefaultExportName = value;
+                    await this.plugin.saveSettings();
+                }))
+            .settingEl.addClass('default-name-toggle-setting');
+
+        new Setting(containerEl)
+            .setName('默认导出文件名')
+            .setDesc('设置默认的导出文件名，支持使用 {{title}} 作为文件名占位符')
+            .addText(text => text
+                .setPlaceholder('{{title}}')
+                .setValue(this.plugin.settings.defaultExportName)
+                .onChange(async (value) => {
+                    this.plugin.settings.defaultExportName = value;
+                    await this.plugin.saveSettings();
+                }))
+            .settingEl.addClass('default-name-setting');
+
         // 添加样式
         const style = document.createElement('style');
         style.textContent = `
-            .export-path-setting, .image-path-setting, .blog-path-setting {
+            .export-path-setting, .image-path-setting, .blog-path-setting, 
+            .default-name-toggle-setting, .default-name-setting {
                 padding: 12px;
                 border-radius: 8px;
                 background-color: var(--background-secondary);
