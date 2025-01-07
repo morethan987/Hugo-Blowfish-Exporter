@@ -10,7 +10,7 @@
   - **内联数学公式**（Blowfish 支持代码块）
   - **mermaid**（支持 mermaid 图表）
   - **图片插入**（自动导出图片）
-  - **不显示的 Wiki 链接导出**。仅支持 `[[PythonTips|PythonTips]]`，不支持 `![[PythonTips|PythonTips]]`
+  - **Wiki链接导出**
 
 ## 使用方法
 
@@ -33,7 +33,7 @@
 
 - Wiki 链接导出依赖于元数据 `slug`，即指向包含引用文件的文件夹名称。例如，如果我将文件的 `slug` 设置为 `pytips`，则表示在网站的根目录下，`content` 文件夹中应该有一个名为 `pytips` 的文件夹。
 
-- Wiki 链接导出只支持 `[[PythonTips|PythonTips]]`，不支持 `![[PythonTips|PythonTips]]`。
+- 展示性 Wiki 链接(`![[PythonTips|PythonTips]]`)导出效果比较受限，并不能真正直接展示在网页中。目前通过Blowfish的短代码mdimporter已经完成了大部分的工作，但是无法去除元数据，最终的网页效果中会多出一截元数据。
 
 ## 进一步开发
 
@@ -60,7 +60,7 @@ Now the plugin only support a little function of Obisidian since it already cove
   - inline math formular(blowfish supports the code block)
   - mermaid
   - image insert(auto export the images)
-  - None display Wiki Link export. Only the `[[PythonTips|PythonTips]]`, no support for `![[PythonTips|PythonTips]]`
+  - Wiki Link export.
 
 ## How to use
 
@@ -84,7 +84,7 @@ Now the plugin only support a little function of Obisidian since it already cove
 
 - Wiki Link exportion relies on the meta data `slug` , which stands for the folder's name that contains the cited file. For example, now I set a file's `slug` as `pytips`, that means in your website root there should be a real folder named `pytips` in the `content` folder.
 
-- Wiki Link exportion only support `[[PythonTips|PythonTips]]`, not `![[PythonTips|PythonTips]]`.
+- The displayed Wiki Link exportion(`![[PythonTips|PythonTips]]`) is now not perfect, even the Blowfish shortcode `mdimporter` already done a lot. In the final web, the meta data of the markdown file will also be displayed, which is hard to clear.
 
 ## Further develop
 
