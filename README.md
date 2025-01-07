@@ -23,6 +23,10 @@
 3. 设置网站的博客路径，即 Hugo 项目 `content` 文件夹下的相对路径。
    - 例如，我将设置为 `blog`，这意味着所有博客文件将存储在 `content/blog` 文件夹中。
 
+4. 设置导出文件的名称，如果需要频繁改动文件名可以不启用默认文件名
+
+5. 如果你的文章内部包含**展示性**的wiki链接，即类似于 `![[yourfile|你的文件]]` ，需要指定链接指向的语言版本。如果没有你需要的语言版本或者你并没有多语言需求，请在设置中配置默认语言版本并启用
+
 ### 导出当前文件
 1. 打开命令面板，输入 `hugo`，即可看到相关命令。
 
@@ -33,7 +37,8 @@
 
 - Wiki 链接导出依赖于元数据 `slug`，即指向包含引用文件的文件夹名称。例如，如果我将文件的 `slug` 设置为 `pytips`，则表示在网站的根目录下，`content` 文件夹中应该有一个名为 `pytips` 的文件夹。
 
-- 展示性 Wiki 链接(`![[PythonTips|PythonTips]]`)导出效果比较受限，并不能真正直接展示在网页中。目前通过Blowfish的短代码mdimporter已经完成了大部分的工作，但是无法去除元数据，最终的网页效果中会多出一截元数据。
+## 样例仓库
+我上传了一个Obsidian的 `exampleVault` 在我的源代码中，可以在Obsidian的沙箱里面进行测试
 
 ## 进一步开发
 
@@ -73,6 +78,9 @@ Now the plugin only support a little function of Obisidian since it already cove
 3. set the blog path of your website, the reletive path to the `content` folder.(There should be a `content` folder in your Hugo project)
   - For example, I set the settings to the `blog` ,which means all the blogs are stored in the folder `content/blog`.
 
+4. set your default export name
+
+5. If there are some **Displayed** Wiki Links in your file(`![[yourfile|text]]`), you may need to choose the language mode of your link. If your website is single-language, you can set the default language link mode in the settings.
 
 ### Export the opened file
 1. call the command palette and type `hugo`, then you can see the relevant command.
@@ -84,7 +92,8 @@ Now the plugin only support a little function of Obisidian since it already cove
 
 - Wiki Link exportion relies on the meta data `slug` , which stands for the folder's name that contains the cited file. For example, now I set a file's `slug` as `pytips`, that means in your website root there should be a real folder named `pytips` in the `content` folder.
 
-- The displayed Wiki Link exportion(`![[PythonTips|PythonTips]]`) is now not perfect, even the Blowfish shortcode `mdimporter` already done a lot. In the final web, the meta data of the markdown file will also be displayed, which is hard to clear.
+## exampleVault
+There is an `exampleVaul` of Obsidian in my source code, you can test the plugin in the sandbox of Obsidian.
 
 ## Further develop
 
