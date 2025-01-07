@@ -1,4 +1,5 @@
 [
   "hot-reload",
-  "hugo-blowfish-exporter"
+  "hugo-blowfish-exporter",
+  "wikilinks-to-mdlinks-obsidian"
 ]

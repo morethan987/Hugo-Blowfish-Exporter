@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "3eb2a759654b80c6",
+        "id": "fc43c2a626edc3fd",
         "type": "tabs",
         "children": [
           {
-            "id": "7d41d1d9ebd08d4f",
+            "id": "b8a35fa97e693713",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -161,6 +161,20 @@
   },
   "active": "71d85942d599a69c",
   "lastOpenFiles": [
+    "exampleVault",
+    "新建文件夹",
+    "主测试文件.md",
+    "测试文件夹/Python小技巧.md",
+    "测试文件夹/index.zh-cn.md",
+    "未命名",
+    "BayesianOPT.md",
+    "链接文件.md",
+    "index.zh-cn.md",
+    "Attachments/GRU.png",
+    "全局工作理论.png",
+    "GRU.png",
+    "Attachments/全局工作理论.png",
+    "Attachments",
     "exampleVault/全局工作理论.png",
     "exampleVault/index.zh-cn.md",
     "exampleVault/index.en.md",
@@ -168,17 +182,10 @@
     "exampleVault/测试文件夹/index.zh-cn.md",
     "exampleVault/测试文件夹/index.en.md",
     "exampleVault/测试文件夹",
-    "exampleVault",
-    "新建文件夹",
-    "index.zh-cn.md",
-    "测试文件夹/index.zh-cn.md",
-    "index.en.md",
     "测试文件夹/index.en.md",
     "测试文件夹",
     "index.zh-cn.md.md",
     "index.zh-cn.md - 副本.md",
-    "全局工作理论.png",
-    "GRU.png",
     "欢迎.md"
   ]
 }
