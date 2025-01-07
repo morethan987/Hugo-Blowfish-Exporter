@@ -8,6 +8,8 @@ interface HugoBlowfishExporterSettings {
     blogPath: string; // 博客文章存放文件夹配置配置
     useDefaultExportName: boolean;  // 是否使用默认导出文件名
     defaultExportName: string;      // 默认导出文件名
+    useDefaultDispName: boolean;    // 是否使用默认展示性链接文件名
+    defaultDispName: string;        // 默认展示性链接文件名
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
@@ -15,7 +17,9 @@ const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
     imageExportPath: 'static/images',
     blogPath: 'posts',
     useDefaultExportName: false,
-    defaultExportName: '{{title}}'  // 支持使用 {{title}} 作为文件名占位符
+    defaultExportName: '{{title}}',  // 支持使用 {{title}} 作为文件名占位符
+    useDefaultDispName: false,
+    defaultDispName: 'index.zh-cn.md'
 }
 
 export default class HugoBlowfishExporter extends Plugin {
@@ -205,16 +209,14 @@ export default class HugoBlowfishExporter extends Plugin {
 
     // 展示性wiki链接转换开始
     private async transformDispWikiLinks(content: string): Promise<string> {
-        // 匹配两种格式：![[file|display]] 和 ![[file]]
         const wikiLinkRegex = /!\[\[(.*?)(?:\|(.*?))?\]\]/g;
         let modifiedContent = content;
         
         const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
             const [fullMatch, targetFile, displayText] = match;
-            const actualTarget = targetFile.split('#')[0].split('|')[0].trim(); // 处理可能包含的标题锚点
+            const actualTarget = targetFile.split('#')[0].split('|')[0].trim();
             
             try {
-                // 查找目标文件
                 const file = this.app.metadataCache.getFirstLinkpathDest(actualTarget, '');
                 if (!file) {
                     console.warn(`未找到文件: ${actualTarget}`);
@@ -226,22 +228,28 @@ export default class HugoBlowfishExporter extends Plugin {
                     file.extension.toLowerCase()
                 );
 
-                // 如果是图片，跳过处理（让 transformImgLink 处理）
-                if (isImage) {
-                    return;
-                }
+                if (isImage) return;
 
-                // 获取文件的元数据
                 const metadata = this.app.metadataCache.getFileCache(file);
                 
-                // 检查是否存在slug
                 if (!metadata?.frontmatter?.slug) {
                     new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
                     return;
                 }
 
-                // 构建Hugo的引用链接
-                const hugoLink = `{{< article link="/${this.settings.blogPath}/${metadata.frontmatter.slug}/" >}}`;
+                let fileName: string;
+                if (this.settings.useDefaultDispName) {
+                    fileName = this.settings.defaultDispName;
+                } else {
+                    // 使用模态框让用户输入文件名
+                    fileName = await new Promise((resolve) => {
+                        new ExportDispNameModal(this.app, 'index.zh-cn.md', (name) => {
+                            resolve(name);
+                        }).open();
+                    });
+                }
+
+                const hugoLink = `{{< mdimporter url="content/${this.settings.blogPath}/${metadata.frontmatter.slug}/${fileName}" >}}`;
                 modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
             } catch (error) {
                 console.error(`处理展示性wiki链接时出错:`, error);
@@ -613,6 +621,93 @@ class ExportNameModal extends Modal {
     }
 }
 
+class ExportDispNameModal extends Modal {
+    private onSubmit: (fileName: string) => void;
+    private selectedLanguage: string = 'zh-cn'; // 默认选择中文
+
+    constructor(app: App, defaultFileName: string, onSubmit: (fileName: string) => void) {
+        super(app);
+        this.onSubmit = onSubmit;
+    }
+
+    onOpen() {
+        const {contentEl} = this;
+        contentEl.empty();
+
+        contentEl.createEl('h2', {text: '选择语言版本'});
+
+        const inputContainer = contentEl.createDiv();
+        inputContainer.style.margin = '1em 0';
+
+        const label = inputContainer.createEl('p', {text: '检测到展示性链接，请选择该链接指向的内容语言版本：'});
+        label.style.marginBottom = '1em';
+
+        // 创建单选按钮组
+        const radioGroup = inputContainer.createDiv();
+        radioGroup.style.display = 'flex';
+        radioGroup.style.flexDirection = 'column';
+        radioGroup.style.gap = '10px';
+        radioGroup.style.marginBottom = '1em';
+
+        // 中文选项
+        const zhContainer = radioGroup.createDiv();
+        zhContainer.style.display = 'flex';
+        zhContainer.style.alignItems = 'center';
+        zhContainer.style.gap = '8px';
+        const zhRadio = zhContainer.createEl('input', {
+            type: 'radio',
+            value: 'zh-cn',
+            attr: { name: 'language' }
+        });
+        zhRadio.checked = true;
+        zhContainer.createEl('label', {text: '中文版本 (index.zh-cn.md)'});
+
+        // 英文选项
+        const enContainer = radioGroup.createDiv();
+        enContainer.style.display = 'flex';
+        enContainer.style.alignItems = 'center';
+        enContainer.style.gap = '8px';
+        const enRadio = enContainer.createEl('input', {
+            type: 'radio',
+            value: 'en',
+            attr: { name: 'language' }
+        });
+        enContainer.createEl('label', {text: '英文版本 (index.en.md)'});
+
+        // 添加事件监听
+        zhRadio.addEventListener('change', () => {
+            if (zhRadio.checked) this.selectedLanguage = 'zh-cn';
+        });
+        enRadio.addEventListener('change', () => {
+            if (enRadio.checked) this.selectedLanguage = 'en';
+        });
+
+        // 按钮容器
+        const buttonContainer = contentEl.createDiv();
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'flex-end';
+        buttonContainer.style.gap = '10px';
+        buttonContainer.style.marginTop = '1em';
+
+        // 添加按钮
+        const cancelButton = buttonContainer.createEl('button', {text: '取消'});
+        const confirmButton = buttonContainer.createEl('button', {text: '确认'});
+        confirmButton.classList.add('mod-cta');
+
+        cancelButton.onclick = () => this.close();
+        confirmButton.onclick = () => {
+            const fileName = `index.${this.selectedLanguage}.md`;
+            this.onSubmit(fileName);
+            this.close();
+        };
+    }
+
+    onClose() {
+        const {contentEl} = this;
+        contentEl.empty();
+    }
+}
+
 class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 	plugin: HugoBlowfishExporter;
 
@@ -687,11 +782,34 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                 }))
             .settingEl.addClass('default-name-setting');
 
+        new Setting(containerEl)
+            .setName('使用默认展示性链接语言版本')
+            .setDesc('启用后将使用默认文件名，不再弹出文件名输入框')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.useDefaultDispName)
+                .onChange(async (value) => {
+                    this.plugin.settings.useDefaultDispName = value;
+                    await this.plugin.saveSettings();
+                }))
+            .settingEl.addClass('default-disp-name-toggle-setting');
+
+        new Setting(containerEl)
+            .setName('默认展示性链接语言版本')
+            .setDesc('设置默认的展示性链接语言版本，其实就是您的网站下不同语言文章的文件名')
+            .addText(text => text
+                .setPlaceholder('index.zh-cn.md')
+                .setValue(this.plugin.settings.defaultDispName)
+                .onChange(async (value) => {
+                    this.plugin.settings.defaultDispName = value;
+                    await this.plugin.saveSettings();
+                }))
+            .settingEl.addClass('default-disp-name-setting');
+
         // 添加样式
         const style = document.createElement('style');
         style.textContent = `
             .export-path-setting, .image-path-setting, .blog-path-setting, 
-            .default-name-toggle-setting, .default-name-setting {
+            .default-name-toggle-setting, .default-name-setting, .default-disp-name-toggle-setting, .default-disp-name-setting {
                 padding: 12px;
                 border-radius: 8px;
                 background-color: var(--background-secondary);
