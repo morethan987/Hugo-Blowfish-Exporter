@@ -138,7 +138,7 @@ export default class HugoBlowfishExporter extends Plugin {
                 `✅ 成功: ${successCount}\n` +
                 `❌ 失败: ${failCount}\n` +
                 `⚠️ 缺少slug: ${missingSlugCount}`,
-                5000
+                10000
             );
         } catch (error) {
             new Notice(`导出失败: ${error.message}`);
