@@ -1,6 +1,6 @@
 ---
 title: Python小技巧
-weight: 15
+weight: -15
 draft: false
 description: Python中的一些小技巧
 slug: pytips

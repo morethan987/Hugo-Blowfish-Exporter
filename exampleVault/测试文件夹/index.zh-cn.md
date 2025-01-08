@@ -3,6 +3,7 @@ title: 基本测试
 weight: -1
 draft: true
 description: 中文版基本功能说明和测试文档
+slug: test_in_folder
 tags: 
   - test
 series: test
