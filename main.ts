@@ -13,7 +13,7 @@ interface HugoBlowfishExporterSettings {
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
-	exportPath: './output',
+	exportPath: 'E:/Hugo/morethan987/content',
     imageExportPath: 'static/images',
     blogPath: 'posts',
     useDefaultExportName: false,
@@ -157,13 +157,7 @@ export default class HugoBlowfishExporter extends Plugin {
         for (const match of matches) {
             const wikiPath = match[1];
             try {
-                // 判定文件类型
-                const fileExtension = path.extname(wikiPath).toLowerCase();
-                // 获取附件地址
-                const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.[a-zA-Z]+$/, fileExtension);
-
-                // 获取附件文件
-                const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
+                const attachmentFile = this.app.metadataCache.getFirstLinkpathDest(wikiPath, '');
                 if (attachmentFile instanceof TFile) {
                     // 获取相对于vault根目录的路径
                     const relativePath = attachmentFile.path.replace(/\\/g, '/');
@@ -487,13 +481,8 @@ ${content}
     for (const match of matches) {
         const wikiPath = match[1];
         try {
-            //判定文件类型
-            const fileExtension = path.extname(wikiPath).toLowerCase();
-            // 获取附件地址
-            const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.[a-zA-Z]+$/, fileExtension);
-
-            // 获取附件文件
-            const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
+            const attachmentFile = this.app.metadataCache.getFirstLinkpathDest(wikiPath, '');
+            
             if (attachmentFile instanceof TFile) {
                 // 获取相对于vault根目录的路径
                 const relativePath = attachmentFile.path.replace(/\\/g, '/');
@@ -818,7 +807,7 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setName('网站内容目录')
 			.setDesc('设置content文件夹在磁盘中的绝对路径')
 			.addText(text => text
-				.setPlaceholder('./output')
+				.setPlaceholder('E:/Hugo/morethan987/content')
 				.setValue(this.plugin.settings.exportPath)
 				.onChange(async (value) => {
 					this.plugin.settings.exportPath = value;
