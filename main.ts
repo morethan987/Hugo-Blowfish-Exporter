@@ -390,56 +390,68 @@ ${content}
 
 	// 图片链接转换开始
 	private async transformImgLink(content: string): Promise<string> {
-        const imgLinkRegex = /!\[\[(.*?)\]\]/g;
-        const matches = Array.from(content.matchAll(imgLinkRegex));
-        
-        let modifiedContent = content;
-        
-        for (const match of matches) {
-            // 获取原始的wiki链接内容
-            const wikiPath = match[1];
-            try {
-                // 获取附件地址
-                const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.png$/, '.png');
+    const imgLinkRegex = /!\[\[(.*?)\]\]/g;
+    const matches = Array.from(content.matchAll(imgLinkRegex));
+    
+    let modifiedContent = content;
 
-                // 获取附件文件
-                const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
-                if (attachmentFile instanceof TFile) {
-                    // 获取相对于vault根目录的路径
-                    const relativePath = attachmentFile.path.replace(/\\/g, '/');
-                    console.log('Image relative path:', relativePath);
-                    
-                    // 构建目标路径
-                    const exportDir = path.resolve(this.settings.exportPath);
-                    const imageExportDir = path.join(exportDir, this.settings.imageExportPath);
-                    
-                    // 确保图片导出目录存在
-                    if (!fs.existsSync(imageExportDir)) {
-                        fs.mkdirSync(imageExportDir, { recursive: true });
-                    }
-                    
-                    // 获取文件内容并复制
-                    const imageData = await this.app.vault.readBinary(attachmentFile);
-                    const targetPath = path.join(imageExportDir, attachmentFile.name);
-                    fs.writeFileSync(targetPath, Buffer.from(imageData));
-                    
-                    // 生成新的图片引用路径（使用正斜杠）
-                    const hugoImagePath = `${this.settings.imageExportPath}/${attachmentFile.name}`.replace(/^\//, '');
-                    
-                    // 替换原始wiki链接
-                    modifiedContent = modifiedContent.replace(
-                        `![[${wikiPath}]]`,
-                        this.generateImageHtml(hugoImagePath, attachmentFile.name)
-                    );
-                }
-            } catch (error) {
-                console.error(`Failed to process image ${wikiPath}:`, error);
-            }
-        }
-        
-        return modifiedContent;
+    // 先获取当前文件的 slug
+    const activeFile = this.app.workspace.getActiveFile();
+    const metadata = activeFile ? this.app.metadataCache.getFileCache(activeFile) : null;
+    if (!metadata?.frontmatter?.slug) {
+        new Notice('⚠️ 当前文件缺少 slug 属性，图片链接转换可能不正确');
+        return content;
     }
+    
+    for (const match of matches) {
+        const wikiPath = match[1];
+        try {
+            // 获取附件地址
+            const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.png$/, '.png');
 
+            // 获取附件文件
+            const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
+            if (attachmentFile instanceof TFile) {
+                // 获取相对于vault根目录的路径
+                const relativePath = attachmentFile.path.replace(/\\/g, '/');
+                console.log('Image relative path:', relativePath);
+                
+                // 构建目标路径
+                const exportDir = path.resolve(this.settings.exportPath);
+                const imagesDir = path.join(
+                    exportDir,
+                    this.settings.blogPath,
+                    metadata.frontmatter.slug,
+                    'images'
+                );
+                
+                // 确保图片导出目录存在
+                if (!fs.existsSync(imagesDir)) {
+                    fs.mkdirSync(imagesDir, { recursive: true });
+                }
+                
+                // 获取文件内容并复制
+                const imageData = await this.app.vault.readBinary(attachmentFile);
+                const targetPath = path.join(imagesDir, attachmentFile.name);
+                fs.writeFileSync(targetPath, Buffer.from(imageData));
+                
+                // 生成新的图片引用路径（使用相对路径）
+                const hugoImagePath = `images/${attachmentFile.name}`;
+                
+                // 替换原始wiki链接
+                modifiedContent = modifiedContent.replace(
+                    `![[${wikiPath}]]`,
+                    this.generateImageHtml(hugoImagePath, attachmentFile.name)
+                );
+            }
+        } catch (error) {
+            console.error(`Failed to process image ${wikiPath}:`, error);
+            new Notice(`❌ 处理图片失败: ${wikiPath}\n${error.message}`);
+        }
+    }
+    
+    return modifiedContent;
+    }
     private generateImageHtml(imagePath: string, imageTitle: string): string {
         return `![${imageTitle}](${imagePath})`;
     }
