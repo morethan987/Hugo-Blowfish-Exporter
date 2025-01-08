@@ -426,8 +426,10 @@ ${content}
     for (const match of matches) {
         const wikiPath = match[1];
         try {
+            //判定文件类型
+            const fileExtension = path.extname(wikiPath).toLowerCase();
             // 获取附件地址
-            const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.png$/, '.png');
+            const attachmentPath = (await this.app.fileManager.getAvailablePathForAttachment(wikiPath)).replace(/\s*\d+\.[a-zA-Z]+$/, fileExtension);
 
             // 获取附件文件
             const attachmentFile = this.app.vault.getAbstractFileByPath(attachmentPath);
@@ -442,7 +444,7 @@ ${content}
                     exportDir,
                     this.settings.blogPath,
                     metadata.frontmatter.slug,
-                    'images'
+                    this.settings.imageExportPath
                 );
                 
                 // 确保图片导出目录存在
@@ -456,7 +458,7 @@ ${content}
                 fs.writeFileSync(targetPath, Buffer.from(imageData));
                 
                 // 生成新的图片引用路径（使用相对路径）
-                const hugoImagePath = `images/${attachmentFile.name}`;
+                const hugoImagePath = `${this.settings.imageExportPath}/${attachmentFile.name}`;
                 
                 // 替换原始wiki链接
                 modifiedContent = modifiedContent.replace(
