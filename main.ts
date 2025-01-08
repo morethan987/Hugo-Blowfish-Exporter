@@ -50,79 +50,99 @@ export default class HugoBlowfishExporter extends Plugin {
 
     // 批量导出
 	private async exportToHugo() {
-        // 显示确认对话框
-        new ConfirmationModal(this.app, async () => {
-            try {
-                const files = this.app.vault.getMarkdownFiles();
-                if (files.length === 0) {
-                    new Notice('没有找到Markdown文件');
-                    return;
-                }
-
-                // 创建进度条通知
-                const progressNotice = new Notice('', 0);
-
-                // 确保导出目录存在
-                const exportDir = path.resolve(this.settings.exportPath);
-                if (!fs.existsSync(exportDir)) {
-                    fs.mkdirSync(exportDir, { recursive: true });
-                }
-                let processedCount = 0;
-                let successCount = 0;
-                let failCount = 0;
-
-                // ...existing export logic...
-                for (const file of files) {
-                    try {
-                        // 更新进度条
-                        processedCount++;
-                        const progress = Math.round((processedCount / files.length) * 100);
-                        progressNotice.setMessage(
-                            `正在导出: ${progress}%\n` +
-                            `${file.basename}\n` +
-                            `(${processedCount}/${files.length})`
-                        );
-
-                        // 获取文件内容
-                        const content = await this.app.vault.read(file);
-                        
-                        // 处理文件内容
-                        const modifiedContent = await this.modifyContent(content);
-
-                        // 获取文件的相对路径（相对于vault根目录）
-                        const relativePath = file.path;
-                        const dirPath = path.dirname(relativePath);
-                        
-                        // 在导出目录中创建对应的子文件夹
-                        const targetDir = path.join(exportDir, dirPath);
-                        if (!fs.existsSync(targetDir)) {
-                            fs.mkdirSync(targetDir, { recursive: true });
-                        }
-
-                        // 生成输出文件路径（保持原始文件夹结构）
-                        const outputPath = path.join(exportDir, relativePath);
-
-                        // 写入文件
-                        fs.writeFileSync(outputPath, modifiedContent, 'utf8');
-                        
-                        successCount++;
-                    } catch (error) {
-                        console.error(`导出失败 ${file.path}:`, error);
-                        failCount++;
-                    }
-                }
-
-                // 关闭进度条通知
-                progressNotice.hide();
-
-                // 显示完成通知
-                new Notice(`导出完成!\n✅ 成功: ${successCount}\n❌ 失败: ${failCount}`, 5000);
-            } catch (error) {
-                new Notice(`导出失败: ${error.message}`);
-                console.error('Export error:', error);
+    // 显示确认对话框
+    new ConfirmationModal(this.app, async () => {
+        try {
+            const files = this.app.vault.getMarkdownFiles();
+            if (files.length === 0) {
+                new Notice('没有找到Markdown文件');
+                return;
             }
-        }).open();
-    }
+
+            // 创建进度条通知
+            const progressNotice = new Notice('', 0);
+
+            // 确保导出目录存在
+            const exportDir = path.resolve(this.settings.exportPath);
+            const contentDir = path.join(exportDir, this.settings.blogPath);
+            if (!fs.existsSync(contentDir)) {
+                fs.mkdirSync(contentDir, { recursive: true });
+            }
+
+            let processedCount = 0;
+            let successCount = 0;
+            let failCount = 0;
+            let missingSlugCount = 0;
+
+            for (const file of files) {
+                try {
+                    // 更新进度条
+                    processedCount++;
+                    const progress = Math.round((processedCount / files.length) * 100);
+                    progressNotice.setMessage(
+                        `正在导出: ${progress}%\n` +
+                        `${file.basename}\n` +
+                        `(${processedCount}/${files.length})`
+                    );
+
+                    // 获取文件的元数据
+                    const metadata = this.app.metadataCache.getFileCache(file);
+                    if (!metadata?.frontmatter?.slug) {
+                        console.warn(`文件 ${file.basename} 缺少 slug 属性，已跳过`);
+                        missingSlugCount++;
+                        continue;
+                    }
+
+                    // 创建文章目录
+                    const slugDir = path.join(contentDir, metadata.frontmatter.slug);
+                    if (!fs.existsSync(slugDir)) {
+                        fs.mkdirSync(slugDir, { recursive: true });
+                    }
+
+                    // 获取文件内容
+                    const content = await this.app.vault.read(file);
+                    
+                    // 处理文件内容
+                    const modifiedContent = await this.modifyContent(content);
+
+                    // 确定输出文件名
+                    let fileName: string;
+                    if (this.settings.useDefaultExportName) {
+                        fileName = this.settings.defaultExportName.replace('{{title}}', file.basename);
+                    } else {
+                        fileName = file.basename;
+                    }
+
+                    // 生成输出文件路径
+                    const outputPath = path.join(slugDir, `${fileName}.md`);
+
+                    // 写入文件
+                    fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+                    
+                    successCount++;
+                } catch (error) {
+                    console.error(`导出失败 ${file.path}:`, error);
+                    failCount++;
+                }
+            }
+
+            // 关闭进度条通知
+            progressNotice.hide();
+
+            // 显示完成通知
+            new Notice(
+                `导出完成!\n` +
+                `✅ 成功: ${successCount}\n` +
+                `❌ 失败: ${failCount}\n` +
+                `⚠️ 缺少slug: ${missingSlugCount}`,
+                5000
+            );
+        } catch (error) {
+            new Notice(`导出失败: ${error.message}`);
+            console.error('Export error:', error);
+        }
+    }).open();
+}
 
 	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
     try {
