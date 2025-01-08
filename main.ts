@@ -158,6 +158,12 @@ export default class HugoBlowfishExporter extends Plugin {
             const wikiPath = match[1];
             try {
                 const attachmentFile = this.app.metadataCache.getFirstLinkpathDest(wikiPath, '');
+                if (attachmentFile) {
+                    const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(path.extname(attachmentFile.path).toLowerCase());
+                    if (!isImage) {
+                        continue;
+                    }
+                }
                 if (attachmentFile instanceof TFile) {
                     // 获取相对于vault根目录的路径
                     const relativePath = attachmentFile.path.replace(/\\/g, '/');
