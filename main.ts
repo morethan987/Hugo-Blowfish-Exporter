@@ -263,20 +263,25 @@ export default class HugoBlowfishExporter extends Plugin {
 private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
     try {
         // 按顺序应用所有转换规则
-        const transformations = [
-            (content: string) => this.transformDispWikiLinks(content, mode),
-            (content: string) => this.transformWikiLinks(content, mode),
-            this.transformCallouts,
-            (content: string) => this.transformImgLink(content, mode),
-            this.transformMermaid,
-            this.transformMath
-        ];
-
-        // 依次应用每个转换
         let modifiedContent = content;
-        for (const transform of transformations) {
-            modifiedContent = await transform(modifiedContent);
-        }
+
+        // 转换数学公式（需要先处理，因为可能包含 $ 符号）
+        modifiedContent = await this.transformMath(modifiedContent);
+
+        // 转换 Callouts
+        modifiedContent = await this.transformCallouts(modifiedContent);
+
+        // 转换展示性 wiki 链接
+        modifiedContent = await this.transformDispWikiLinks(modifiedContent, mode);
+
+        // 转换普通 wiki 链接
+        modifiedContent = await this.transformWikiLinks(modifiedContent, mode);
+
+        // 转换图片链接
+        modifiedContent = await this.transformImgLink(modifiedContent, mode);
+
+        // 转换 Mermaid 图表
+        modifiedContent = await this.transformMermaid(modifiedContent);
 
         return modifiedContent;
     } catch (error) {
@@ -600,7 +605,7 @@ ${content}
         return mathContent
             .trim()
             .replace(/\s+/g, ' ')  // 将多个空格替换为单个空格
-            .replace(/\\{2,}/g, '\\'); // 将多个反斜杠替换为单个反斜杠
+            .replace(/\\/g, '\\\\'); //单斜杠变双斜杠
     }
 
     private generateKatexHtml(content: string): string {
