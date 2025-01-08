@@ -723,8 +723,8 @@ class HugoBlowfishExporterSettingTab extends PluginSettingTab {
         containerEl.createEl('h2', {text: 'Hugo Blowfish 导出设置'});
 
 		new Setting(containerEl)
-			.setName('内容导出路径')
-			.setDesc('设置Hugo内容文件的导出目录路径')
+			.setName('网站内容目录')
+			.setDesc('设置content文件夹在磁盘中的绝对路径')
 			.addText(text => text
 				.setPlaceholder('./output')
 				.setValue(this.plugin.settings.exportPath)
