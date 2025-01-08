@@ -125,61 +125,58 @@ export default class HugoBlowfishExporter extends Plugin {
     }
 
 	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
-        try {
-            const currentFile = view.file;
-            if (!currentFile) {
-                new Notice('没有打开的文件');
-                return;
-            }
-
-            // 如果启用了默认文件名
-            if (this.settings.useDefaultExportName) {
-                try {
-                    // 替换文件名中的占位符
-                    let fileName = this.settings.defaultExportName;
-                    fileName = fileName.replace('{{title}}', currentFile.basename);
-                    
-                    const content = await this.app.vault.read(currentFile);
-                    const modifiedContent = await this.modifyContent(content);
-
-                    const exportDir = path.resolve(this.settings.exportPath);
-                    if (!fs.existsSync(exportDir)) {
-                        fs.mkdirSync(exportDir, { recursive: true });
-                    }
-
-                    const outputPath = path.join(exportDir, `${fileName}.md`);
-                    fs.writeFileSync(outputPath, modifiedContent, 'utf8');
-                    new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
-                } catch (error) {
-                    new Notice(`❌ 导出失败: ${error.message}`, 5000);
-                    console.error('Export error:', error);
-                }
-            } else {
-                // 如果未启用默认文件名，则使用原有的对话框逻辑
-                new ExportNameModal(this.app, currentFile.basename, async (fileName) => {
-                    try {
-                        const content = await this.app.vault.read(currentFile);
-                        const modifiedContent = await this.modifyContent(content);
-
-                        const exportDir = path.resolve(this.settings.exportPath);
-                        if (!fs.existsSync(exportDir)) {
-                            fs.mkdirSync(exportDir, { recursive: true });
-                        }
-
-                        const outputPath = path.join(exportDir, `${fileName}.md`);
-                        fs.writeFileSync(outputPath, modifiedContent, 'utf8');
-                        new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
-                    } catch (error) {
-                        new Notice(`❌ 导出失败: ${error.message}`, 5000);
-                        console.error('Export error:', error);
-                    }
-                }).open();
-            }
-        } catch (error) {
-            new Notice(`❌ 导出失败: ${error.message}`, 5000);
-            console.error('Export error:', error);
+    try {
+        const currentFile = view.file;
+        if (!currentFile) {
+            new Notice('没有打开的文件');
+            return;
         }
+
+        // 获取文件的元数据
+        const metadata = this.app.metadataCache.getFileCache(currentFile);
+        if (!metadata?.frontmatter?.slug) {
+            new Notice('⚠️ 当前文件缺少 slug 属性，请在 frontmatter 中添加 slug 字段');
+            return;
+        }
+
+        // 读取文件内容并修改
+        const content = await this.app.vault.read(currentFile);
+        const modifiedContent = await this.modifyContent(content);
+
+        // 根据slug创建目标目录
+        let exportDir = path.resolve(this.settings.exportPath);
+        exportDir = path.join(exportDir, this.settings.blogPath);
+        const slugDir = path.join(exportDir, metadata.frontmatter.slug);
+        if (!fs.existsSync(slugDir)) {
+            fs.mkdirSync(slugDir, { recursive: true });
+        }
+
+        let fileName: string;
+        if (this.settings.useDefaultExportName) {
+            // 替换文件名中的占位符
+            fileName = this.settings.defaultExportName;
+            fileName = fileName.replace('{{title}}', currentFile.basename);
+        } else {
+            // 使用对话框获取文件名
+            fileName = await new Promise((resolve) => {
+                new ExportNameModal(this.app, currentFile.basename, (name) => {
+                    resolve(name);
+                }).open();
+            });
+        }
+
+        // 构建完整的输出路径
+        const outputPath = path.join(slugDir, `${fileName}.md`);
+
+        // 写入文件
+        fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+        new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
+
+    } catch (error) {
+        new Notice(`❌ 导出失败: ${error.message}`, 5000);
+        console.error('Export error:', error);
     }
+}
 
 	//自定义修正文件中的格式
 	private async modifyContent(content: string): Promise<string> {
