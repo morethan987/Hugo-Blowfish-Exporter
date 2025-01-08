@@ -106,7 +106,7 @@ export default class HugoBlowfishExporter extends Plugin {
                     content = await this.handleImagesInContent(content, metadata.frontmatter.slug);
                     
                     // 处理其他内容
-                    const modifiedContent = await this.modifyContent(content);
+                    const modifiedContent = await this.modifyContent(content, 'batch');
 
                     // 确定输出文件名
                     let fileName: string;
@@ -222,7 +222,7 @@ export default class HugoBlowfishExporter extends Plugin {
 
         // 读取文件内容并修改
         const content = await this.app.vault.read(currentFile);
-        const modifiedContent = await this.modifyContent(content);
+        const modifiedContent = await this.modifyContent(content, 'single');
 
         // 根据slug创建目标目录
         let exportDir = path.resolve(this.settings.exportPath);
@@ -259,34 +259,34 @@ export default class HugoBlowfishExporter extends Plugin {
     }
 }
 
-	//自定义修正文件中的格式
-	private async modifyContent(content: string): Promise<string> {
-        try {
-            // 按顺序应用所有转换规则
-            const transformations = [
-                this.transformDispWikiLinks,
-                this.transformWikiLinks,
-                this.transformCallouts,
-                this.transformImgLink,
-                this.transformMermaid,
-                this.transformMath
-            ];
+// 修改导出方法，添加模式参数
+private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
+    try {
+        // 按顺序应用所有转换规则
+        const transformations = [
+            (content: string) => this.transformDispWikiLinks(content, mode),
+            (content: string) => this.transformWikiLinks(content, mode),
+            this.transformCallouts,
+            (content: string) => this.transformImgLink(content, mode),
+            this.transformMermaid,
+            this.transformMath
+        ];
 
-            // 依次应用每个转换
-            let modifiedContent = content;
-            for (const transform of transformations) {
-                modifiedContent = await transform.call(this, modifiedContent);
-            }
-
-            return modifiedContent;
-        } catch (error) {
-            console.error('Error modifying content:', error);
-            return content;
+        // 依次应用每个转换
+        let modifiedContent = content;
+        for (const transform of transformations) {
+            modifiedContent = await transform(modifiedContent);
         }
+
+        return modifiedContent;
+    } catch (error) {
+        console.error('Error modifying content:', error);
+        return content;
     }
+}
 
     // 展示性wiki链接转换开始
-    private async transformDispWikiLinks(content: string): Promise<string> {
+    private async transformDispWikiLinks(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
         const wikiLinkRegex = /!\[\[(.*?)(?:\|(.*?))?\]\]/g;
         let modifiedContent = content;
         
@@ -311,7 +311,11 @@ export default class HugoBlowfishExporter extends Plugin {
                 const metadata = this.app.metadataCache.getFileCache(file);
                 
                 if (!metadata?.frontmatter?.slug) {
-                    new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
+                    if (mode === 'single') {
+                        new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
+                    } else {
+                        console.warn(`文件 ${file.basename} 缺少slug属性`);
+                    }
                     return;
                 }
 
@@ -340,7 +344,7 @@ export default class HugoBlowfishExporter extends Plugin {
     // 展示性wiki链接转换结束
 
     // 非展示性wiki链接转换开始
-    private async transformWikiLinks(content: string): Promise<string> {
+    private async transformWikiLinks(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
         const wikiLinkRegex = /\[\[(.*?)\|(.*?)\]\]/g;
         let modifiedContent = content;
         
@@ -350,7 +354,11 @@ export default class HugoBlowfishExporter extends Plugin {
                 // 查找目标文件
                 const file = this.app.metadataCache.getFirstLinkpathDest(targetFile, '');
                 if (!file) {
-                    new Notice(`❌ 未找到文件: ${targetFile}`);
+                    if (mode === 'single') {
+                        new Notice(`❌ 未找到文件: ${targetFile}`);
+                    } else {
+                        console.warn(`未找到文件: ${targetFile}`);
+                    }
                     return;
                 }
 
@@ -359,7 +367,11 @@ export default class HugoBlowfishExporter extends Plugin {
                 
                 // 检查是否存在slug
                 if (!metadata?.frontmatter?.slug) {
-                    new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
+                    if (mode === 'single') {
+                        new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
+                    } else {
+                        console.warn(`文件 ${file.basename} 缺少slug属性`);
+                    }
                     return;
                 }
 
@@ -367,7 +379,9 @@ export default class HugoBlowfishExporter extends Plugin {
                 const hugoLink = `[${displayText}]({{< ref "/${this.settings.blogPath}/${metadata.frontmatter.slug}" >}})`;
                 modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
             } catch (error) {
-                new Notice(`❌ 处理链接失败: ${targetFile}\n${error.message}`);
+                if (mode === 'single') {
+                    new Notice(`❌ 处理链接失败: ${targetFile}\n${error.message}`);
+                }
                 console.error(`处理wiki链接时出错:`, error);
             }
         });
@@ -470,7 +484,7 @@ ${content}
 	// callout转换结束
 
 	// 图片链接转换开始
-	private async transformImgLink(content: string): Promise<string> {
+	private async transformImgLink(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
     const imgLinkRegex = /!\[\[(.*?)\]\]/g;
     const matches = Array.from(content.matchAll(imgLinkRegex));
     
@@ -479,7 +493,7 @@ ${content}
     // 先获取当前文件的 slug
     const activeFile = this.app.workspace.getActiveFile();
     const metadata = activeFile ? this.app.metadataCache.getFileCache(activeFile) : null;
-    if (!metadata?.frontmatter?.slug) {
+    if (!metadata?.frontmatter?.slug && mode === 'single') {
         new Notice('⚠️ 当前文件缺少 slug 属性，图片链接转换可能不正确');
         return content;
     }
@@ -499,7 +513,7 @@ ${content}
                 const imagesDir = path.join(
                     exportDir,
                     this.settings.blogPath,
-                    metadata.frontmatter.slug,
+                    metadata?.frontmatter?.slug ?? '',
                     this.settings.imageExportPath
                 );
                 
