@@ -10,7 +10,7 @@
   - **内联数学公式**（Blowfish 支持代码块）
   - **mermaid**（支持 mermaid 图表）
   - **图片插入**（自动导出图片）
-  - **Wiki链接导出**
+  - **Wiki链接导出**，非展示性链接支持段落链接和全文引用链接，展示性链接仅支持全文引用链接，并且尽量避免使用展示性引用链接
 
 ## 使用方法
 
@@ -36,6 +36,8 @@
 ## 注意事项
 
 - Wiki 链接导出依赖于元数据 `slug`，即指向包含引用文件的文件夹名称。例如，如果我将文件的 `slug` 设置为 `pytips`，则表示在网站的根目录下，`content` 文件夹中应该有一个名为 `pytips` 的文件夹。
+
+- Wiki链接导出，支持非展示性的段落和全文引用；展示性的仅支持全文引用，并且尽量避免使用展示性引用，原因是：为了避免展示性引用之间循环嵌套，嵌入的文本中会有部分Hugo简码未翻译，可能影响观感
 
 ## 样例仓库
 我上传了一个Obsidian的 `exampleVault` 在我的源代码中，可以在Obsidian的沙箱里面进行测试
@@ -65,7 +67,7 @@ Now the plugin only support a little function of Obisidian since it already cove
   - inline math formular(blowfish supports the code block)
   - mermaid
   - image insert(auto export the images)
-  - Wiki Link export.
+  - **Wiki link export**, non-display links support paragraph links and full-text citation links, display links only support full-text citation links, and try to avoid the use of display citation links
 
 ## How to use
 
@@ -91,6 +93,8 @@ Now the plugin only support a little function of Obisidian since it already cove
 ## Attention
 
 - Wiki Link exportion relies on the meta data `slug` , which stands for the folder's name that contains the cited file. For example, now I set a file's `slug` as `pytips`, that means in your website root there should be a real folder named `pytips` in the `content` folder.
+
+- Wiki link export supports non-display paragraphs and full-text citations; display paragraphs only support full-text citations. It is recommended to avoid using display citations as much as possible. The reason is to prevent circular nesting between display citations. Some Hugo shortcodes in the embedded text may not be translated, which may affect the appearance.
 
 ## exampleVault
 There is an `exampleVaul` of Obsidian in my source code, you can test the plugin in the sandbox of Obsidian.
