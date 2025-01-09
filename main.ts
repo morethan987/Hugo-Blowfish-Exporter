@@ -35,13 +35,13 @@ export default class HugoBlowfishExporter extends Plugin {
     private mathExporter: MathExporter;
     private mermaidExporter: MermaidExporter;
     private calloutExporter: CalloutExporter;
-    private imageExporter: ImageExporter;  // 新增
+    private imageExporter: ImageExporter;
 
 	async onload() {
         this.mathExporter = new MathExporter();
         this.mermaidExporter = new MermaidExporter();
         this.calloutExporter = new CalloutExporter();
-        this.imageExporter = new ImageExporter(this.app);  // 新增
+        this.imageExporter = new ImageExporter(this.app);
 		await this.loadSettings();
 
 		// 添加导出按钮到ribbon
@@ -282,25 +282,20 @@ export default class HugoBlowfishExporter extends Plugin {
 // 修改导出方法，添加模式参数
 private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
     try {
-        // 按顺序应用所有转换规则
         let modifiedContent = content;
 
-        // 获取当前文件的slug
         const activeFile = this.app.workspace.getActiveFile();
         const metadata = activeFile ? this.app.metadataCache.getFileCache(activeFile) : null;
         const slug = metadata?.frontmatter?.slug;
 
-        // 转换数学公式（需要先处理，因为可能包含 $ 符号）
+        // 转换数学公式
         modifiedContent = this.mathExporter.transformMath(modifiedContent);
 
         // 转换 Callouts
         modifiedContent = this.calloutExporter.transformCallouts(modifiedContent);
 
-        // 转换展示性 wiki 链接
-        modifiedContent = await this.transformDispWikiLinks(modifiedContent, mode);
-
-        // 转换普通 wiki 链接
-        modifiedContent = await this.transformWikiLinks(modifiedContent, mode);
+        // 转换所有 wiki 链接
+        modifiedContent = await this.transformAllWikiLinks(modifiedContent, mode);
 
         // 转换图片链接
         if (slug) {
@@ -322,28 +317,34 @@ private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'
     }
 }
 
-    // 展示性wiki链接转换开始
-    private async transformDispWikiLinks(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
-        const wikiLinkRegex = /!\[\[(.*?)(?:\|(.*?))?\]\]/g;
+    private async transformAllWikiLinks(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
+        // 匹配所有wiki链接：展示性(![[file]])和非展示性([[file|text]])
+        const wikiLinkRegex = /(!?\[\[(.*?)(?:\|(.*?))?\]\])/g;
         let modifiedContent = content;
         
         const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
-            const [fullMatch, targetFile, displayText] = match;
+            const [fullMatch, _, targetFile, displayText] = match;
+            const isDisplayLink = fullMatch.startsWith('!');
             const actualTarget = targetFile.split('#')[0].split('|')[0].trim();
             
             try {
                 const file = this.app.metadataCache.getFirstLinkpathDest(actualTarget, '');
                 if (!file) {
-                    console.warn(`未找到文件: ${actualTarget}`);
+                    if (mode === 'single') {
+                        new Notice(`❌ 未找到文件: ${actualTarget}`);
+                    } else {
+                        console.warn(`未找到文件: ${actualTarget}`);
+                    }
                     return;
                 }
 
-                // 检查文件是否为图片
-                const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(
-                    file.extension.toLowerCase()
-                );
-
-                if (isImage) return;
+                // 检查如果是展示性链接且为图片，则跳过处理
+                if (isDisplayLink) {
+                    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(
+                        file.extension.toLowerCase()
+                    );
+                    if (isImage) return;
+                }
 
                 const metadata = this.app.metadataCache.getFileCache(file);
                 
@@ -356,68 +357,30 @@ private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'
                     return;
                 }
 
-                let fileName: string;
-                if (this.settings.useDefaultDispName) {
-                    fileName = this.settings.defaultDispName;
+                let hugoLink: string;
+                if (isDisplayLink) {
+                    // 处理展示性链接
+                    let fileName: string;
+                    if (this.settings.useDefaultDispName) {
+                        fileName = this.settings.defaultDispName;
+                    } else {
+                        fileName = await new Promise((resolve) => {
+                            new ExportDispNameModal(this.app, 'index.zh-cn.md', (name) => {
+                                resolve(name);
+                            }).open();
+                        });
+                    }
+                    hugoLink = `{{< mdimporter url="content/${this.settings.blogPath}/${metadata.frontmatter.slug}/${fileName}" >}}`;
                 } else {
-                    // 使用模态框让用户输入文件名
-                    fileName = await new Promise((resolve) => {
-                        new ExportDispNameModal(this.app, 'index.zh-cn.md', (name) => {
-                            resolve(name);
-                        }).open();
-                    });
+                    // 处理非展示性链接
+                    const linkText = displayText || file.basename;
+                    hugoLink = `[${linkText}]({{< ref "/${this.settings.blogPath}/${metadata.frontmatter.slug}" >}})`;
                 }
 
-                const hugoLink = `{{< mdimporter url="content/${this.settings.blogPath}/${metadata.frontmatter.slug}/${fileName}" >}}`;
-                modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
-            } catch (error) {
-                console.error(`处理展示性wiki链接时出错:`, error);
-            }
-        });
-
-        await Promise.all(promises);
-        return modifiedContent;
-    }
-    // 展示性wiki链接转换结束
-
-    // 非展示性wiki链接转换开始
-    private async transformWikiLinks(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
-        const wikiLinkRegex = /\[\[(.*?)\|(.*?)\]\]/g;
-        let modifiedContent = content;
-        
-        const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
-            const [fullMatch, targetFile, displayText] = match;
-            try {
-                // 查找目标文件
-                const file = this.app.metadataCache.getFirstLinkpathDest(targetFile, '');
-                if (!file) {
-                    if (mode === 'single') {
-                        new Notice(`❌ 未找到文件: ${targetFile}`);
-                    } else {
-                        console.warn(`未找到文件: ${targetFile}`);
-                    }
-                    return;
-                }
-
-                // 获取文件的元数据
-                const metadata = this.app.metadataCache.getFileCache(file);
-                
-                // 检查是否存在slug
-                if (!metadata?.frontmatter?.slug) {
-                    if (mode === 'single') {
-                        new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
-                    } else {
-                        console.warn(`文件 ${file.basename} 缺少slug属性`);
-                    }
-                    return;
-                }
-
-                // 构建Hugo的引用链接
-                const hugoLink = `[${displayText}]({{< ref "/${this.settings.blogPath}/${metadata.frontmatter.slug}" >}})`;
                 modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
             } catch (error) {
                 if (mode === 'single') {
-                    new Notice(`❌ 处理链接失败: ${targetFile}\n${error.message}`);
+                    new Notice(`❌ 处理链接失败: ${actualTarget}\n${error.message}`);
                 }
                 console.error(`处理wiki链接时出错:`, error);
             }
@@ -426,7 +389,6 @@ private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'
         await Promise.all(promises);
         return modifiedContent;
     }
-    // 非展示性wiki链接转换结束
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
