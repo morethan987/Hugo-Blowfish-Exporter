@@ -10,6 +10,7 @@ import { ExportDispNameModal } from './utils/exportDispNameModal';
 import { ExportNameModal } from './utils/exportNameModal';
 import { ConfirmationModal } from './utils/confirmationModal';
 import { WikiLinkExporter } from './exporters/wikiLinkExporter';
+import { BatchExportModal } from './utils/batchExportModal';
 
 export interface HugoBlowfishExporterSettings {
 	exportPath: string; // 导出路径配置
@@ -71,105 +72,13 @@ export default class HugoBlowfishExporter extends Plugin {
 	private async exportToHugo() {
         new ConfirmationModal(this.app, async () => {
             try {
-                await this.processFileExport();
+                const batchExporter = new BatchExportModal(this.app, this.settings, this.modifyContent.bind(this));
+                await batchExporter.export();
             } catch (error) {
                 new Notice(`导出失败: ${error.message}`);
                 console.error('Export error:', error);
             }
         }).open();
-    }
-
-    private async processFileExport() {
-        const files = this.app.vault.getMarkdownFiles();
-        if (files.length === 0) {
-            new Notice('没有找到Markdown文件');
-            return;
-        }
-
-        // 创建进度条通知
-        const progressNotice = new Notice('', 0);
-
-        // 确保导出目录存在
-        const exportDir = path.resolve(this.settings.exportPath);
-        const contentDir = path.join(exportDir, this.settings.blogPath);
-        if (!fs.existsSync(contentDir)) {
-            fs.mkdirSync(contentDir, { recursive: true });
-        }
-
-        let processedCount = 0;
-        let successCount = 0;
-        let failCount = 0;
-        let missingSlugCount = 0;
-
-        for (const file of files) {
-            // 更新进度条
-            processedCount++;
-            const progress = Math.round((processedCount / files.length) * 100);
-            progressNotice.setMessage(
-                `正在导出: ${progress}%\n` +
-                `${file.basename}\n` +
-                `(${processedCount}/${files.length})`
-            );
-
-            const result = await this.processSingleFile(file, contentDir);
-            if (result.success) successCount++;
-            if (result.failed) failCount++;
-            if (result.missingSlug) missingSlugCount++;
-        }
-
-        // 关闭进度条通知
-        progressNotice.hide();
-
-        // 显示完成通知
-        new Notice(
-            `导出完成!\n` +
-            `✅ 成功: ${successCount}\n` +
-            `❌ 失败: ${failCount}\n` +
-            `⚠️ 缺少slug: ${missingSlugCount}`,
-            10000
-        );
-    }
-
-    // 处理单个文件的导出
-    private async processSingleFile(file: TFile, contentDir: string): Promise<{success?: boolean, failed?: boolean, missingSlug?: boolean}> {
-        try {
-            // 获取文件的元数据
-            const metadata = this.app.metadataCache.getFileCache(file);
-            if (!metadata?.frontmatter?.slug) {
-                console.warn(`文件 ${file.basename} 缺少 slug 属性，已跳过`);
-                return { missingSlug: true };
-            }
-
-            // 创建文章目录
-            const slugDir = path.join(contentDir, metadata.frontmatter.slug);
-            if (!fs.existsSync(slugDir)) {
-                fs.mkdirSync(slugDir, { recursive: true });
-            }
-
-            // 获取和处理文件内容
-            let content = await this.app.vault.read(file);
-            content = await this.imageExporter.transformImages(
-                content, 
-                'batch', 
-                this.settings, 
-                metadata.frontmatter.slug
-            );
-            const modifiedContent = await this.modifyContent(content, 'batch');
-
-            // 确定输出文件名
-            let fileName = this.settings.useDefaultExportName
-                ? this.settings.defaultExportName.replace('{{title}}', file.basename)
-                : file.basename;
-
-            // 写入文件
-            const outputPath = path.join(slugDir, `${fileName}.md`);
-            fs.writeFileSync(outputPath, modifiedContent, 'utf8');
-            
-            return { success: true };
-        } catch (error) {
-            console.error(`导出失败 ${file.path}:`, error);
-            return { failed: true };
-        }
     }
 
     // 导出当前笔记
