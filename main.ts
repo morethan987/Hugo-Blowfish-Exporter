@@ -9,8 +9,9 @@ import { HugoBlowfishExporterSettingTab } from './utils/settingsTab';
 import { ExportDispNameModal } from './utils/exportDispNameModal';
 import { ExportNameModal } from './utils/exportNameModal';
 import { ConfirmationModal } from './utils/confirmationModal';
+import { WikiLinkExporter } from './exporters/wikiLinkExporter';
 
-interface HugoBlowfishExporterSettings {
+export interface HugoBlowfishExporterSettings {
 	exportPath: string; // 导出路径配置
     imageExportPath: string;  // 图片导出路径配置
     blogPath: string; // 博客文章存放文件夹配置配置
@@ -36,12 +37,14 @@ export default class HugoBlowfishExporter extends Plugin {
     private mermaidExporter: MermaidExporter;
     private calloutExporter: CalloutExporter;
     private imageExporter: ImageExporter;
+    private wikiLinkExporter: WikiLinkExporter;
 
 	async onload() {
         this.mathExporter = new MathExporter();
         this.mermaidExporter = new MermaidExporter();
         this.calloutExporter = new CalloutExporter();
         this.imageExporter = new ImageExporter(this.app);
+        this.wikiLinkExporter = new WikiLinkExporter(this.app);
 		await this.loadSettings();
 
 		// 添加导出按钮到ribbon
@@ -117,11 +120,11 @@ export default class HugoBlowfishExporter extends Plugin {
 
                     // 获取文件内容
                     let content = await this.app.vault.read(file);
+
+                    //批量导出时特有的处理图片导出，增加一次对于imageExporter的调用
+                    content = await this.imageExporter.transformImages(content, 'batch', this.settings, metadata.frontmatter.slug);
                     
-                    // 处理文件内容中的图片
-                    content = await this.handleImagesInContent(content, metadata.frontmatter.slug);
-                    
-                    // 处理其他内容
+                    // 直接使用 modifyContent 处理所有内容（包括图片）
                     const modifiedContent = await this.modifyContent(content, 'batch');
 
                     // 确定输出文件名
@@ -162,68 +165,6 @@ export default class HugoBlowfishExporter extends Plugin {
         }
     }).open();
 }
-
-    // 新增：处理内容中的图片
-    private async handleImagesInContent(content: string, slug: string): Promise<string> {
-        const imgLinkRegex = /!\[\[(.*?)\]\]/g;
-        const matches = Array.from(content.matchAll(imgLinkRegex));
-        
-        let modifiedContent = content;
-        
-        for (const match of matches) {
-            const wikiPath = match[1];
-            try {
-                const attachmentFile = this.app.metadataCache.getFirstLinkpathDest(wikiPath, '');
-                if (attachmentFile) {
-                    const isImage = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(path.extname(attachmentFile.path).toLowerCase());
-                    if (!isImage) {
-                        continue;
-                    }
-                }
-                if (attachmentFile instanceof TFile) {
-                    // 获取相对于vault根目录的路径
-                    const relativePath = attachmentFile.path.replace(/\\/g, '/');
-                    
-                    // 构建目标路径
-                    const exportDir = path.resolve(this.settings.exportPath);
-                    const imagesDir = path.join(
-                        exportDir,
-                        this.settings.blogPath,
-                        slug,
-                        this.settings.imageExportPath
-                    );
-                    
-                    // 确保图片导出目录存在
-                    if (!fs.existsSync(imagesDir)) {
-                        fs.mkdirSync(imagesDir, { recursive: true });
-                    }
-                    
-                    // 获取文件内容并复制
-                    const imageData = await this.app.vault.readBinary(attachmentFile);
-                    const targetPath = path.join(imagesDir, attachmentFile.name);
-                    fs.writeFileSync(targetPath, Buffer.from(imageData));
-                    
-                    // 生成新的图片引用路径（使用相对路径）
-                    const hugoImagePath = `${this.settings.imageExportPath}/${attachmentFile.name}`;
-                    
-                    // 替换原始wiki链接
-                    modifiedContent = modifiedContent.replace(
-                        `![[${wikiPath}]]`,
-                        this.generateImageHtml(hugoImagePath, attachmentFile.name)
-                    );
-                }
-            } catch (error) {
-                console.error(`Failed to process image ${wikiPath}:`, error);
-                new Notice(`❌ 处理图片失败: ${wikiPath}\n${error.message}`);
-            }
-        }
-        
-        return modifiedContent;
-    }
-
-    private generateImageHtml(imagePath: string, imageTitle: string): string {
-        return `![${imageTitle}](${imagePath})`;
-    }
 
 	private async exportCurrentNote(editor: Editor, view: MarkdownView) {
     try {
@@ -295,7 +236,7 @@ private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'
         modifiedContent = this.calloutExporter.transformCallouts(modifiedContent);
 
         // 转换所有 wiki 链接
-        modifiedContent = await this.transformAllWikiLinks(modifiedContent, mode);
+        modifiedContent = await this.wikiLinkExporter.transformWikiLinks(modifiedContent, mode, this.settings);
 
         // 转换图片链接
         if (slug) {
@@ -316,79 +257,6 @@ private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'
         return content;
     }
 }
-
-    private async transformAllWikiLinks(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
-        // 匹配所有wiki链接：展示性(![[file]])和非展示性([[file|text]])
-        const wikiLinkRegex = /(!?\[\[(.*?)(?:\|(.*?))?\]\])/g;
-        let modifiedContent = content;
-        
-        const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
-            const [fullMatch, _, targetFile, displayText] = match;
-            const isDisplayLink = fullMatch.startsWith('!');
-            const actualTarget = targetFile.split('#')[0].split('|')[0].trim();
-            
-            try {
-                const file = this.app.metadataCache.getFirstLinkpathDest(actualTarget, '');
-                if (!file) {
-                    if (mode === 'single') {
-                        new Notice(`❌ 未找到文件: ${actualTarget}`);
-                    } else {
-                        console.warn(`未找到文件: ${actualTarget}`);
-                    }
-                    return;
-                }
-
-                // 检查如果是展示性链接且为图片，则跳过处理
-                if (isDisplayLink) {
-                    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(
-                        file.extension.toLowerCase()
-                    );
-                    if (isImage) return;
-                }
-
-                const metadata = this.app.metadataCache.getFileCache(file);
-                
-                if (!metadata?.frontmatter?.slug) {
-                    if (mode === 'single') {
-                        new Notice(`⚠️ 警告: ${file.basename} 缺少slug属性\n请在文件frontmatter中添加slug字段`, 20000);
-                    } else {
-                        console.warn(`文件 ${file.basename} 缺少slug属性`);
-                    }
-                    return;
-                }
-
-                let hugoLink: string;
-                if (isDisplayLink) {
-                    // 处理展示性链接
-                    let fileName: string;
-                    if (this.settings.useDefaultDispName) {
-                        fileName = this.settings.defaultDispName;
-                    } else {
-                        fileName = await new Promise((resolve) => {
-                            new ExportDispNameModal(this.app, 'index.zh-cn.md', (name) => {
-                                resolve(name);
-                            }).open();
-                        });
-                    }
-                    hugoLink = `{{< mdimporter url="content/${this.settings.blogPath}/${metadata.frontmatter.slug}/${fileName}" >}}`;
-                } else {
-                    // 处理非展示性链接
-                    const linkText = displayText || file.basename;
-                    hugoLink = `[${linkText}]({{< ref "/${this.settings.blogPath}/${metadata.frontmatter.slug}" >}})`;
-                }
-
-                modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
-            } catch (error) {
-                if (mode === 'single') {
-                    new Notice(`❌ 处理链接失败: ${actualTarget}\n${error.message}`);
-                }
-                console.error(`处理wiki链接时出错:`, error);
-            }
-        });
-
-        await Promise.all(promises);
-        return modifiedContent;
-    }
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
