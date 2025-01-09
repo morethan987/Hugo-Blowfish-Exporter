@@ -17,7 +17,10 @@ export class WikiLinkExporter {
         const promises = Array.from(content.matchAll(wikiLinkRegex)).map(async match => {
             const [fullMatch, _, targetFile, displayText] = match;
             const isDisplayLink = fullMatch.startsWith('!');
-            const actualTarget = targetFile.split('#')[0].split('|')[0].trim();
+            
+            // 分离文件名和段落引用
+            const [filePath, fragment] = targetFile.split('#');
+            const actualTarget = filePath.split('|')[0].trim();
             
             try {
                 const file = this.app.metadataCache.getFirstLinkpathDest(actualTarget, '');
@@ -65,8 +68,9 @@ export class WikiLinkExporter {
                     hugoLink = `{{< mdimporter url="content/${settings.blogPath}/${metadata.frontmatter.slug}/${fileName}" >}}`;
                 } else {
                     // 处理非展示性链接
-                    const linkText = displayText || file.basename;
-                    hugoLink = `[${linkText}]({{< ref "/${settings.blogPath}/${metadata.frontmatter.slug}" >}})`;
+                    const linkText = displayText || (fragment || file.basename);
+                    const fragmentPart = fragment ? `#${fragment}` : '';
+                    hugoLink = `[${linkText}]({{< ref "/${settings.blogPath}/${metadata.frontmatter.slug}/${fragmentPart}" >}})`;
                 }
 
                 modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
