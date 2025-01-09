@@ -79,6 +79,13 @@ export class ExportDispNameModal extends Modal {
             this.onSubmit(fileName);
             this.close();
         };
+
+        // 支持回车确认
+        contentEl.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                confirmButton.click();
+            }
+        });
     }
 
     onClose() {
