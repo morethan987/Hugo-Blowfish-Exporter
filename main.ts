@@ -8,6 +8,7 @@ import { ImageExporter } from './exporters/imageExporter';
 import { HugoBlowfishExporterSettingTab } from './utils/settingsTab';
 import { ExportDispNameModal } from './utils/exportDispNameModal';
 import { ExportNameModal } from './utils/exportNameModal';
+import { ConfirmationModal } from './utils/confirmationModal';
 
 interface HugoBlowfishExporterSettings {
 	exportPath: string; // 导出路径配置
@@ -434,36 +435,4 @@ private async modifyContent(content: string, mode: 'batch' | 'single' = 'single'
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
-}
-
-class ConfirmationModal extends Modal {
-    constructor(app: App, private onConfirm: () => void) {
-        super(app);
-    }
-
-    onOpen() {
-        const {contentEl} = this;
-        contentEl.createEl('h2', {text: '确认导出'});
-        contentEl.createEl('p', {text: '是否确认导出所有文件？此操作可能需要一些时间。'});
-
-        const buttonContainer = contentEl.createDiv();
-        buttonContainer.style.display = 'flex';
-        buttonContainer.style.justifyContent = 'flex-end';
-        buttonContainer.style.gap = '10px';
-
-        const cancelButton = buttonContainer.createEl('button', {text: '取消'});
-        const confirmButton = buttonContainer.createEl('button', {text: '确认'});
-        confirmButton.classList.add('mod-cta');
-
-        cancelButton.onclick = () => this.close();
-        confirmButton.onclick = () => {
-            this.onConfirm();
-            this.close();
-        };
-    }
-
-    onClose() {
-        const {contentEl} = this;
-        contentEl.empty();
-    }
 }
