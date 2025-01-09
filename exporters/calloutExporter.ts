@@ -52,34 +52,35 @@ export class CalloutExporter {
     private getCalloutAttributes(type: string): string {
         switch (type.toLowerCase()) {
             case 'note':
-                return 'icon="pencil"';
+                return 'icon="pencil" cardColor="#1E3A8A" textColor="#E0E7FF"';
             case 'info':
-                return 'icon="circle-info"';
+                return 'icon="circle-info" cardColor="#b0c4de" textColor="#333333"';
             case 'todo':
-                return 'icon="square-check" iconColor="#F0FFFF" cardColor="#4682B4"';
+                return 'icon="square-check" iconColor="#4682B4" cardColor="#e0ffff" textColor="#333333"';
             case 'tip':
             case 'hint':
             case 'important':
-                return 'icon="lightbulb" cardColor="#7FFFD4" textColor="#696969"';
+                return 'icon="lightbulb" cardColor="#fff5b7" textColor="#333333"';
             case 'success':
             case 'check':
             case 'done':
-                return 'icon="check" cardColor="#00EE00" textColor="#F0FFFF" iconColor="#F0FFFF"';
+                return 'icon="check" cardColor="#32CD32" textColor="#fff" iconColor="#ffffff"';
             case 'warning':
             case 'caution':
             case 'attention':
-                return 'cardColor="#FFD700" iconColor="#8B6914" textColor="#696969"';
+                return 'icon="triangle-exclamation" cardColor="#ffcc00" textColor="#333333" iconColor="#8B6914"';
             case 'question':
             case 'help':
             case 'faq':
-                return 'icon="circle-question" cardColor="#FF7F24" textColor="#F0FFFF"';
+                return 'icon="circle-question" cardColor="#ffeb3b" textColor="#333333" iconColor="#3b3b3b"';
             case 'danger':
             case 'error':
-                return 'icon="fire" cardColor="#e63946" iconColor="#1d3557" textColor="#f1faee"';
+                return 'icon="fire" cardColor="#e63946" iconColor="#ffffff" textColor="#ffffff"';
             case 'example':
-                return 'icon="list" cardColor="#9370DB" iconColor="#8B008B" textColor="#F0FFFF"';
+                return 'icon="list" cardColor="#d8bfd8" iconColor="#8B008B" textColor="#333333"';
             default:
                 return '';
+
         }
     }
 
