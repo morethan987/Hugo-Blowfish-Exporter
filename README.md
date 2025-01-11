@@ -1,3 +1,9 @@
+## 不再进行专门的功能更新，毕竟功能上[Quartz](https://github.com/jackyzha0/quartz)已经可以说登峰造极了。
+
+## 并且Quartz主创团队也表达了Hugo很难开发这个观点，从目前的实践看来确实如此。
+
+## 因此这个插件仅为Blowfish的深度用户提供简单的Obsidian转换支持
+
 # Hugo-blowfish-exporter
 
 ## 概述
