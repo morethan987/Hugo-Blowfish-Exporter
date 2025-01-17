@@ -13,8 +13,6 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
         const {containerEl} = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', {text: 'Hugo Blowfish 导出设置'});
-
         new Setting(containerEl)
             .setName('网站内容目录')
             .setDesc('设置content文件夹在磁盘中的绝对路径')
@@ -96,21 +94,5 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('default-disp-name-setting');
-
-        // 添加样式
-        const style = document.createElement('style');
-        style.textContent = `
-            .export-path-setting, .image-path-setting, .blog-path-setting, 
-            .default-name-toggle-setting, .default-name-setting, .default-disp-name-toggle-setting, .default-disp-name-setting {
-                padding: 12px;
-                border-radius: 8px;
-                background-color: var(--background-secondary);
-                margin-bottom: 12px;
-            }
-            .setting-item-control input {
-                width: 100%;
-            }
-        `;
-        containerEl.appendChild(style);
     }
 }

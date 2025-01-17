@@ -34,9 +34,24 @@ If your plugin does not need CSS, delete this file.
     padding: 4px 8px;
     background-color: var(--background-primary);
     border: 1px solid var(--background-modifier-border);
+    width: 100%;
 }
 
 .setting-item-control input:focus {
     border-color: var(--text-accent);
     box-shadow: 0 0 0 2px var(--text-accent-hover);
+}
+
+/* 设置页面样式 */
+.export-path-setting, 
+.image-path-setting, 
+.blog-path-setting, 
+.default-name-toggle-setting, 
+.default-name-setting, 
+.default-disp-name-toggle-setting, 
+.default-disp-name-setting {
+    padding: 12px;
+    border-radius: 8px;
+    background-color: var(--background-secondary);
+    margin-bottom: 12px;
 }

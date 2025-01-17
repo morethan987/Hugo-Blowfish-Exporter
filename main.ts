@@ -23,7 +23,7 @@ export interface HugoBlowfishExporterSettings {
 }
 
 const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
-	exportPath: 'E:/Hugo/morethan987/content',
+	exportPath: '',
     imageExportPath: 'img',
     blogPath: 'posts',
     useDefaultExportName: false,
