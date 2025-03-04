@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { HugoBlowfishExporterSettings } from '../main';
 import { ImageExporter } from '../exporters/imageExporter';
+import { CoverChooser } from '../exporters/coverChooser';
 
 // 批量导出的模态框
 export class BatchExportModal {
@@ -86,6 +87,9 @@ export class BatchExportModal {
 
             const outputPath = path.join(slugDir, `${fileName}.md`);
             fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+
+            const coverChooser = new CoverChooser();
+            await coverChooser.chooseCover(this.settings, slugDir);
             
             return { success: true };
         } catch (error) {

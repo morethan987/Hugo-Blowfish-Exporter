@@ -48,6 +48,18 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('blog-path-setting');
+        
+        new Setting(containerEl)
+            .setName('封面图片文件夹')
+            .setDesc('设置封面图片文件夹（相对于content文件夹）')
+            .addText(text => text
+                .setPlaceholder('.featured')
+                .setValue(this.plugin.settings.coverPath)
+                .onChange(async (value) => {
+                    this.plugin.settings.coverPath = value;
+                    await this.plugin.saveSettings();
+                }))
+            .settingEl.addClass('blog-path-setting');
 
         new Setting(containerEl)
             .setName('使用默认导出文件名')

@@ -27,7 +27,8 @@ export class WikiLinkExporter {
                 // 如果没有文件名，说明是一个内部链接
                 if (!actualTarget) {
                     const linkText = displayText || fragment;
-                    hugoLink = `[${linkText}]({{< relref "#${fragment}" >}})`;
+                    const formated_fragment = fragment.replace(/[A-Z]/g, (char) => char.toLowerCase()).replace(/\s+/g, "-");
+                    hugoLink = `[${linkText}]({{< relref "#${formated_fragment}" >}})`;
                     modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
                 } else {
                     const file = this.app.metadataCache.getFirstLinkpathDest(actualTarget, '');

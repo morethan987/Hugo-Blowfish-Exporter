@@ -6,16 +6,17 @@ import { MermaidExporter } from './exporters/mermaidExporter';
 import { CalloutExporter } from './exporters/calloutExporter';
 import { ImageExporter } from './exporters/imageExporter';
 import { HugoBlowfishExporterSettingTab } from './utils/settingsTab';
-import { ExportDispNameModal } from './utils/exportDispNameModal';
 import { ExportNameModal } from './utils/exportNameModal';
 import { ConfirmationModal } from './utils/confirmationModal';
 import { WikiLinkExporter } from './exporters/wikiLinkExporter';
 import { BatchExportModal } from './utils/batchExportModal';
+import { CoverChooser } from 'exporters/coverChooser';
 
 export interface HugoBlowfishExporterSettings {
 	exportPath: string; // 导出路径配置
     imageExportPath: string;  // 图片导出路径配置
     blogPath: string; // 博客文章存放文件夹配置配置
+    coverPath: string; // 封面图片文件夹配置
     useDefaultExportName: boolean;  // 是否使用默认导出文件名
     defaultExportName: string;      // 默认导出文件名
     useDefaultDispName: boolean;    // 是否使用默认展示性链接文件名
@@ -26,6 +27,7 @@ const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
 	exportPath: '',
     imageExportPath: 'img',
     blogPath: 'posts',
+    coverPath: '.featured',
     useDefaultExportName: false,
     defaultExportName: '{{title}}',  // 支持使用 {{title}} 作为文件名占位符
     useDefaultDispName: false,
@@ -38,6 +40,7 @@ export default class HugoBlowfishExporter extends Plugin {
     private mermaidExporter: MermaidExporter;
     private calloutExporter: CalloutExporter;
     private imageExporter: ImageExporter;
+    private coverChooser: CoverChooser;
     private wikiLinkExporter: WikiLinkExporter;
 
 	async onload() {
@@ -45,6 +48,7 @@ export default class HugoBlowfishExporter extends Plugin {
         this.mermaidExporter = new MermaidExporter();
         this.calloutExporter = new CalloutExporter();
         this.imageExporter = new ImageExporter(this.app);
+        this.coverChooser = new CoverChooser();
         this.wikiLinkExporter = new WikiLinkExporter(this.app);
 		await this.loadSettings();
 
@@ -128,6 +132,11 @@ export default class HugoBlowfishExporter extends Plugin {
 
         // 写入文件
         fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+
+        // 自动选择博客封面
+        await this.coverChooser.chooseCover(this.settings, slugDir);
+
+        // 显示成功提示
         new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
 
     } catch (error) {
