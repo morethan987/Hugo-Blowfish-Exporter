@@ -85,8 +85,8 @@ export class CalloutExporter {
     }
 
     private generateCalloutHtml(content: string, attributes: string): string {
-        return `{{< alert ${attributes} >}}
+        return `\n{{< alert ${attributes} >}}
 ${content}
-{{< /alert >}}`;
+{{< /alert >}}\n`;
 	}
 }
