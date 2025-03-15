@@ -1,20 +1,22 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import HugoBlowfishExporter from '../main';
 import { ApiKeyModal } from './apiKeyModal';
+import HugoBlowfishExporter from '../src/core/plugin';
 
 export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
     plugin: HugoBlowfishExporter;
+    mainPlugin: any;
 
     constructor(app: App, plugin: HugoBlowfishExporter) {
-        super(app, plugin);
+        super(app, plugin.plugin);
         this.plugin = plugin;
+        this.mainPlugin = plugin.plugin;
     }
 
     display(): void {
         const {containerEl} = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: '翻译设置' });
+        containerEl.createEl('h1', { text: '翻译设置' });
 
         new Setting(containerEl)
             .setName('翻译文件导出路径')
@@ -77,9 +79,9 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('翻译文件前缀')
-            .setDesc('设置翻译后文件的文件名前缀')
+            .setDesc('设置翻译后文件的文件名前缀，默认为空')
             .addText(text => text
-                .setPlaceholder('translated-')
+                .setPlaceholder('')
                 .setValue(this.plugin.settings.translatedFilePrefix)
                 .onChange(async (value) => {
                     this.plugin.settings.translatedFilePrefix = value;
@@ -97,7 +99,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                 }))
             .settingEl.addClass('direct-export-setting');
                 
-        containerEl.createEl('h2', { text: '导出设置' });
+        containerEl.createEl('h1', { text: '导出设置' });
 
         new Setting(containerEl)
             .setName('网站内容目录')

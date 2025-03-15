@@ -44,12 +44,17 @@ If your plugin does not need CSS, delete this file.
 
 /* 设置页面样式 */
 .hugo-blowfish-settings .export-path-setting, 
+.hugo-blowfish-settings .translated-export-path-setting,
 .hugo-blowfish-settings .image-path-setting, 
 .hugo-blowfish-settings .blog-path-setting, 
 .hugo-blowfish-settings .default-name-toggle-setting, 
 .hugo-blowfish-settings .default-name-setting, 
 .hugo-blowfish-settings .default-disp-name-toggle-setting, 
-.hugo-blowfish-settings .default-disp-name-setting {
+.hugo-blowfish-settings .default-disp-name-setting,
+.hugo-blowfish-settings .baseurl-setting,
+.hugo-blowfish-settings .api-key-setting,
+.hugo-blowfish-settings .model-name-setting,
+.hugo-blowfish-settings .direct-export-setting {
     padding: 12px;
     border-radius: 8px;
     background-color: var(--background-secondary);

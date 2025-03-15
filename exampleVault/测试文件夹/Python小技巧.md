@@ -37,9 +37,9 @@ D:\Python\Python311\python.exe -m venv your_env_name
 | `--clear`                | 如果指定的虚拟环境目录已经存在，这会清除目录中的所有内容，然后重新创建虚拟环境 |
 | `--version`              | 用于确认虚拟环境中 Python 的版本                    |
 
-{{< alert >}}
-所有的参数说明都可以通过运行 `python -m venv -h` 来获得；不用到处查文档了~😆
-{{< /alert >}}
+> [!NOTE] Title
+> 所有的参数说明都可以通过运行 `python -m venv -h` 来获得；不用到处查文档了~😆
+
 
 ### 激活
 默认情况下，虚拟环境处于非激活状态。在“your_env_name/Scripts/”目录下将有一个名为“activate”的文件，用命令行运行即可。

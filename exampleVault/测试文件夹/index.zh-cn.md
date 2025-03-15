@@ -1,10 +1,10 @@
 ---
 title: 基本测试
 weight: -1
-draft: true
+draft: false
 description: 中文版基本功能说明和测试文档
 slug: test_in_folder
-tags: 
+tags:
   - test
 series: test
 series_order: 1
