@@ -2,8 +2,13 @@ import { HugoBlowfishExporterSettings } from '../types/settings';
 
 export const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
     exportPath: '',
+    exportPathWindows: 'E:/Hugo/morethan987/content',
+    exportPathLinux: '/mnt/E/Hugo/morethan987/content',
     imageExportPath: 'img',
     translatedExportPath: '',
+    translatedExportPathWindows: '',
+    translatedExportPathLinux: '',
+    currentOS: 'Windows',
     BaseURL: 'https://api.deepseek.com/v1',
     ApiKey: '',
     ModelName: 'deepseek-chat',

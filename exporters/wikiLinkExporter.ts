@@ -1,6 +1,6 @@
 import { App, Notice, TFile } from 'obsidian';
 import { ExportDispNameModal } from '../utils/exportDispNameModal';
-import { HugoBlowfishExporterSettings } from '../main';
+import { HugoBlowfishExporterSettings } from '../src/types/settings';
 
 export class WikiLinkExporter {
     constructor(private app: App) {}
@@ -27,7 +27,7 @@ export class WikiLinkExporter {
                 // 如果没有文件名，说明是一个内部链接
                 if (!actualTarget) {
                     const linkText = displayText || fragment;
-                    const formated_fragment = fragment.replace(/[A-Z]/g, (char) => char.toLowerCase()).replace(/\s+/g, "-");
+                    const formated_fragment = fragment.replace(/[A-Z]/g, (char) => char.toLowerCase()).replace(/\s+/g, "-").replace(/[^\w\-\u4e00-\u9fa5]/g, ""); // 保留中文汉字，但移除特殊标点符号
                     hugoLink = `[${linkText}]({{< relref "#${formated_fragment}" >}})`;
                     modifiedContent = modifiedContent.replace(fullMatch, hugoLink);
                 } else {

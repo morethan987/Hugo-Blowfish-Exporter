@@ -1,7 +1,7 @@
 import { App, Notice, TFile } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
-import { HugoBlowfishExporterSettings } from '../main';
+import { HugoBlowfishExporterSettings } from '../src/types/settings';
 import { ImageExporter } from '../exporters/imageExporter';
 import { CoverChooser } from '../exporters/coverChooser';
 

@@ -16,16 +16,46 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
         const {containerEl} = this;
         containerEl.empty();
 
+        containerEl.createEl('h1', { text: '环境设置' });
+
+        new Setting(containerEl)
+            .setName('当前操作系统')
+            .setDesc('选择当前使用的操作系统，以使用对应的路径配置')
+            .addDropdown(dropdown => dropdown
+                .addOption('Windows', 'Windows')
+                .addOption('Linux', 'Linux')
+                .setValue(this.plugin.settings.currentOS)
+                .onChange(async (value) => {
+                    this.plugin.settings.currentOS = value as 'Windows' | 'Linux';
+                    // 根据选择的操作系统更新显示的路径
+                    if (value === 'Windows') {
+                        this.plugin.settings.translatedExportPath = this.plugin.settings.translatedExportPathWindows;
+                        this.plugin.settings.exportPath = this.plugin.settings.exportPathWindows;
+                    } else {
+                        this.plugin.settings.translatedExportPath = this.plugin.settings.translatedExportPathLinux;
+                        this.plugin.settings.exportPath = this.plugin.settings.exportPathLinux;
+                    }
+                    await this.plugin.saveSettings();
+                    // 重新加载设置页面以更新显示的值
+                    this.display();
+                }));
+
         containerEl.createEl('h1', { text: '翻译设置' });
 
         new Setting(containerEl)
             .setName('翻译文件导出路径')
             .setDesc('设置翻译后的文件保存路径（绝对路径）')
             .addText(text => text
-                .setPlaceholder('E:/Translations')
+                .setPlaceholder(this.plugin.settings.currentOS === 'Windows' ? 'E:/Translations' : '/home/user/translations')
                 .setValue(this.plugin.settings.translatedExportPath)
                 .onChange(async (value) => {
+                    // 同时更新当前路径和对应操作系统的路径
                     this.plugin.settings.translatedExportPath = value;
+                    if (this.plugin.settings.currentOS === 'Windows') {
+                        this.plugin.settings.translatedExportPathWindows = value;
+                    } else {
+                        this.plugin.settings.translatedExportPathLinux = value;
+                    }
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('translated-export-path-setting');
@@ -108,7 +138,13 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                 .setPlaceholder('E:/Hugo/morethan987/content')
                 .setValue(this.plugin.settings.exportPath)
                 .onChange(async (value) => {
+                    // 同时更新当前路径和对应操作系统的路径
                     this.plugin.settings.exportPath = value;
+                    if (this.plugin.settings.currentOS === 'Windows') {
+                        this.plugin.settings.exportPathWindows = value;
+                    } else {
+                        this.plugin.settings.exportPathLinux = value;
+                    }
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('export-path-setting');

@@ -1,7 +1,12 @@
 export interface HugoBlowfishExporterSettings {
     exportPath: string; // 导出路径配置
+    exportPathWindows: string; // Windows系统下的content目录绝对路径
+    exportPathLinux: string; // Linux系统下的content目录绝对路径
     imageExportPath: string; // 图片导出路径配置
     translatedExportPath: string; // 翻译文件导出路径配置
+    translatedExportPathWindows: string; // Windows系统下的翻译文件导出路径
+    translatedExportPathLinux: string; // Linux系统下的翻译文件导出路径
+    currentOS: 'Windows' | 'Linux'; // 当前选择的操作系统
     BaseURL: string; // 大模型BaseURL
     ApiKey: string;  // API密钥
     ModelName: string; // 模型名称

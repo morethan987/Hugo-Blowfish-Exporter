@@ -5,11 +5,10 @@ export class CoverChooser {
     constructor() {}
 
     async chooseCover( settings: any, slugDir: string) {
-        // settings.blogPath和settings.coverPath拼接形成封面图片文件夹的绝对路径
+        // settings.exportPath和settings.coverPath拼接形成封面图片文件夹的绝对路径
         const exportDir = path.resolve(settings.exportPath);
         const coverDir = path.join(
             exportDir,
-            settings.blogPath,
             settings.coverPath
         );
 
