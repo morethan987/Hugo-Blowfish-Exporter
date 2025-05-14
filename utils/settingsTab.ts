@@ -10,6 +10,23 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
         super(app, plugin.plugin);
         this.plugin = plugin;
         this.mainPlugin = plugin.plugin;
+        
+        // 自动检测操作系统
+        const platform = process.platform;
+        const detectedOS = platform === 'win32' ? 'Windows' : 'Linux';
+        
+        // 如果检测到的操作系统与当前设置不同，则更新设置
+        if (this.plugin.settings.currentOS !== detectedOS) {
+            this.plugin.settings.currentOS = detectedOS;
+            if (detectedOS === 'Windows') {
+                this.plugin.settings.translatedExportPath = this.plugin.settings.translatedExportPathWindows;
+                this.plugin.settings.exportPath = this.plugin.settings.exportPathWindows;
+            } else {
+                this.plugin.settings.translatedExportPath = this.plugin.settings.translatedExportPathLinux;
+                this.plugin.settings.exportPath = this.plugin.settings.exportPathLinux;
+            }
+            this.plugin.saveSettings();
+        }
     }
 
     display(): void {
@@ -20,25 +37,10 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('当前操作系统')
-            .setDesc('选择当前使用的操作系统，以使用对应的路径配置')
-            .addDropdown(dropdown => dropdown
-                .addOption('Windows', 'Windows')
-                .addOption('Linux', 'Linux')
+            .setDesc('系统自动检测到的操作系统类型')
+            .addText(text => text
                 .setValue(this.plugin.settings.currentOS)
-                .onChange(async (value) => {
-                    this.plugin.settings.currentOS = value as 'Windows' | 'Linux';
-                    // 根据选择的操作系统更新显示的路径
-                    if (value === 'Windows') {
-                        this.plugin.settings.translatedExportPath = this.plugin.settings.translatedExportPathWindows;
-                        this.plugin.settings.exportPath = this.plugin.settings.exportPathWindows;
-                    } else {
-                        this.plugin.settings.translatedExportPath = this.plugin.settings.translatedExportPathLinux;
-                        this.plugin.settings.exportPath = this.plugin.settings.exportPathLinux;
-                    }
-                    await this.plugin.saveSettings();
-                    // 重新加载设置页面以更新显示的值
-                    this.display();
-                }));
+                .setDisabled(true));
 
         containerEl.createEl('h1', { text: '翻译设置' });
 
