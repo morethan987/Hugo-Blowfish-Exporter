@@ -117,7 +117,7 @@ export class GitHandler {
                         new Notice('正在执行Git操作...');
                         await execPromise('git add .', { cwd: repoPath });
                         await execPromise(`git commit -m "${commitMessage}"`, { cwd: repoPath });
-                        // await execPromise('git push', { cwd: repoPath });
+                        await execPromise('git push', { cwd: repoPath });
                         new Notice('Git操作完成');
                         resolve(true);
                     } catch (error) {
