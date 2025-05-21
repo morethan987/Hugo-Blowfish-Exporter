@@ -7,8 +7,8 @@ export class GitDiffModal extends Modal {
     ) {
         super(app);
         this.modalEl.className = 'modal mod-sidebar-layout';
-        this.modalEl.style.width = '90vw';  // 可调整
-        this.modalEl.style.height = '90vh'; // 可调整
+        this.modalEl.style.width = '90vw';  // *******可调整*********
+        this.modalEl.style.height = '90vh'; // *******可调整*********
         this.modalEl.style.maxWidth = '100%';
         this.modalEl.style.maxHeight = '100%';
     }
@@ -37,19 +37,18 @@ export class GitDiffModal extends Modal {
 
         // 设置内容元素样式
         Object.assign(contentEl.style, {
-            display: 'flex',
-            flexDirection: 'column',
+            display: 'block',
             width: '100%',
             height: '100%',
             padding: '20px',
-            maxHeight: '100vh',
-            overflow: 'hidden'
+            overflow: 'auto',
+            maxHeight: '120vh'
         });
         
         const headerDiv = contentEl.createDiv();
         headerDiv.style.marginBottom = '20px';
         headerDiv.createEl('h2', {
-            text: 'Markdown 文件变更',
+            text: '文件变更',
             attr: { style: 'margin: 0; color: var(--text-normal); border-bottom: 2px solid var(--background-modifier-border); padding-bottom: 10px;' }
         });
 
@@ -86,14 +85,6 @@ export class GitDiffModal extends Modal {
             });
         }
 
-        // 差异内容容器
-        const diffContainer = contentEl.createDiv({
-            cls: 'diff-content',
-            attr: {
-                style: 'flex: 1; display: flex; flex-direction: column; gap: 20px; overflow: auto;'
-            }
-        });
-
         // 将差异内容按文件分组
         const files: { fileName: string; content: string[]; isNew: boolean }[] = [];
         const lines = this.diffContent.split('\n');
@@ -122,18 +113,17 @@ export class GitDiffModal extends Modal {
 
         // 为每个文件创建独立的区块
         for (const file of files) {
-            // 文件容器
-            const fileContainer = diffContainer.createDiv({
+            // 文件容器，******调整这里就可以改变显示文本的大小******
+            const fileContainer = contentEl.createDiv({
                 attr: {
                     style: `
                         background-color: var(--background-secondary);
                         border-radius: 8px;
                         overflow: hidden;
-                        display: flex;
-                        flex-direction: column;
-                        flex: 1;
-                        min-height: 0;
-                        max-height: 100%;
+                        height: 500px;
+                        margin-bottom: 20px;
+                        display: block;
+                        margin-top: 20px;
                     `
                 }
             });
@@ -167,8 +157,6 @@ export class GitDiffModal extends Modal {
                         white-space: pre-wrap;
                         word-wrap: break-word;
                         overflow: auto;
-                        flex: 1;
-                        min-height: 0;
                         height: 100%;
                     `
                 }
