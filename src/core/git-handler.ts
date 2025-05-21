@@ -1,8 +1,9 @@
-import { App, Notice, Modal } from 'obsidian';
+import { App, Notice } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import HugoBlowfishExporter from './plugin';
 import { GitDiffModal } from '../../utils/gitDiffModal';
+import { GitCommitModal } from '../../utils/gitCommitModal';
 
 export class GitHandler {
     constructor(
@@ -80,15 +81,27 @@ export class GitHandler {
         // 获取目标仓库的父级目录路径
         const repoPath = path.dirname(path.resolve(this.plugin.settings.exportPath));
 
-        // 弹窗提示用户输入 commit message
+        // 检查目录是否存在
+        if (!fs.existsSync(repoPath)) {
+            new Notice('仓库目录不存在！');
+            return;
+        }
 
-        // 执行 git add 命令
-
-        // 执行 git commit 命令
-
-        // 执行 git push 命令
-
-        // 弹窗提示用户操作成功
-
+        return new Promise((resolve, reject) => {
+            new GitCommitModal(this.app, async (commitMessage) => {
+                try {
+                    const { execSync } = require('child_process');
+                    new Notice('正在执行Git操作...', 0);
+                    execSync('git add .', { cwd: repoPath });
+                    execSync(`git commit -m "${commitMessage}"`, { cwd: repoPath });
+                    execSync('git push', { cwd: repoPath });
+                    new Notice('Git操作完成');
+                    resolve(true);
+                } catch (error) {
+                    new Notice('Git操作失败: ' + error);
+                    reject(error);
+                }
+            }).open();
+        });
     }
 }
