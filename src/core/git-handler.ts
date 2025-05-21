@@ -14,67 +14,83 @@ export class GitHandler {
     async showAllDiff() {
         // 获取目标仓库的父级目录路径
         const repoPath = path.dirname(path.resolve(this.plugin.settings.exportPath));
-
+    
         // 检查目录是否存在
         if (!fs.existsSync(repoPath)) {
             new Notice('仓库目录不存在！');
             return;
         }
-
-        // 执行 git diff 命令
-        const { execSync } = require('child_process');
-        try {
-            let diffContent = '';
-
-            // 获取已跟踪的 .md 文件的差异
+    
+        new Notice('正在获取文件差异...');
+        
+        // 异步执行获取差异
+        setTimeout(async () => {
             try {
-                const trackedDiff = execSync('git diff -- "*.md"', { cwd: repoPath }).toString();
-                if (trackedDiff) {
-                    diffContent += trackedDiff;
-                }
-            } catch (err) {
-                console.error('获取已跟踪文件差异失败:', err);
-            }
-
-            // 获取未跟踪的 .md 文件
-            try {
-                const untrackedFiles = execSync('git ls-files --others --exclude-standard', { cwd: repoPath })
-                    .toString()
-                    .split('\n')
-                    .filter((file: string) => file.endsWith('.md'))
-                    .map((file: string) => {
-                        try {
-                            // 读取新文件的内容
-                            const content = fs.readFileSync(path.join(repoPath, file), 'utf-8');
-                            return `\ndiff --git a/${file} b/${file}\n` +
-                                   `new file mode 100644\n` +
-                                   `--- /dev/null\n` +
-                                   `+++ b/${file}\n` +
-                                   `@@ -0,0 +1,${content.split('\n').length} @@\n` +
-                                   content.split('\n').map(line => `+${line}`).join('\n');
-                        } catch (err) {
-                            console.error(`读取文件 ${file} 失败:`, err);
-                            return '';
-                        }
-                    })
-                    .filter((diff: string) => diff)  // 移除空字符串
-                    .join('\n');
-
-                if (untrackedFiles) {
-                    if (diffContent) {
-                        diffContent += '\n';
+                const { exec } = require('child_process');
+                const util = require('util');
+                const execPromise = util.promisify(exec);
+                const fsPromises = fs.promises;
+                
+                let diffContent = '';
+    
+                // 获取已跟踪的 .md 文件的差异
+                try {
+                    const { stdout: trackedDiff } = await execPromise('git diff -- "*.md"', { cwd: repoPath });
+                    if (trackedDiff) {
+                        diffContent += trackedDiff;
                     }
-                    diffContent += untrackedFiles;
+                } catch (err) {
+                    console.error('获取已跟踪文件差异失败:', err);
                 }
-            } catch (err) {
-                console.error('获取未跟踪文件失败:', err);
+    
+                // 获取未跟踪的 .md 文件
+                try {
+                    const { stdout: untrackedFilesOutput } = await execPromise(
+                        'git ls-files --others --exclude-standard', 
+                        { cwd: repoPath }
+                    );
+                    
+                    const untrackedFilesList = untrackedFilesOutput
+                        .split('\n')
+                        .filter((file: string) => file.trim() && file.endsWith('.md'));
+                    
+                    // 并行处理未跟踪文件
+                    const untrackedDiffs = await Promise.all(
+                        untrackedFilesList.map(async (file: string) => {
+                            try {
+                                // 异步读取新文件的内容
+                                const content = await fsPromises.readFile(path.join(repoPath, file), 'utf-8');
+                                const lines = content.split('\n');
+                                return `\ndiff --git a/${file} b/${file}\n` +
+                                       `new file mode 100644\n` +
+                                       `--- /dev/null\n` +
+                                       `+++ b/${file}\n` +
+                                       `@@ -0,0 +1,${lines.length} @@\n` +
+                                       lines.map(line => `+${line}`).join('\n');
+                            } catch (err) {
+                                console.error(`读取文件 ${file} 失败:`, err);
+                                return '';
+                            }
+                        })
+                    );
+    
+                    const untrackedFilesContent = untrackedDiffs.filter(diff => diff).join('\n');
+                    if (untrackedFilesContent) {
+                        if (diffContent) {
+                            diffContent += '\n';
+                        }
+                        diffContent += untrackedFilesContent;
+                    }
+                } catch (err) {
+                    console.error('获取未跟踪文件失败:', err);
+                }
+    
+                // 使用独立的模态框组件显示差异
+                new GitDiffModal(this.app, diffContent).open();
+            } catch (error) {
+                new Notice('执行 git 命令时发生错误：' + error);
             }
-
-            // 使用独立的模态框组件显示差异
-            new GitDiffModal(this.app, diffContent).open();
-        } catch (error) {
-            new Notice('执行 git 命令时发生错误：' + error);
-        }
+        }, 50);
     }
     
     async commitAndPush() {
@@ -87,20 +103,28 @@ export class GitHandler {
             return;
         }
 
+        // filepath: [git-handler.ts](http://_vscodecontentref_/1)
         return new Promise((resolve, reject) => {
-            new GitCommitModal(this.app, async (commitMessage) => {
-                try {
-                    const { execSync } = require('child_process');
-                    new Notice('正在执行Git操作...', 0);
-                    execSync('git add .', { cwd: repoPath });
-                    execSync(`git commit -m "${commitMessage}"`, { cwd: repoPath });
-                    execSync('git push', { cwd: repoPath });
-                    new Notice('Git操作完成');
-                    resolve(true);
-                } catch (error) {
-                    new Notice('Git操作失败: ' + error);
-                    reject(error);
-                }
+            new GitCommitModal(this.app, (commitMessage) => {
+                // 先关闭模态框
+                // 然后异步执行Git操作
+                setTimeout(async () => {
+                    const { exec } = require('child_process');
+                    const util = require('util');
+                    const execPromise = util.promisify(exec);
+                    
+                    try {
+                        new Notice('正在执行Git操作...');
+                        await execPromise('git add .', { cwd: repoPath });
+                        await execPromise(`git commit -m "${commitMessage}"`, { cwd: repoPath });
+                        // await execPromise('git push', { cwd: repoPath });
+                        new Notice('Git操作完成');
+                        resolve(true);
+                    } catch (error) {
+                        new Notice('Git操作失败: ' + error);
+                        reject(error);
+                    }
+                }, 50); // 给UI一点时间关闭模态框
             }).open();
         });
     }
