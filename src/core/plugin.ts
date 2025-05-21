@@ -83,14 +83,14 @@ export default class HugoBlowfishExporter {
         this.plugin.addCommand({
             id: 'show-diff',
             name: 'Show the diff of export result',
-            editorCallback: this.gitHandler.showAllDiff.bind(this.gitHandler)
+            callback: this.gitHandler.showAllDiff.bind(this.gitHandler)
         });
 
         // 添加直接推送命令，类似于git push，并且需要用户输入comment
         this.plugin.addCommand({
             id: 'commit-and-push',
             name: 'Commit and push to the remote repository',
-            editorCallback: this.gitHandler.commitAndPush.bind(this.gitHandler)
+            callback: this.gitHandler.commitAndPush.bind(this.gitHandler)
         });
 
         // 添加设置选项卡

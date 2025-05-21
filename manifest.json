@@ -1,6 +1,6 @@
 {
 	"id": "hugo-blowfish-exporter",
-	"name": "Hugo Blowfish Exporter",
+	"name": "Blowfish Exporter",
 	"version": "2.5.0",
 	"minAppVersion": "0.15.0",
 	"description": "Export and translate your notes to Hugo Blowfish format.",
