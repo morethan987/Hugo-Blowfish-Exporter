@@ -60,7 +60,7 @@ export class MathExporter {
             //     清理后: this.cleanMathContent(formula)
             // });
             hasMath = true;
-            return `\\\\(${this.cleanMathContent(formula)}\\\\)`;
+            return `\\(${this.cleanMathContent(formula)}\\)`;
         });
 
         // console.log('处理完成的内容:', content);
@@ -90,7 +90,6 @@ export class MathExporter {
         const result = mathContent
             .trim()
             .replace(/\s+/g, ' ')  // 将多个空格替换为单个空格
-            .replace(/\\/g, '\\\\'); // 单斜杠变双斜杠
         // console.log('清理数学内容:', {
         //     输入: mathContent,
         //     输出: result
