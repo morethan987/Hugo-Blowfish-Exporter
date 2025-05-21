@@ -1,6 +1,6 @@
 export class MathExporter {
     transformMath(content: string): string {
-        console.log('开始处理数学公式');
+        // console.log('开始处理数学公式');
         
         // 首先找出所有代码块的位置
         const codeBlocks: { start: number; end: number }[] = [];
@@ -14,7 +14,7 @@ export class MathExporter {
             });
         }
         
-        console.log('找到的代码块:', codeBlocks);
+        // console.log('找到的代码块:', codeBlocks);
         
         // 判断一个位置是否在代码块中
         const isInCodeBlock = (position: number, length: number): boolean => {
@@ -22,7 +22,7 @@ export class MathExporter {
                 (position >= block.start && position < block.end) || 
                 (position + length > block.start && position + length <= block.end)
             );
-            console.log(`检查位置 ${position} 是否在代码块中:`, result);
+            // console.log(`检查位置 ${position} 是否在代码块中:`, result);
             return result;
         };
 
@@ -35,14 +35,14 @@ export class MathExporter {
         const blockMathRegex = /\$\$\s*\n([^$]+?)\n\s*\$\$/g;
         content = content.replace(blockMathRegex, (match, formula, offset) => {
             if (isInCodeBlock(offset, match.length)) {
-                console.log('块级公式在代码块中，保持原样:', match);
+                // console.log('块级公式在代码块中，保持原样:', match);
                 return match;
             }
-            console.log('处理块级公式:', {
-                原始内容: match,
-                提取内容: formula,
-                清理后: this.cleanMathContent(formula)
-            });
+            // console.log('处理块级公式:', {
+            //     原始内容: match,
+            //     提取内容: formula,
+            //     清理后: this.cleanMathContent(formula)
+            // });
             hasMath = true;
             return `$$\n${this.cleanMathContent(formula)}\n$$`;
         });
@@ -51,19 +51,19 @@ export class MathExporter {
         const inlineMathRegex = /\$([^\$\n]+?)\$/g;
         content = content.replace(inlineMathRegex, (match, formula, offset) => {
             if (isInCodeBlock(offset, match.length)) {
-                console.log('内联公式在代码块中，保持原样:', match);
+                // console.log('内联公式在代码块中，保持原样:', match);
                 return match;
             }
-            console.log('处理内联公式:', {
-                原始内容: match,
-                提取内容: formula,
-                清理后: this.cleanMathContent(formula)
-            });
+            // console.log('处理内联公式:', {
+            //     原始内容: match,
+            //     提取内容: formula,
+            //     清理后: this.cleanMathContent(formula)
+            // });
             hasMath = true;
             return `\\\\(${this.cleanMathContent(formula)}\\\\)`;
         });
 
-        console.log('处理完成的内容:', content);
+        // console.log('处理完成的内容:', content);
 
         // 如果没有数学公式，直接返回处理后的内容
         if (!hasMath) {
@@ -91,10 +91,10 @@ export class MathExporter {
             .trim()
             .replace(/\s+/g, ' ')  // 将多个空格替换为单个空格
             .replace(/\\/g, '\\\\'); // 单斜杠变双斜杠
-        console.log('清理数学内容:', {
-            输入: mathContent,
-            输出: result
-        });
+        // console.log('清理数学内容:', {
+        //     输入: mathContent,
+        //     输出: result
+        // });
         return result;
     }
 }

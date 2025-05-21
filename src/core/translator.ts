@@ -10,6 +10,9 @@ export class Translator {
     ) {}
 
     async translateCurrentNote() {
+        // 创建一个持续显示的通知
+        let notice: Notice | null = null;
+        
         try {
             // 检查API密钥是否配置
             if (!process.env.API_KEY) {
@@ -51,9 +54,10 @@ export class Translator {
             const metadata = this.app.metadataCache.getFileCache(currentFile);
             const content = await this.app.vault.read(currentFile);
 
-            new Notice('开始翻译...');
+            notice = new Notice('开始翻译...', 0);
 
-            // 调用API进行标题的翻译
+            // 更新通知显示，开始翻译标题
+            notice.setMessage('正在翻译标题...');
             const titleCompletion = await this.plugin.client.chat.completions.create({
                 model: this.plugin.settings.ModelName,
                 messages: [
@@ -70,7 +74,8 @@ export class Translator {
             });
             const translatedTitle = titleCompletion.choices[0].message.content || 'Default Title';
 
-            // 调用API进行内容的翻译
+            // 更新通知显示，开始翻译内容
+            notice.setMessage('正在翻译内容...');
             const contentCompletion = await this.plugin.client.chat.completions.create({
                 model: this.plugin.settings.ModelName,
                 messages: [
@@ -94,27 +99,37 @@ export class Translator {
 
             // 先导出到目标文件夹中，确保目录存在
             fs.mkdirSync(path.dirname(translatedFilePath), { recursive: true });
+            notice.setMessage('正在保存翻译结果...');
             fs.writeFileSync(translatedFilePath, translatedContent, 'utf8');
-            new Notice(`✅ 翻译完成！\n文件已保存至:\n${translatedFilePath}`);
+            
+            // 关闭进度通知
+            notice.hide();
+            new Notice(`✅ 翻译完成！\n文件已保存至:\n${translatedFilePath}`, 4000);
 
             // 检查是否需要直接导出
             if (this.plugin.settings.directExportAfterTranslation) {
                 await this.directExport(translatedContent, metadata, translatedTitle);
             }
         } catch (error) {
-            new Notice(`❌ 翻译失败: ${error.message}`);
+            // 确保在出错时关闭进度通知
+            if (notice) {
+                notice.hide();
+            }
+            new Notice(`❌ 翻译失败: ${error.message}`, 4000);
             console.error('Translation error:', error);
         }
     }
 
     private async directExport(translatedContent: string, metadata: any, translatedTitle: string) {
-        new Notice(`正在执行直接导出...`);
+        const notice = new Notice('正在执行直接导出...', 0);
 
-        // 检测是否有slug属性
-        if (!metadata?.frontmatter?.slug) {
-            new Notice('⚠️ 当前文件缺少 slug 属性，请在 frontmatter 中添加 slug 字段');
-            return;
-        }
+        try {
+            // 检测是否有slug属性
+            if (!metadata?.frontmatter?.slug) {
+                notice.hide();
+                new Notice('⚠️ 当前文件缺少 slug 属性，请在 frontmatter 中添加 slug 字段', 4000);
+                return;
+            }
 
         // 根据slug创建目标目录
         let exportDir = path.resolve(this.plugin.settings.exportPath);
@@ -124,7 +139,8 @@ export class Translator {
             fs.mkdirSync(slugDir, { recursive: true });
         }
 
-        const modifiedContent = await this.plugin.exporter.modifyContent(translatedContent, 'single');
+            notice.setMessage('正在处理内容...');
+            const modifiedContent = await this.plugin.exporter.modifyContent(translatedContent, 'single');
 
         let directExportFileName: string;
         if (this.plugin.settings.targetLanguage === '中文') {
@@ -136,12 +152,20 @@ export class Translator {
         // 构建完整的输出路径
         const outputPath = path.join(slugDir, `${directExportFileName}.md`);
 
-        // 写入文件
-        fs.writeFileSync(outputPath, modifiedContent, 'utf8');
+            // 写入文件
+            notice.setMessage('正在保存文件...');
+            fs.writeFileSync(outputPath, modifiedContent, 'utf8');
 
-        // 自动选择博客封面
-        await this.plugin.coverChooser.chooseCover(this.plugin.settings, slugDir);
+            // 自动选择博客封面
+            notice.setMessage('正在选择博客封面...');
+            await this.plugin.coverChooser.chooseCover(this.plugin.settings, slugDir);
 
-        new Notice(`✅ 直接导出成功!\n文件已保存至:\n${outputPath}`, 5000);
+            notice.hide();
+            new Notice(`✅ 直接导出成功!\n文件已保存至:\n${outputPath}`, 5000);
+        } catch (error) {
+            notice.hide();
+            new Notice(`❌ 直接导出失败: ${error.message}`, 4000);
+            console.error('Direct export error:', error);
+        }
     }
 }

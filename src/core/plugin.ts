@@ -11,6 +11,7 @@ import { WikiLinkExporter } from '../../exporters/wikiLinkExporter';
 import { HugoBlowfishExporterSettingTab } from '../../utils/settingsTab';
 import { Exporter } from './exporter';
 import { Translator } from './translator';
+import { GitHandler } from './git-handler';
 
 export default class HugoBlowfishExporter {
     settings: HugoBlowfishExporterSettings;
@@ -23,6 +24,7 @@ export default class HugoBlowfishExporter {
     client: OpenAI;
     exporter: Exporter;
     translator: Translator;
+    gitHandler: GitHandler;
     app: App;
     plugin: any;
 
@@ -52,9 +54,10 @@ export default class HugoBlowfishExporter {
             dangerouslyAllowBrowser: true
         });
 
-        // 初始化导出器和翻译器
+        // 初始化导出器、翻译器和Git处理器
         this.exporter = new Exporter(this.app, this);
         this.translator = new Translator(this.app, this);
+        this.gitHandler = new GitHandler(this.app, this);
 
         // 添加导出按钮到ribbon
         const ribbonIconEl = this.plugin.addRibbonIcon('arrow-right-from-line', 'Export all the file in vault', (evt: MouseEvent) => {
@@ -74,6 +77,20 @@ export default class HugoBlowfishExporter {
             id: 'translate-to-the-other-language',
             name: 'Translate current note to the other language',
             editorCallback: this.translator.translateCurrentNote.bind(this.translator)
+        });
+
+        // 添加更改查看命令，类似于git diff
+        this.plugin.addCommand({
+            id: 'show-diff',
+            name: 'Show the diff of export result',
+            editorCallback: this.gitHandler.showAllDiff.bind(this.gitHandler)
+        });
+
+        // 添加直接推送命令，类似于git push，并且需要用户输入comment
+        this.plugin.addCommand({
+            id: 'commit-and-push',
+            name: 'Commit and push to the remote repository',
+            editorCallback: this.gitHandler.commitAndPush.bind(this.gitHandler)
         });
 
         // 添加设置选项卡
