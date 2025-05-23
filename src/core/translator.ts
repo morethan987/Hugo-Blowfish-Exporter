@@ -81,7 +81,7 @@ export class Translator {
                 messages: [
                     {
                         role: "system",
-                        content: `你是一个专业的文档翻译助手。请将以下Markdown内容翻译成地道流畅的${this.plugin.settings.targetLanguage}，同时遵循一下要求：\n1. 保持所有的Markdown格式、链接和图片引用不变；frontmatter部分需要保持格式不变。\n2. 不要翻译文件名和链接。\n3. 代码块中的注释需要翻译`
+                        content: `你是一个专业的文档翻译助手。请将以下Markdown内容翻译成表达地道、语义流畅流畅的${this.plugin.settings.targetLanguage}，同时严格遵循以下要求：\n1. 保持所有的Markdown格式、链接和图片引用不变；frontmatter部分需要保持格式不变。\n2. 不要翻译文件名和链接。\n3. 代码块中的注释需要翻译。\n4. 只翻译内容，不要添加任何额外的解释或注释。`
                     },
                     {
                         role: "user",
