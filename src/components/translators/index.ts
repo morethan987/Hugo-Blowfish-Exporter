@@ -1,0 +1,12 @@
+export { TranslationValidator } from './validation';
+export { TranslationApiClient } from './api-client';
+export { TranslationFileOperations } from './file-operations';
+export { DirectExportHelper } from './direct-export';
+export { DiffDetector } from './diff-detector';
+export type { GitDiffResult, DiffChange } from './diff-detector';
+export { ParagraphMatcher } from './paragraph-matcher';
+export type { Paragraph, ParagraphType } from './paragraph-matcher';
+export { DiffTranslator } from './diff-translator';
+export type { TranslatedParagraph } from './diff-translator';
+export { FileUpdater } from './file-updater';
+export type { ParagraphUpdate, ParagraphInsertion } from './file-updater';

@@ -68,28 +68,35 @@ export default class HugoBlowfishExporter {
         // 添加导出命令
         this.plugin.addCommand({
             id: 'export-to-hugo-blowfish',
-            name: 'Export current note to Hugo Blowfish',
+            name: 'Export to Hugo Blowfish',
             editorCallback: this.exporter.exportCurrentNote.bind(this.exporter)
         });
 
-        // 添加翻译命令
+        // 添加全文翻译命令
         this.plugin.addCommand({
             id: 'translate-to-the-other-language',
-            name: 'Translate current note to the other language',
+            name: 'Translate whole note',
             editorCallback: this.translator.translateCurrentNote.bind(this.translator)
+        });
+
+        // 添加差异翻译命令
+        this.plugin.addCommand({
+            id: 'translate-diff-to-the-other-language',
+            name: 'Translate Diff',
+            editorCallback: this.translator.translateDifference.bind(this.translator)
         });
 
         // 添加更改查看命令，类似于git diff
         this.plugin.addCommand({
             id: 'show-diff',
-            name: 'Show the diff of export result',
+            name: 'Show Diff',
             callback: this.gitHandler.showAllDiff.bind(this.gitHandler)
         });
 
         // 添加直接推送命令，类似于git push，并且需要用户输入comment
         this.plugin.addCommand({
             id: 'commit-and-push',
-            name: 'Commit and push to the remote repository',
+            name: 'Commit and Push',
             callback: this.gitHandler.commitAndPush.bind(this.gitHandler)
         });
 
