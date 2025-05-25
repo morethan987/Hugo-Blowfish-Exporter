@@ -41,7 +41,7 @@ export class TranslationApiClient {
             messages: [
                 {
                     role: "system",
-                    content: `你是一个专业的文档翻译助手。请将以下Markdown内容翻译成表达地道、语义流畅流畅的${this.plugin.settings.targetLanguage}，同时严格遵循以下要求：\n1. 保持所有的Markdown格式、链接和图片引用不变；frontmatter部分需要保持格式不变。\n2. 不要翻译文件名和链接。\n3. 代码块中的注释需要翻译。\n4. 只翻译内容，不要添加任何额外的解释或注释。`
+                    content: `你是一个专业的文档翻译助手。请将以下Markdown内容翻译成表达地道、语义流畅流畅的${this.plugin.settings.targetLanguage}，同时严格遵循以下要求：\n1. 保持所有的Markdown格式、链接和图片引用不变；frontmatter部分需要保持格式不变。\n2. 代码块中的注释需要翻译。\n3. 只翻译内容，不要添加任何额外的解释或注释。\n4. 忠于原文结构和格式，严禁随意添加换行符。`
                 },
                 {
                     role: "user",

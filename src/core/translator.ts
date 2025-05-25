@@ -6,15 +6,12 @@ import {
     TranslationFileOperations,
     DirectExportHelper,
     DiffDetector,
-    ParagraphMatcher,
-    DiffTranslator,
     FileUpdater
 } from '../components/translators';
 import type {
     Paragraph,
-    TranslatedParagraph,
     ParagraphUpdate,
-    ParagraphInsertion
+    TranslatedParagraph
 } from '../components/translators';
 
 export class Translator {
@@ -23,8 +20,6 @@ export class Translator {
     private fileOps: TranslationFileOperations;
     private directExport: DirectExportHelper;
     private diffDetector: DiffDetector;
-    private paragraphMatcher: ParagraphMatcher;
-    private diffTranslator: DiffTranslator;
     private fileUpdater: FileUpdater;
 
     constructor(
@@ -36,8 +31,6 @@ export class Translator {
         this.fileOps = new TranslationFileOperations(plugin);
         this.directExport = new DirectExportHelper(plugin);
         this.diffDetector = new DiffDetector(plugin);
-        this.paragraphMatcher = new ParagraphMatcher(plugin);
-        this.diffTranslator = new DiffTranslator(plugin);
         this.fileUpdater = new FileUpdater(plugin, app);
     }
 
@@ -119,7 +112,7 @@ export class Translator {
 
             notice = new Notice('开始差异翻译...', 0);
 
-            // 1. 检测文件变化
+            // 1. 检测文件变化 TODO 这里git检测需要改进
             notice.setMessage('正在检测文件变化...');
             const diffResult = await this.diffDetector.detectGitDiff(currentFile.path);
             
@@ -145,81 +138,92 @@ export class Translator {
                 return;
             }
 
-            // 4. 创建英文文件备份
-            notice.setMessage('正在创建备份...');
-            const backupPath = await this.fileUpdater.createBackup(englishFilePath);
-
-            // 5. 读取文件内容并分析段落
-            notice.setMessage('正在分析段落变化...');
+            // 4. 读取并更新文件内容
+            notice.setMessage('正在更新文件内容...');
             const chineseContent = await this.app.vault.read(currentFile);
             const englishContent = await this.readFileContent(englishFilePath);
 
-            const chineseParagraphs = this.paragraphMatcher.splitIntoParagraphs(chineseContent);
-            const englishParagraphs = this.paragraphMatcher.splitIntoParagraphs(englishContent);
+            const chineseLines = chineseContent.split(/\r?\n/);
+            const englishLines = englishContent.split(/\r?\n/);
+            const updatedEnglishLines = [...englishLines];
 
-            // 6. 识别修改和新增的段落
-            const { updatedParagraphs, newParagraphs } = this.identifyChangedParagraphs(
-                chineseParagraphs,
-                englishParagraphs,
-                diffResult.changes
-            );
-
-            if (updatedParagraphs.length === 0 && newParagraphs.length === 0) {
-                notice.hide();
-                new Notice('没有检测到需要翻译的段落变化');
-                return;
-            }
-
-            // 7. 翻译修改的段落
-            notice.setMessage('正在翻译修改的段落...');
-            const translatedUpdates: TranslatedParagraph[] = [];
-            const translatedNews: TranslatedParagraph[] = [];
-
-            if (updatedParagraphs.length > 0) {
-                const updates = await this.diffTranslator.translateModifiedParagraphs(updatedParagraphs);
-                translatedUpdates.push(...updates);
-            }
-
-            if (newParagraphs.length > 0) {
-                const news = await this.diffTranslator.translateModifiedParagraphs(newParagraphs);
-                translatedNews.push(...news);
-            }
-
-            // 8. 更新英文文件
-            notice.setMessage('正在更新英文文件...');
-            
-            // 处理段落更新
-            if (translatedUpdates.length > 0) {
-                const updates: ParagraphUpdate[] = translatedUpdates.map(translated => {
-                    const matchIndex = this.paragraphMatcher.findMatchingParagraph(translated, englishParagraphs);
-                    if (matchIndex === -1) {
-                        throw new Error(`无法找到段落的对应位置: ${translated.content.substring(0, 50)}...`);
+            // 5. 遍历每个变更，直接翻译修改的行
+            for (const change of diffResult.changes) {
+                const { newStart, newCount, addedLines } = change;
+                
+                // 处理新增和修改的行
+                for (let i = 0; i < newCount; i++) {
+                    const lineIndex = newStart + i - 1; // 转换为0-based索引
+                    const lineContent = chineseLines[lineIndex];
+                    
+                    // 处理空行
+                    if (!lineContent || !lineContent.trim()) {
+                        // 确保目标数组长度足够
+                        while (updatedEnglishLines.length <= lineIndex) {
+                            updatedEnglishLines.push('');
+                        }
+                        updatedEnglishLines[lineIndex] = '';
+                        continue;
                     }
-                    return {
-                        targetParagraph: englishParagraphs[matchIndex],
-                        translatedParagraph: translated
-                    };
-                });
-                
-                await this.fileUpdater.updateTargetFile(englishFilePath, updates);
+
+                    // 检查行是否包含特殊标记（如frontmatter、代码块等）
+                    if (this.shouldSkipTranslation(lineContent)) {
+                        // 确保目标数组长度足够
+                        while (updatedEnglishLines.length <= lineIndex) {
+                            updatedEnglishLines.push('');
+                        }
+                        updatedEnglishLines[lineIndex] = lineContent;
+                        continue;
+                    }
+
+                    try {
+                        notice.setMessage(`正在翻译第 ${lineIndex + 1} 行...`);
+                        const translated = await this.apiClient.translateContent(lineContent);
+                        // 确保目标数组长度足够
+                        while (updatedEnglishLines.length <= lineIndex) {
+                            updatedEnglishLines.push('');
+                        }
+                        updatedEnglishLines[lineIndex] = translated;
+                    } catch (error) {
+                        console.warn(`翻译第 ${lineIndex + 1} 行失败:`, error);
+                        // 确保目标数组长度足够
+                        while (updatedEnglishLines.length <= lineIndex) {
+                            updatedEnglishLines.push('');
+                        }
+                        updatedEnglishLines[lineIndex] = lineContent;
+                    }
+                }
             }
 
-            // 处理新段落插入
-            if (translatedNews.length > 0) {
-                const insertions: ParagraphInsertion[] = translatedNews.map(translated => {
-                    // 根据在中文文件中的位置确定插入位置
-                    const insertAfterLine = this.determineInsertionPoint(translated, chineseParagraphs, englishParagraphs);
-                    return {
-                        insertAfterLine,
-                        translatedParagraph: translated
-                    };
-                });
+            // 6. 构造更新并写入内容
+            notice.setMessage('正在保存更新...');
+            const updates: ParagraphUpdate[] = diffResult.changes.map(change => {
+                const { newStart, newCount } = change;
+                // 创建一个表示整个修改区域的段落对象
+                const targetParagraph: Paragraph = {
+                    startLine: newStart,
+                    endLine: newStart + newCount - 1,
+                    content: englishLines.slice(newStart - 1, newStart + newCount - 1).join('\n'),
+                    type: 'text'
+                };
                 
-                await this.fileUpdater.insertNewParagraphs(englishFilePath, insertions);
-            }
+                // 创建翻译后的段落对象
+                const translatedContent = updatedEnglishLines.slice(newStart - 1, newStart + newCount - 1).join('\n');
+                const translatedParagraph: TranslatedParagraph = {
+                    ...targetParagraph,
+                    translatedContent
+                };
+                
+                return {
+                    targetParagraph,
+                    translatedParagraph
+                };
+            });
+
+            await this.fileUpdater.updateTargetFile(englishFilePath, updates);
 
             notice.hide();
-            new Notice(`✅ 差异翻译完成！\n已更新文件: ${englishFilePath}\n备份文件: ${backupPath}`, 8000);
+            new Notice(`✅ 差异翻译完成！\n已更新文件: ${englishFilePath}`, 8000);
 
         } catch (error) {
             if (notice) {
@@ -228,6 +232,27 @@ export class Translator {
             new Notice(`❌ 差异翻译失败: ${error.message}`, 5000);
             console.error('Difference translation error:', error);
         }
+    }
+
+    /**
+     * 检查是否应该跳过翻译
+     * @param line 行内容
+     * @returns 是否跳过
+     */
+    private shouldSkipTranslation(line: string): boolean {
+        // 跳过frontmatter
+        if (line.trim() === '---') return true;
+        
+        // 跳过代码块标记
+        if (line.startsWith('```')) return true;
+        
+        // 跳过HTML注释
+        if (line.trim().startsWith('<!--') || line.trim().endsWith('-->')) return true;
+        
+        // 跳过纯链接、图片等Markdown语法
+        if (/^(!?\[.*?\]\(.*?\))$/.test(line.trim())) return true;
+        
+        return false;
     }
 
     /**
@@ -293,87 +318,4 @@ export class Translator {
         }
     }
 
-    /**
-     * 识别变化的段落
-     * @param chineseParagraphs 中文段落
-     * @param englishParagraphs 英文段落
-     * @param changes git差异变化
-     * @returns 更新和新增的段落
-     */
-    private identifyChangedParagraphs(
-        chineseParagraphs: Paragraph[],
-        englishParagraphs: Paragraph[],
-        changes: any[]
-    ): { updatedParagraphs: Paragraph[], newParagraphs: Paragraph[] } {
-        const updatedParagraphs: Paragraph[] = [];
-        const newParagraphs: Paragraph[] = [];
-
-        for (const paragraph of chineseParagraphs) {
-            // 检查这个段落是否在git变化范围内
-            const isInChangeRange = changes.some(change =>
-                paragraph.startLine >= change.newStart &&
-                paragraph.endLine <= change.newStart + (change.newCount || 1)
-            );
-
-            if (isInChangeRange) {
-                // 尝试在英文文件中找到对应段落
-                const matchIndex = this.paragraphMatcher.findMatchingParagraph(paragraph, englishParagraphs);
-                
-                if (matchIndex !== -1) {
-                    // 找到对应段落，标记为更新
-                    updatedParagraphs.push(paragraph);
-                } else {
-                    // 没找到对应段落，标记为新增
-                    newParagraphs.push(paragraph);
-                }
-            }
-        }
-
-        return { updatedParagraphs, newParagraphs };
-    }
-
-    /**
-     * 确定新段落的插入位置
-     * @param newParagraph 新段落
-     * @param chineseParagraphs 中文段落列表
-     * @param englishParagraphs 英文段落列表
-     * @returns 插入位置（行号）
-     */
-    private determineInsertionPoint(
-        newParagraph: Paragraph,
-        chineseParagraphs: Paragraph[],
-        englishParagraphs: Paragraph[]
-    ): number {
-        // 找到新段落在中文文件中的位置
-        const newIndex = chineseParagraphs.findIndex(p => p === newParagraph);
-        
-        if (newIndex === 0) {
-            // 插入到文件开头
-            return 0;
-        }
-        
-        if (newIndex === chineseParagraphs.length - 1) {
-            // 插入到文件末尾
-            return englishParagraphs.length > 0 ? englishParagraphs[englishParagraphs.length - 1].endLine : 0;
-        }
-        
-        // 找到前一个段落在英文文件中的对应位置
-        const prevParagraph = chineseParagraphs[newIndex - 1];
-        const prevMatchIndex = this.paragraphMatcher.findMatchingParagraph(prevParagraph, englishParagraphs);
-        
-        if (prevMatchIndex !== -1) {
-            return englishParagraphs[prevMatchIndex].endLine;
-        }
-        
-        // 如果找不到前一个段落的对应位置，尝试找下一个段落
-        const nextParagraph = chineseParagraphs[newIndex + 1];
-        const nextMatchIndex = this.paragraphMatcher.findMatchingParagraph(nextParagraph, englishParagraphs);
-        
-        if (nextMatchIndex !== -1) {
-            return englishParagraphs[nextMatchIndex].startLine - 1;
-        }
-        
-        // 默认插入到文件末尾
-        return englishParagraphs.length > 0 ? englishParagraphs[englishParagraphs.length - 1].endLine : 0;
-    }
 }

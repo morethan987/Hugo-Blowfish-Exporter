@@ -2,8 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { App } from 'obsidian';
 import HugoBlowfishExporter from '../../core/plugin';
-import { Paragraph } from './paragraph-matcher';
-import { TranslatedParagraph } from './diff-translator';
 
 /**
  * 文件更新器
@@ -201,6 +199,23 @@ export class FileUpdater {
             return false;
         }
     }
+}
+
+/**
+ * 段落信息
+ */
+export interface Paragraph {
+    content: string;
+    startLine: number;
+    endLine: number;
+    type: 'text' | 'heading' | 'code' | 'math' | 'list';
+}
+
+/**
+ * 翻译后的段落信息
+ */
+export interface TranslatedParagraph extends Paragraph {
+    translatedContent: string;
 }
 
 /**
