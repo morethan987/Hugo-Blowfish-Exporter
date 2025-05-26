@@ -58,7 +58,14 @@ export class FileUpdater {
         insertions: ParagraphInsertion[]
     ): Promise<string> {
         const targetContent = await this.readFile(targetFilePath);
-        const lines = targetContent.split('\n');
+        
+        // 正确处理空文件的情况，与updateTargetFile保持一致
+        let lines: string[];
+        if (targetContent === '') {
+            lines = [];
+        } else {
+            lines = targetContent.split(/\r?\n/);
+        }
         
         // 按照插入位置倒序排序
         const sortedInsertions = insertions.sort((a, b) => b.insertAfterLine - a.insertAfterLine);
@@ -80,52 +87,127 @@ export class FileUpdater {
      */    private applyUpdate(lines: string[], update: ParagraphUpdate): void {
         const { targetParagraph, translatedParagraph } = update;
         
+        console.log('🔧 [FileUpdater.applyUpdate] 开始应用更新:', {
+            targetParagraph,
+            translatedParagraph,
+            currentLinesLength: lines.length
+        });
+        
+        // 验证行号的合理性
+        if (targetParagraph.startLine < 1) {
+            console.error('❌ [FileUpdater.applyUpdate] Invalid startLine (should be >= 1):', targetParagraph);
+            return;
+        }
+        
+        // 检查是否是特殊的新增操作（endLine < startLine）
+        if (targetParagraph.endLine < targetParagraph.startLine) {
+            console.log('➕ [FileUpdater.applyUpdate] 检测到新增操作 (endLine < startLine)');
+            this.applyInsertOperation(lines, update);
+            return;
+        }
+        
         // 注意：所有行号都是基于新文件状态的1-based索引
         const startIndex = targetParagraph.startLine - 1;  // 转换为0-based
+        const endIndex = targetParagraph.endLine - 1;      // 转换为0-based
+        
+        console.log('📍 [FileUpdater.applyUpdate] 索引转换:', {
+            startLine: targetParagraph.startLine,
+            endLine: targetParagraph.endLine,
+            startIndex,
+            endIndex
+        });
         
         // 获取译文内容
         let translatedLines = translatedParagraph.translatedContent
             ? translatedParagraph.translatedContent.split(/\r?\n/)
             : [];
             
+        console.log('📝 [FileUpdater.applyUpdate] 翻译内容:', {
+            original: translatedParagraph.translatedContent,
+            split: translatedLines
+        });
         
-        
-        if (targetParagraph.endLine < targetParagraph.startLine) {
-            // 处理纯新增或纯删除操作
-            if (translatedLines.length === 0) {
-                // 纯删除：删除指定范围的行
-                const deleteCount = targetParagraph.endLine - targetParagraph.startLine + 1;
-                if (startIndex >= 0 && startIndex < lines.length) {
-                    lines.splice(startIndex, deleteCount);
-        
-                }
-            } else {
-                // 纯新增：在指定位置插入新行
-                if (startIndex >= 0 && startIndex <= lines.length) {
-                    lines.splice(startIndex, 0, ...translatedLines);
-        
-                }
-            }
-        } else {
-            // 处理正常的替换操作
-            if (startIndex < 0 || startIndex >= lines.length) {
-
-                return;
-            }
-            
-            // 计算要替换的行数（基于目标文件的行号）
-            const targetLineCount = targetParagraph.endLine - targetParagraph.startLine + 1;
-            
-            // 检查替换范围是否合理
-            if (startIndex + targetLineCount > lines.length) {
-
-                return;
-            }
-            
-            // 执行替换
-            lines.splice(startIndex, targetLineCount, ...translatedLines);
-
+        // 检查索引范围是否有效
+        if (startIndex < 0 || startIndex >= lines.length) {
+            console.error('❌ [FileUpdater.applyUpdate] Start index out of range:', {
+                startIndex,
+                linesLength: lines.length
+            });
+            return;
         }
+        
+        // 计算要替换的行数
+        const targetLineCount = targetParagraph.endLine - targetParagraph.startLine + 1;
+        
+        console.log('🔢 [FileUpdater.applyUpdate] 替换计算:', {
+            targetLineCount,
+            startIndex,
+            endIndex: startIndex + targetLineCount - 1
+        });
+        
+        // 检查替换范围是否合理
+        if (startIndex + targetLineCount > lines.length) {
+            console.error('❌ [FileUpdater.applyUpdate] Replace range exceeds file length:', {
+                startIndex,
+                targetLineCount,
+                linesLength: lines.length
+            });
+            return;
+        }
+        
+        console.log('🔄 [FileUpdater.applyUpdate] 执行替换操作:', {
+            method: 'splice',
+            startIndex,
+            deleteCount: targetLineCount,
+            insertItems: translatedLines
+        });
+        
+        // 执行替换操作
+        lines.splice(startIndex, targetLineCount, ...translatedLines);
+        
+        console.log('✅ [FileUpdater.applyUpdate] 替换完成，新文件行数:', lines.length);
+    }
+
+    /**
+     * 应用插入操作（用于处理新增内容）
+     */
+    private applyInsertOperation(lines: string[], update: ParagraphUpdate): void {
+        const { targetParagraph, translatedParagraph } = update;
+        
+        console.log('➕ [FileUpdater.applyInsertOperation] 处理插入操作:', {
+            targetParagraph,
+            translatedParagraph
+        });
+        
+        // 对于新增操作，startLine是插入位置
+        const insertIndex = targetParagraph.startLine - 1;  // 转换为0-based
+        
+        // 获取译文内容
+        let translatedLines = translatedParagraph.translatedContent
+            ? translatedParagraph.translatedContent.split(/\r?\n/)
+            : [];
+            
+        console.log('📝 [FileUpdater.applyInsertOperation] 插入内容:', {
+            insertIndex,
+            translatedLines,
+            currentLinesLength: lines.length
+        });
+        
+        // 检查插入位置是否有效
+        if (insertIndex < 0 || insertIndex > lines.length) {
+            console.error('❌ [FileUpdater.applyInsertOperation] Insert index out of range:', {
+                insertIndex,
+                linesLength: lines.length
+            });
+            return;
+        }
+        
+        console.log('🔄 [FileUpdater.applyInsertOperation] 执行插入操作');
+        
+        // 在指定位置插入新内容
+        lines.splice(insertIndex, 0, ...translatedLines);
+        
+        console.log('✅ [FileUpdater.applyInsertOperation] 插入完成，新文件行数:', lines.length);
     }
 
     /**
@@ -136,17 +218,22 @@ export class FileUpdater {
     private applyInsertion(lines: string[], insertion: ParagraphInsertion): void {
         const { insertAfterLine, translatedParagraph } = insertion;
         
-        // 转换为0-based索引
+        // insertAfterLine 是1-based，表示在第N行后插入
+        // 要在第N行后插入，数组索引应该是N（因为splice在该位置前插入）
         const insertIndex = insertAfterLine;
         
-        // 确保索引有效
+        // 确保索引有效（可以在文件末尾插入）
         if (insertIndex < 0 || insertIndex > lines.length) {
-
+            console.error('Insert index out of range:', {
+                insertIndex,
+                insertAfterLine,
+                linesLength: lines.length
+            });
             return;
         }
         
-        // 将翻译后的内容分割为行
-        const translatedLines = translatedParagraph.translatedContent.split('\n');
+        // 将翻译后的内容分割为行，使用统一的换行符处理
+        const translatedLines = translatedParagraph.translatedContent.split(/\r?\n/);
         
         // 在指定位置后插入新行
         lines.splice(insertIndex, 0, '', ...translatedLines, '');
@@ -161,7 +248,8 @@ export class FileUpdater {
         try {
             // 如果是vault内的文件，使用Obsidian API
             const file = this.app.vault.getAbstractFileByPath(filePath);
-            if (file && file instanceof this.app.vault.constructor.prototype.constructor) {
+            if (file && 'path' in file) {
+                // 更可靠的类型检查：检查是否具有文件的基本属性
                 return await this.app.vault.read(file as any);
             }
             
@@ -181,7 +269,8 @@ export class FileUpdater {
         try {
             // 如果是vault内的文件，使用Obsidian API
             const file = this.app.vault.getAbstractFileByPath(filePath);
-            if (file && file instanceof this.app.vault.constructor.prototype.constructor) {
+            if (file && 'path' in file) {
+                // 更可靠的类型检查：检查是否具有文件的基本属性
                 await this.app.vault.modify(file as any, content);
                 return;
             }
