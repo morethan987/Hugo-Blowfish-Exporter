@@ -1,117 +1,302 @@
-## 不再进行专门的功能更新，毕竟功能上[Quartz](https://github.com/jackyzha0/quartz)已经可以说登峰造极了。
+# Hugo Blowfish Exporter
 
-## 并且Quartz主创团队也表达了Hugo很难开发这个观点，从目前的实践看来确实如此。
+A comprehensive Obsidian plugin for exporting and translating notes to Hugo Blowfish format with AI-powered translation and Git integration.
 
-## 因此这个插件仅为Blowfish的深度用户提供简单的Obsidian转换支持
+Transform your Obsidian vault into a beautiful Hugo website with just a few clicks! This plugin not only converts your markdown files but also provides intelligent translation capabilities and seamless Git workflow integration.
 
-# Hugo-blowfish-exporter
+> **Note**: While [Quartz](https://github.com/jackyzha0/quartz) offers excellent functionality, this plugin provides specialized support for Hugo Blowfish users with unique features like AI translation and Git integration.
 
-## 概述
-这是一个简单的插件，用于将标准的 Obsidian markdown 文件转换为适用于 Hugo 格式，特别是 [Blowfish](https://blowfish.page/) 主题。
+## Table of Contents
 
-## 主要功能
-
-目前该插件只支持 Obsidian 的一小部分功能，因为它已经覆盖了我自己的使用需求：
-  - **callout**（支持所有官方的 callout 名称）
-  - **内联数学公式**（Blowfish 支持代码块）
-  - **mermaid**（支持 mermaid 图表）
-  - **图片插入**（自动导出图片）
-  - **Wiki链接导出**，非展示性链接支持段落链接和全文引用链接，展示性链接仅支持全文引用链接，并且尽量避免使用展示性引用链接
-
-## 使用方法
-
-### 设置说明
-
-1. 在 Obsidian 设置中设置输出文件路径，该路径为导出文件保存的位置。
-  
-2. 设置图片导出路径，包含图片链接的 Obsidian 文件将使用此设置。
-
-3. 设置网站的博客路径，即 Hugo 项目 `content` 文件夹下的相对路径。
-   - 例如，我将设置为 `blog`，这意味着所有博客文件将存储在 `content/blog` 文件夹中。
-
-4. 设置导出文件的名称，如果需要频繁改动文件名可以不启用默认文件名
-
-5. 如果你的文章内部包含**展示性**的wiki链接，即类似于 `![[yourfile|你的文件]]` ，需要指定链接指向的语言版本。如果没有你需要的语言版本或者你并没有多语言需求，请在设置中配置默认语言版本并启用
-
-### 导出当前文件
-1. 打开命令面板，输入 `hugo`，即可看到相关命令。
-
-### 导出所有已打开的 Vault 中的 md 文件
-1. 点击页面上的一个按钮（如果没有禁用的话）。
-
-## 注意事项
-
-- Wiki 链接导出依赖于元数据 `slug`，即指向包含引用文件的文件夹名称。例如，如果我将文件的 `slug` 设置为 `pytips`，则表示在网站的根目录下，`content` 文件夹中应该有一个名为 `pytips` 的文件夹。
-
-- Wiki链接导出，支持非展示性的段落和全文引用；展示性的仅支持全文引用，并且尽量避免使用展示性引用，原因是：为了避免展示性引用之间循环嵌套，嵌入的文本中会有部分Hugo简码未翻译，可能影响观感
-
-## 样例仓库
-我上传了一个Obsidian的 `exampleVault` 在我的源代码中，可以在Obsidian的沙箱里面进行测试
-
-## 进一步开发
-
-> 你可能会觉得：这个插件的功能有点简单！
-
-**是的，我也这么认为！**
-
-如果你愿意添加更多功能，欢迎克隆该仓库并进行修改！  
-主文件 `main.ts` 中有详细的说明。
-
-> 如果你能将修改后的代码上传给我，我将非常感激。🫡
+- [概述 (Chinese)](#概述-chinese)
+  - [主要功能](#主要功能)
+  - [安装与配置](#安装与配置)
+  - [使用方法](#使用方法)
+  - [注意事项](#注意事项)
+  - [样例仓库](#样例仓库)
+- [Summary (English)](#summary-english)
+  - [Main Features](#main-features)
+  - [Installation & Configuration](#installation--configuration)
+  - [How to Use](#how-to-use)
+  - [Important Notes](#important-notes)
+  - [Example Vault](#example-vault)
+- [Technical Specifications](#technical-specifications)
+- [Contributing](#contributing)
 
 ---
 
-# Hugo-blowfish-exporter
+## 概述 (Chinese)
 
-## Summary
-This is a simple plugin to convert your standard Obisidian md file to a Hugo-friendly format, especially the [Blowfish](https://blowfish.page/) theme.
+这是一个功能丰富的 Obsidian 插件，专为 [Blowfish](https://blowfish.page/) 主题设计，提供完整的导出、翻译和版本控制解决方案。
 
-## Main Function
+### 主要功能
 
-Now the plugin only support a little function of Obisidian since it already cover my own usage.
-  - callout(support all the offical callout name)
-  - inline math formular(blowfish supports the code block)
-  - mermaid
-  - image insert(auto export the images)
-  - **Wiki link export**, non-display links support paragraph links and full-text citation links, display links only support full-text citation links, and try to avoid the use of display citation links
+#### 📝 内容导出
+- **Callout 转换**：支持所有官方 callout 类型
+- **数学公式**：内联和块级数学公式转换
+- **Mermaid 图表**：完整的图表支持
+- **图片处理**：自动导出图片和封面图片管理
+- **Wiki 链接**：智能链接转换，支持段落和全文引用
 
-## How to use
+#### 🌐 AI 翻译功能
+- **多语言翻译**：基于 OpenAI API 的智能翻译
+- **自定义模型**：支持配置不同的 AI 模型（如 DeepSeek）
+- **翻译后导出**：翻译完成后可直接导出到指定路径
+- **翻译文件管理**：支持翻译文件前缀和路径配置
 
-### Settings explaination
+#### 🔧 Git 集成
+- **差异查看**：类似 `git diff` 的文件变更预览
+- **一键提交**：支持提交信息输入和推送到远程仓库
+- **版本控制**：完整的 Git 工作流集成
 
-1. set the output file path in the settings of Obisidian, this is the path that the output files are put.
+#### 🖥️ 跨平台支持
+- **多系统兼容**：支持 Windows 和 Linux 路径配置
+- **灵活配置**：可根据操作系统切换不同的导出路径
 
-2. set the image export path, the Obsidian files that contain image links will use this setting.
+### 安装与配置
 
-3. set the blog path of your website, the reletive path to the `content` folder.(There should be a `content` folder in your Hugo project)
-  - For example, I set the settings to the `blog` ,which means all the blogs are stored in the folder `content/blog`.
+#### 基础设置
 
-4. set your default export name
+1. **导出路径配置**
+   - 设置 Hugo 项目的 `content` 文件夹绝对路径
+   - 支持 Windows 和 Linux 分别配置
+   - 在设置中选择当前操作系统
 
-5. If there are some **Displayed** Wiki Links in your file(`![[yourfile|text]]`), you may need to choose the language mode of your link. If your website is single-language, you can set the default language link mode in the settings.
+2. **博客路径设置**
+   - 配置博客文章在 `content` 文件夹下的相对路径
+   - 例如：设置为 `posts` 表示文章存储在 `content/posts` 中
 
-### Export the opened file
-1. call the command palette and type `hugo`, then you can see the relevant command.
+3. **图片和封面配置**
+   - 图片导出路径：如 `img`
+   - 封面路径：如 `.featured`（用于存放 background.svg 等封面文件）
 
-### Export all the md files in the opend vault
-1. There is a ribbon button you can click.(If you didn't ban that)
+#### AI 翻译配置
 
-## Attention
+1. **API 设置**
+   - Base URL：如 `https://api.deepseek.com/v1`
+   - API 密钥：在环境变量 `API_KEY` 中设置
+   - 模型名称：如 `deepseek-chat`
 
-- Wiki Link exportion relies on the meta data `slug` , which stands for the folder's name that contains the cited file. For example, now I set a file's `slug` as `pytips`, that means in your website root there should be a real folder named `pytips` in the `content` folder.
+2. **翻译选项**
+   - 目标语言：如 "英文"、"中文" 等
+   - 翻译文件前缀：可选的文件名前缀
+   - 翻译后自动导出：启用后翻译完成自动导出
 
-- Wiki link export supports non-display paragraphs and full-text citations; display paragraphs only support full-text citations. It is recommended to avoid using display citations as much as possible. The reason is to prevent circular nesting between display citations. Some Hugo shortcodes in the embedded text may not be translated, which may affect the appearance.
+### 使用方法
 
-## exampleVault
-There is an `exampleVaul` of Obsidian in my source code, you can test the plugin in the sandbox of Obsidian.
+#### 可用命令
 
-## Further develop
+1. **导出当前笔记** (`Ctrl/Cmd + P` → `hugo`)
+   - `Export current note to Hugo Blowfish`
 
-> You may think: How shallow the plugin is!
+2. **翻译当前笔记**
+   - `Translate current note to the other language`
 
-**Yes! I think so!**
+3. **查看文件差异**
+   - `Show the diff of export result`
 
-If you are willing to add more function, feel free to clone the repository and modify it!
-There are detailed explaination through the main file `main.ts`
+4. **提交并推送**
+   - `Commit and push to the remote repository`
 
-> It's nice for you to upload your own modified code to me. My sincerely gratitude for that. 🫡
+#### 快捷操作
+
+- **批量导出**：点击侧边栏的导出按钮
+- **Git 工作流**：使用差异查看确认更改，然后一键提交推送
+
+### 注意事项
+
+#### Wiki 链接处理
+- Wiki 链接导出依赖于元数据 `slug`，表示包含引用文件的文件夹名称
+- 例如：文件的 `slug` 设置为 `pytips`，则网站 `content` 文件夹中应有 `pytips` 文件夹
+- 支持非展示性的段落和全文引用；展示性链接仅支持全文引用
+- 建议避免过度使用展示性引用，以防循环嵌套影响渲染效果
+
+#### AI 翻译注意事项
+- 确保 API 密钥已正确设置在环境变量中
+- 翻译功能需要网络连接
+- 不同模型的翻译质量和速度可能有差异
+
+#### Git 集成要求
+- 导出路径必须是 Git 仓库的一部分
+- 确保有适当的 Git 权限进行提交和推送
+
+### 样例仓库
+项目包含一个 [`exampleVault`](./exampleVault) 示例库，包含中文测试文件，可用于在 Obsidian 沙箱环境中测试插件功能。
+
+---
+
+## Summary (English)
+
+A comprehensive Obsidian plugin designed specifically for the [Blowfish](https://blowfish.page/) theme, providing complete export, translation, and version control solutions.
+
+### Main Features
+
+#### 📝 Content Export
+- **Callout Conversion**: Supports all official callout types
+- **Math Formulas**: Inline and block-level math formula conversion
+- **Mermaid Diagrams**: Complete diagram support
+- **Image Processing**: Automatic image export and cover image management
+- **Wiki Links**: Smart link conversion with paragraph and full-text reference support
+
+#### 🌐 AI Translation
+- **Multi-language Translation**: Intelligent translation powered by OpenAI API
+- **Custom Models**: Support for different AI models (e.g., DeepSeek)
+- **Post-translation Export**: Direct export after translation completion
+- **Translation File Management**: Support for translation file prefixes and path configuration
+
+#### 🔧 Git Integration
+- **Diff Viewing**: File change preview similar to `git diff`
+- **One-click Commit**: Support for commit message input and push to remote repository
+- **Version Control**: Complete Git workflow integration
+
+#### 🖥️ Cross-platform Support
+- **Multi-system Compatibility**: Support for Windows and Linux path configuration
+- **Flexible Configuration**: Switch between different export paths based on operating system
+
+### Installation & Configuration
+
+#### Basic Settings
+
+1. **Export Path Configuration**
+   - Set the absolute path to your Hugo project's `content` folder
+   - Support separate configuration for Windows and Linux
+   - Select your current operating system in settings
+
+2. **Blog Path Settings**
+   - Configure the relative path for blog posts within the `content` folder
+   - Example: Set to `posts` means articles are stored in `content/posts`
+
+3. **Image and Cover Configuration**
+   - Image export path: e.g., `img`
+   - Cover path: e.g., `.featured` (for storing background.svg and other cover files)
+
+#### AI Translation Configuration
+
+1. **API Settings**
+   - Base URL: e.g., `https://api.deepseek.com/v1`
+   - API Key: Set in environment variable `API_KEY`
+   - Model Name: e.g., `deepseek-chat`
+
+2. **Translation Options**
+   - Target Language: e.g., "English", "Chinese", etc.
+   - Translation File Prefix: Optional filename prefix
+   - Auto-export After Translation: Enable to automatically export after translation
+
+### How to Use
+
+#### Available Commands
+
+1. **Export Current Note** (`Ctrl/Cmd + P` → `hugo`)
+   - `Export current note to Hugo Blowfish`
+
+2. **Translate Current Note**
+   - `Translate current note to the other language`
+
+3. **Show File Differences**
+   - `Show the diff of export result`
+
+4. **Commit and Push**
+   - `Commit and push to the remote repository`
+
+#### Quick Operations
+
+- **Batch Export**: Click the export button in the sidebar
+- **Git Workflow**: Use diff view to confirm changes, then one-click commit and push
+
+### Important Notes
+
+#### Wiki Link Processing
+- Wiki link export relies on the `slug` metadata, representing the folder name containing the referenced file
+- Example: If a file's `slug` is set to `pytips`, there should be a `pytips` folder in the website's `content` folder
+- Supports non-display paragraph and full-text references; display links only support full-text references
+- Avoid excessive use of display references to prevent circular nesting affecting rendering
+
+#### AI Translation Notes
+- Ensure API key is properly set in environment variables
+- Translation functionality requires network connection
+- Different models may have varying translation quality and speed
+
+#### Git Integration Requirements
+- Export path must be part of a Git repository
+- Ensure appropriate Git permissions for committing and pushing
+
+### Example Vault
+The project includes an [`exampleVault`](./exampleVault) with Chinese test files that can be used to test plugin functionality in Obsidian's sandbox environment.
+
+---
+
+## Technical Specifications
+
+### Dependencies
+- **OpenAI**: `^4.87.3` - For AI translation functionality
+- **Obsidian API**: Latest - Core plugin framework
+- **Node.js**: Built-in modules for file system and child process operations
+
+### File Structure
+```text
+src/
+├── core/
+│   ├── plugin.ts          # Main plugin file
+│   ├── translator.ts      # AI translation handler
+│   └── git-handler.ts     # Git integration
+├── config/
+│   └── default-settings.ts # Default configuration
+├── types/
+│   └── settings.ts        # TypeScript interfaces
+├── exporters/             # Content conversion modules
+│   ├── calloutExporter.ts
+│   ├── imageExporter.ts
+│   ├── mathExporter.ts
+│   ├── mermaidExporter.ts
+│   ├── wikiLinkExporter.ts
+│   └── coverChooser.ts
+└── utils/                 # UI components and modals
+    ├── settingsTab.ts
+    ├── gitDiffModal.ts
+    ├── gitCommitModal.ts
+    └── ...
+```
+
+### Version Information
+- **Current Version**: 2.5.0
+- **Minimum Obsidian Version**: 0.15.0
+- **Platform Support**: Desktop only (Windows, Linux)
+
+---
+
+## Contributing
+
+We welcome contributions to improve the Hugo Blowfish Exporter! Here's how you can help:
+
+### Development Setup
+1. Clone the repository
+```bash
+git clone https://github.com/morethan987/Hugo-Blowfish-Exporter.git
+cd Hugo-Blowfish-Exporter
+```
+
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Build the plugin
+```bash
+npm run build
+```
+
+4. Copy to your Obsidian plugins folder for testing
+
+### Areas for Contribution
+- **New Export Features**: Additional Obsidian syntax support
+- **Translation Improvements**: Support for more AI providers
+- **UI Enhancements**: Better user experience and error handling
+- **Documentation**: Translations, examples, and tutorials
+
+### Code Guidelines
+- Follow TypeScript best practices
+- Maintain compatibility with Obsidian API
+- Add appropriate error handling and user feedback
+- Update documentation for new features
+
+> If you create improvements, we'd be grateful if you share them with the community! 🫡
