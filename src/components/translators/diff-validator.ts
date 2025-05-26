@@ -23,56 +23,56 @@ export class DiffValidator {
      * @returns 验证结果，包含差异信息和文件路径
      */
     async validateDiffTranslation(): Promise<DiffValidationResult | null> {
-        console.log('🔍 [DiffValidator] 开始验证差异翻译前置条件');
+        console.debug('🔍 [DiffValidator] 开始验证差异翻译前置条件');
         
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!activeView) {
-            console.log('❌ [DiffValidator] 没有打开的文件');
+            console.debug('❌ [DiffValidator] 没有打开的文件');
             new Notice('没有打开的文件');
             return null;
         }
 
         const currentFile = activeView.file;
         if (!currentFile) {
-            console.log('❌ [DiffValidator] 无法获取当前文件');
+            console.debug('❌ [DiffValidator] 无法获取当前文件');
             new Notice('无法获取当前文件');
             return null;
         }
 
-        console.log('📄 [DiffValidator] 当前文件:', currentFile.path);
+        console.debug('📄 [DiffValidator] 当前文件:', currentFile.path);
 
         // 检测文件变化
-        console.log('🔍 [DiffValidator] 检测文件变化...');
+        console.debug('🔍 [DiffValidator] 检测文件变化...');
         const diffResult = await this.diffDetector.detectGitDiff(currentFile.path);
-        console.log('📊 [DiffValidator] 差异检测结果:', {
+        console.debug('📊 [DiffValidator] 差异检测结果:', {
             hasChanges: diffResult.hasChanges,
             changesCount: diffResult.changes.length
         });
         
         if (!diffResult.hasChanges) {
-            console.log('❌ [DiffValidator] 当前文件没有检测到变化');
+            console.debug('❌ [DiffValidator] 当前文件没有检测到变化');
             new Notice('当前文件没有检测到变化');
             return null;
         }
 
         // 确定英文翻译文件路径
-        console.log('🎯 [DiffValidator] 确定英文翻译文件路径...');
+        console.debug('🎯 [DiffValidator] 确定英文翻译文件路径...');
         const englishFilePath = await this.determineEnglishFilePath(currentFile.path);
-        console.log('📂 [DiffValidator] 英文文件路径:', englishFilePath);
+        console.debug('📂 [DiffValidator] 英文文件路径:', englishFilePath);
         
         if (!englishFilePath) {
-            console.log('❌ [DiffValidator] 无法确定对应的英文翻译文件路径');
+            console.debug('❌ [DiffValidator] 无法确定对应的英文翻译文件路径');
             new Notice('无法确定对应的英文翻译文件路径');
             return null;
         }
 
         // 检查英文文件是否存在
-        console.log('✅ [DiffValidator] 检查英文文件是否可以安全更新...');
+        console.debug('✅ [DiffValidator] 检查英文文件是否可以安全更新...');
         const canUpdate = await this.fileUpdater.canSafelyUpdate(englishFilePath);
-        console.log('🔒 [DiffValidator] 文件安全检查结果:', canUpdate);
+        console.debug('🔒 [DiffValidator] 文件安全检查结果:', canUpdate);
         
         if (!canUpdate) {
-            console.log('❌ [DiffValidator] 英文翻译文件不存在或无法更新:', englishFilePath);
+            console.debug('❌ [DiffValidator] 英文翻译文件不存在或无法更新:', englishFilePath);
             new Notice(`英文翻译文件不存在: ${englishFilePath}`);
             return null;
         }
@@ -82,7 +82,7 @@ export class DiffValidator {
             englishFilePath
         };
         
-        console.log('✅ [DiffValidator] 验证成功，返回结果:', result);
+        console.debug('✅ [DiffValidator] 验证成功，返回结果:', result);
         return result;
     }
 

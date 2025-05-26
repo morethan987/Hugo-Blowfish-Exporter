@@ -14,8 +14,8 @@ export class DiffProcessor {
      * @returns 更新信息列表
      */
     async processDiffChanges(changes: DiffChange[]): Promise<ParagraphUpdate[]> {
-        console.log('🚀 [DiffProcessor] 开始处理差异变更，总数:', changes.length);
-        console.log('📊 [DiffProcessor] 输入变更详情:', JSON.stringify(changes, null, 2));
+        console.debug('🚀 [DiffProcessor] 开始处理差异变更，总数:', changes.length);
+        console.debug('📊 [DiffProcessor] 输入变更详情:', JSON.stringify(changes, null, 2));
         
         const updates: ParagraphUpdate[] = [];
         
@@ -23,7 +23,7 @@ export class DiffProcessor {
             const change = changes[i];
             const { oldStart, oldCount, newStart, newCount, addedLines, removedLines } = change;
             
-            console.log(`🔄 [DiffProcessor] 处理第${i+1}个变更:`, {
+            console.debug(`🔄 [DiffProcessor] 处理第${i+1}个变更:`, {
                 oldStart, oldCount, newStart, newCount,
                 addedLinesCount: addedLines.length,
                 removedLinesCount: removedLines.length,
@@ -32,33 +32,33 @@ export class DiffProcessor {
             });
             
             // 处理内容翻译
-            console.log('🌐 [DiffProcessor] 开始翻译内容...');
+            console.debug('🌐 [DiffProcessor] 开始翻译内容...');
             const translatedLines = await this.processContentTranslation(addedLines);
-            console.log('✅ [DiffProcessor] 翻译完成，结果:', translatedLines);
+            console.debug('✅ [DiffProcessor] 翻译完成，结果:', translatedLines);
             
             let update: ParagraphUpdate;
             
             if (oldCount === 0 && newCount > 0) {
                 // 处理纯新增情况
-                console.log('➕ [DiffProcessor] 识别为纯新增操作');
+                console.debug('➕ [DiffProcessor] 识别为纯新增操作');
                 // 关键修复：对于新增操作，需要传递正确的参数
                 update = this.handleNewContent(oldStart, newStart, addedLines, translatedLines);
             } else if (oldCount > 0 && newCount === 0) {
                 // 处理纯删除情况
-                console.log('➖ [DiffProcessor] 识别为纯删除操作');
+                console.debug('➖ [DiffProcessor] 识别为纯删除操作');
                 update = this.handleDeletedContent(newStart, oldStart, oldCount, removedLines);
             } else {
                 // 处理修改情况
-                console.log('✏️  [DiffProcessor] 识别为修改操作');
+                console.debug('✏️  [DiffProcessor] 识别为修改操作');
                 update = this.handleModifiedContent(newStart, oldCount, newCount, removedLines, translatedLines);
             }
             
-            console.log(`💾 [DiffProcessor] 第${i+1}个变更处理结果:`, JSON.stringify(update, null, 2));
+            console.debug(`💾 [DiffProcessor] 第${i+1}个变更处理结果:`, JSON.stringify(update, null, 2));
             updates.push(update);
         }
         
-        console.log('🎉 [DiffProcessor] 处理完成，总更新数:', updates.length);
-        console.log('📋 [DiffProcessor] 最终更新列表:', JSON.stringify(updates, null, 2));
+        console.debug('🎉 [DiffProcessor] 处理完成，总更新数:', updates.length);
+        console.debug('📋 [DiffProcessor] 最终更新列表:', JSON.stringify(updates, null, 2));
         
         return updates;
     }
@@ -69,8 +69,8 @@ export class DiffProcessor {
      * @returns 翻译后的行
      */
     private async processContentTranslation(lines: string[]): Promise<string[]> {
-        console.log('🔤 [DiffProcessor] 开始处理内容翻译，行数:', lines.length);
-        console.log('📝 [DiffProcessor] 原始行内容:', lines);
+        console.debug('🔤 [DiffProcessor] 开始处理内容翻译，行数:', lines.length);
+        console.debug('📝 [DiffProcessor] 原始行内容:', lines);
         
         const toTranslate: string[] = [];
         const skipLines: boolean[] = [];
@@ -82,7 +82,7 @@ export class DiffProcessor {
             const needTranslate = line && line.trim() && !this.shouldSkipTranslation(line);
             skipLines.push(!needTranslate);
             
-            console.log(`🔍 [DiffProcessor] 第${i+1}行分析:`, {
+            console.debug(`🔍 [DiffProcessor] 第${i+1}行分析:`, {
                 content: JSON.stringify(line),
                 needTranslate: needTranslate,
                 reason: needTranslate ? '需要翻译' : (!line ? '空行' : !line.trim() ? '空白行' : '跳过翻译')
@@ -93,7 +93,7 @@ export class DiffProcessor {
             }
         }
         
-        console.log('📊 [DiffProcessor] 翻译分析结果:', {
+        console.debug('📊 [DiffProcessor] 翻译分析结果:', {
             totalLines: lines.length,
             toTranslateCount: toTranslate.length,
             toTranslate: toTranslate,
@@ -102,18 +102,18 @@ export class DiffProcessor {
         
         if (toTranslate.length > 0) {
             try {
-                console.log('🌐 [DiffProcessor] 调用API翻译...');
+                console.debug('🌐 [DiffProcessor] 调用API翻译...');
                 // 将多行内容合并翻译
                 const translated = await this.apiClient.translateContent(
                     toTranslate.join('\n'),
                     toTranslate.length > 1  // 多行时使用完整文档模式
                 );
                 
-                console.log('✅ [DiffProcessor] API翻译结果:', JSON.stringify(translated));
+                console.debug('✅ [DiffProcessor] API翻译结果:', JSON.stringify(translated));
                 
                 // 分割翻译结果
                 const translatedParts = translated.split('\n');
-                console.log('🔀 [DiffProcessor] 分割后的翻译部分:', translatedParts);
+                console.debug('🔀 [DiffProcessor] 分割后的翻译部分:', translatedParts);
                 
                 // 将翻译结果放回对应位置
                 let translatedIndex = 0;
@@ -121,11 +121,11 @@ export class DiffProcessor {
                     if (skipLines[i]) {
                         // 对于不需要翻译的行，保持原样
                         translatedLines[i] = lines[i];
-                        console.log(`⏭️  [DiffProcessor] 第${i+1}行跳过翻译:`, JSON.stringify(lines[i]));
+                        console.debug(`⏭️  [DiffProcessor] 第${i+1}行跳过翻译:`, JSON.stringify(lines[i]));
                     } else {
                         // 对于需要翻译的行，使用翻译结果
                         translatedLines[i] = translatedParts[translatedIndex++] || lines[i];
-                        console.log(`🔄 [DiffProcessor] 第${i+1}行翻译:`, {
+                        console.debug(`🔄 [DiffProcessor] 第${i+1}行翻译:`, {
                             original: JSON.stringify(lines[i]),
                             translated: JSON.stringify(translatedLines[i])
                         });
@@ -139,14 +139,14 @@ export class DiffProcessor {
                 });
             }
         } else {
-            console.log('⏭️  [DiffProcessor] 没有需要翻译的内容，全部保持原样');
+            console.debug('⏭️  [DiffProcessor] 没有需要翻译的内容，全部保持原样');
             // 没有需要翻译的内容，全部保持原样
             lines.forEach((line, i) => {
                 translatedLines[i] = line;
             });
         }
         
-        console.log('🎯 [DiffProcessor] 翻译处理完成，最终结果:', translatedLines);
+        console.debug('🎯 [DiffProcessor] 翻译处理完成，最终结果:', translatedLines);
         return translatedLines;
     }
 
@@ -159,7 +159,7 @@ export class DiffProcessor {
         addedLines: string[],
         translatedLines: string[]
     ): ParagraphUpdate {
-        console.log('➕ [DiffProcessor] 处理新增内容:', {
+        console.debug('➕ [DiffProcessor] 处理新增内容:', {
             oldStart,
             newStart,
             addedLinesCount: addedLines.length,
@@ -183,7 +183,7 @@ export class DiffProcessor {
             translatedContent: translatedLines.join('\n')
         };
         
-        console.log('✅ [DiffProcessor] 新增内容处理结果:', {
+        console.debug('✅ [DiffProcessor] 新增内容处理结果:', {
             targetParagraph,
             translatedParagraph
         });

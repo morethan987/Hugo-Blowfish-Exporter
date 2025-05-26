@@ -98,27 +98,27 @@ export class Translator {
         let notice: Notice | null = null;
         
         try {
-            console.log('🚀 [Translator] 开始差异翻译流程');
+            console.debug('🚀 [Translator] 开始差异翻译流程');
             
             // 验证配置
             if (!this.validator.validateConfiguration()) {
-                console.log('❌ [Translator] 配置验证失败');
+                console.debug('❌ [Translator] 配置验证失败');
                 return;
             }
 
             notice = new Notice('开始差异翻译...', 0);
 
             // 验证差异翻译的前置条件
-            console.log('🔍 [Translator] 验证差异翻译前置条件...');
+            console.debug('🔍 [Translator] 验证差异翻译前置条件...');
             const validationResult = await this.diffValidator.validateDiffTranslation();
             if (!validationResult) {
-                console.log('❌ [Translator] 差异翻译前置条件验证失败');
+                console.debug('❌ [Translator] 差异翻译前置条件验证失败');
                 notice.hide();
                 return;
             }
 
             const { diffResult, englishFilePath } = validationResult;
-            console.log('✅ [Translator] 验证成功:', {
+            console.debug('✅ [Translator] 验证成功:', {
                 hasChanges: diffResult.hasChanges,
                 changesCount: diffResult.changes.length,
                 englishFilePath
@@ -126,24 +126,24 @@ export class Translator {
 
             // 读取文件内容
             notice.setMessage('正在读取文件内容...');
-            console.log('📖 [Translator] 读取英文文件内容:', englishFilePath);
+            console.debug('📖 [Translator] 读取英文文件内容:', englishFilePath);
             const englishContent = await this.readFileContent(englishFilePath);
-            console.log('📄 [Translator] 文件内容长度:', englishContent.length);
+            console.debug('📄 [Translator] 文件内容长度:', englishContent.length);
 
             // 处理差异内容
             notice.setMessage('正在处理差异内容...');
-            console.log('🔄 [Translator] 开始处理差异内容...');
+            console.debug('🔄 [Translator] 开始处理差异内容...');
             const updates = await this.diffProcessor.processDiffChanges(diffResult.changes);
-            console.log('✅ [Translator] 差异处理完成，更新数量:', updates.length);
+            console.debug('✅ [Translator] 差异处理完成，更新数量:', updates.length);
 
             // 应用更新
             notice.setMessage('正在保存更新...');
-            console.log('💾 [Translator] 开始应用更新到目标文件...');
+            console.debug('💾 [Translator] 开始应用更新到目标文件...');
             await this.fileUpdater.updateTargetFile(englishFilePath, updates);
-            console.log('✅ [Translator] 文件更新完成');
+            console.debug('✅ [Translator] 文件更新完成');
 
             notice.hide();
-            console.log('🎉 [Translator] 差异翻译流程完成');
+            console.debug('🎉 [Translator] 差异翻译流程完成');
             new Notice(`✅ 差异翻译完成！\n已更新文件: ${englishFilePath}`, 8000);
 
         } catch (error) {

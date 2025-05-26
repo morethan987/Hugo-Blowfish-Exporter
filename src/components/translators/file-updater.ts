@@ -87,7 +87,7 @@ export class FileUpdater {
      */    private applyUpdate(lines: string[], update: ParagraphUpdate): void {
         const { targetParagraph, translatedParagraph } = update;
         
-        console.log('🔧 [FileUpdater.applyUpdate] 开始应用更新:', {
+        console.debug('🔧 [FileUpdater.applyUpdate] 开始应用更新:', {
             targetParagraph,
             translatedParagraph,
             currentLinesLength: lines.length
@@ -101,7 +101,7 @@ export class FileUpdater {
         
         // 检查是否是特殊的新增操作（endLine < startLine）
         if (targetParagraph.endLine < targetParagraph.startLine) {
-            console.log('➕ [FileUpdater.applyUpdate] 检测到新增操作 (endLine < startLine)');
+            console.debug('➕ [FileUpdater.applyUpdate] 检测到新增操作 (endLine < startLine)');
             this.applyInsertOperation(lines, update);
             return;
         }
@@ -110,7 +110,7 @@ export class FileUpdater {
         const startIndex = targetParagraph.startLine - 1;  // 转换为0-based
         const endIndex = targetParagraph.endLine - 1;      // 转换为0-based
         
-        console.log('📍 [FileUpdater.applyUpdate] 索引转换:', {
+        console.debug('📍 [FileUpdater.applyUpdate] 索引转换:', {
             startLine: targetParagraph.startLine,
             endLine: targetParagraph.endLine,
             startIndex,
@@ -122,7 +122,7 @@ export class FileUpdater {
             ? translatedParagraph.translatedContent.split(/\r?\n/)
             : [];
             
-        console.log('📝 [FileUpdater.applyUpdate] 翻译内容:', {
+        console.debug('📝 [FileUpdater.applyUpdate] 翻译内容:', {
             original: translatedParagraph.translatedContent,
             split: translatedLines
         });
@@ -139,7 +139,7 @@ export class FileUpdater {
         // 计算要替换的行数
         const targetLineCount = targetParagraph.endLine - targetParagraph.startLine + 1;
         
-        console.log('🔢 [FileUpdater.applyUpdate] 替换计算:', {
+        console.debug('🔢 [FileUpdater.applyUpdate] 替换计算:', {
             targetLineCount,
             startIndex,
             endIndex: startIndex + targetLineCount - 1
@@ -155,7 +155,7 @@ export class FileUpdater {
             return;
         }
         
-        console.log('🔄 [FileUpdater.applyUpdate] 执行替换操作:', {
+        console.debug('🔄 [FileUpdater.applyUpdate] 执行替换操作:', {
             method: 'splice',
             startIndex,
             deleteCount: targetLineCount,
@@ -165,7 +165,7 @@ export class FileUpdater {
         // 执行替换操作
         lines.splice(startIndex, targetLineCount, ...translatedLines);
         
-        console.log('✅ [FileUpdater.applyUpdate] 替换完成，新文件行数:', lines.length);
+        console.debug('✅ [FileUpdater.applyUpdate] 替换完成，新文件行数:', lines.length);
     }
 
     /**
@@ -174,7 +174,7 @@ export class FileUpdater {
     private applyInsertOperation(lines: string[], update: ParagraphUpdate): void {
         const { targetParagraph, translatedParagraph } = update;
         
-        console.log('➕ [FileUpdater.applyInsertOperation] 处理插入操作:', {
+        console.debug('➕ [FileUpdater.applyInsertOperation] 处理插入操作:', {
             targetParagraph,
             translatedParagraph
         });
@@ -187,7 +187,7 @@ export class FileUpdater {
             ? translatedParagraph.translatedContent.split(/\r?\n/)
             : [];
             
-        console.log('📝 [FileUpdater.applyInsertOperation] 插入内容:', {
+        console.debug('📝 [FileUpdater.applyInsertOperation] 插入内容:', {
             insertIndex,
             translatedLines,
             currentLinesLength: lines.length
@@ -202,12 +202,12 @@ export class FileUpdater {
             return;
         }
         
-        console.log('🔄 [FileUpdater.applyInsertOperation] 执行插入操作');
+        console.debug('🔄 [FileUpdater.applyInsertOperation] 执行插入操作');
         
         // 在指定位置插入新内容
         lines.splice(insertIndex, 0, ...translatedLines);
         
-        console.log('✅ [FileUpdater.applyInsertOperation] 插入完成，新文件行数:', lines.length);
+        console.debug('✅ [FileUpdater.applyInsertOperation] 插入完成，新文件行数:', lines.length);
     }
 
     /**

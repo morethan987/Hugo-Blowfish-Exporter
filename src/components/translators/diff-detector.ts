@@ -15,7 +15,7 @@ export class DiffDetector {
      * @returns 差异信息
      */
     async detectGitDiff(filePath: string): Promise<GitDiffResult> {
-        console.log('🔍 [DiffDetector] 开始检测文件差异:', filePath);
+        console.debug('🔍 [DiffDetector] 开始检测文件差异:', filePath);
         
         try {
             // 获取文件的git状态
@@ -24,10 +24,10 @@ export class DiffDetector {
                 cwd: (this.plugin.app.vault.adapter as any).basePath || process.cwd()
             }).trim();
 
-            console.log('📊 [DiffDetector] Git状态:', gitStatus || '无变化');
+            console.debug('📊 [DiffDetector] Git状态:', gitStatus || '无变化');
 
             if (!gitStatus) {
-                console.log('❌ [DiffDetector] 没有检测到文件变化');
+                console.debug('❌ [DiffDetector] 没有检测到文件变化');
                 return { hasChanges: false, changes: [] };
             }
 
@@ -38,19 +38,19 @@ export class DiffDetector {
                 cwd: (this.plugin.app.vault.adapter as any).basePath || process.cwd()
             });
 
-            console.log('📝 [DiffDetector] Git diff 原始输出:');
-            console.log('--- DIFF START ---');
-            console.log(diffOutput);
-            console.log('--- DIFF END ---');
+            console.debug('📝 [DiffDetector] Git diff 原始输出:');
+            console.debug('--- DIFF START ---');
+            console.debug(diffOutput);
+            console.debug('--- DIFF END ---');
 
             const result = this.parseDiffOutput(diffOutput);
-            console.log('✅ [DiffDetector] 解析结果:', JSON.stringify(result, null, 2));
+            console.debug('✅ [DiffDetector] 解析结果:', JSON.stringify(result, null, 2));
             
             return result;
         } catch (error) {
             console.error('❌ [DiffDetector] Git命令执行失败:', error.message);
             const fallbackResult = this.detectByTimestamp(filePath);
-            console.log('🔄 [DiffDetector] 使用fallback方法，结果:', fallbackResult);
+            console.debug('🔄 [DiffDetector] 使用fallback方法，结果:', fallbackResult);
             return fallbackResult;
         }
     }
@@ -82,11 +82,11 @@ export class DiffDetector {
      * @returns 解析后的结构化差异信息
      */
     private parseDiffOutput(diffOutput: string): GitDiffResult {
-        console.log('🔧 [DiffDetector] 开始解析diff输出');
+        console.debug('🔧 [DiffDetector] 开始解析diff输出');
         
         // 将diff输出按行分割，便于逐行解析
         const lines = diffOutput.split('\n');
-        console.log('📄 [DiffDetector] 总行数:', lines.length);
+        console.debug('📄 [DiffDetector] 总行数:', lines.length);
         
         // 存储所有解析出的差异块
         const changes: DiffChange[] = [];
@@ -100,7 +100,7 @@ export class DiffDetector {
             
             // 检测差异块头部标记：@@ -oldStart,oldCount +newStart,newCount @@
             if (line.startsWith('@@')) {
-                console.log(`🎯 [DiffDetector] 第${i+1}行发现差异块头部:`, line);
+                console.debug(`🎯 [DiffDetector] 第${i+1}行发现差异块头部:`, line);
                 
                 // 使用正则表达式解析行号信息
                 // 匹配模式：@@ -数字,数字 +数字,数字 @@ 可选的上下文信息
@@ -108,11 +108,11 @@ export class DiffDetector {
                 const match = line.match(/@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@.*$/);
                 
                 if (match) {
-                    console.log('✨ [DiffDetector] 解析匹配结果:', match);
+                    console.debug('✨ [DiffDetector] 解析匹配结果:', match);
                     
                     // 如果之前有未完成的差异块，先将其保存
                     if (currentChange) {
-                        console.log('💾 [DiffDetector] 保存前一个差异块:', JSON.stringify(currentChange, null, 2));
+                        console.debug('💾 [DiffDetector] 保存前一个差异块:', JSON.stringify(currentChange, null, 2));
                         changes.push(currentChange);
                     }
                     
@@ -132,7 +132,7 @@ export class DiffDetector {
                         addedLines: []
                     };
                     
-                    console.log('🆕 [DiffDetector] 创建新差异块:', JSON.stringify(currentChange, null, 2));
+                    console.debug('🆕 [DiffDetector] 创建新差异块:', JSON.stringify(currentChange, null, 2));
                 } else {
                     console.warn('⚠️  [DiffDetector] 无法解析差异块头部:', line);
                 }
@@ -142,21 +142,21 @@ export class DiffDetector {
                 // 去掉行首的 - 符号，保存实际的行内容
                 const content = line.substring(1);
                 currentChange.removedLines.push(content);
-                console.log(`➖ [DiffDetector] 第${i+1}行删除内容:`, JSON.stringify(content));
+                console.debug(`➖ [DiffDetector] 第${i+1}行删除内容:`, JSON.stringify(content));
             }
             // 处理新增的行：以 + 开头但不是文件头标记 +++
             else if (currentChange && line.startsWith('+') && !line.startsWith('+++')) {
                 // 去掉行首的 + 符号，保存实际的行内容
                 const content = line.substring(1);
                 currentChange.addedLines.push(content);
-                console.log(`➕ [DiffDetector] 第${i+1}行新增内容:`, JSON.stringify(content));
+                console.debug(`➕ [DiffDetector] 第${i+1}行新增内容:`, JSON.stringify(content));
             }
             // 注意：不带前缀的行（上下文行）在这里被忽略，因为我们只关心实际的变更
         }
     
         // 处理最后一个差异块（如果存在）
         if (currentChange) {
-            console.log('💾 [DiffDetector] 保存最后一个差异块:', JSON.stringify(currentChange, null, 2));
+            console.debug('💾 [DiffDetector] 保存最后一个差异块:', JSON.stringify(currentChange, null, 2));
             changes.push(currentChange);
         }
     
@@ -166,8 +166,8 @@ export class DiffDetector {
             changes
         };
         
-        console.log('🎉 [DiffDetector] 解析完成，总变更块数:', changes.length);
-        console.log('📋 [DiffDetector] 最终结果:', JSON.stringify(result, null, 2));
+        console.debug('🎉 [DiffDetector] 解析完成，总变更块数:', changes.length);
+        console.debug('📋 [DiffDetector] 最终结果:', JSON.stringify(result, null, 2));
         
         return result;
     }
