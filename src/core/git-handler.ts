@@ -124,7 +124,7 @@ export class GitHandler {
                         new Notice('Git操作失败: ' + error);
                         reject(error);
                     }
-                }, 50); // 给UI一点时间关闭模态框
+                }, 10); // 减少延迟，避免与编辑器状态冲突
             }).open();
         });
     }

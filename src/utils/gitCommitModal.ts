@@ -1,9 +1,11 @@
-import { App, Modal, Notice } from 'obsidian';
+import { App, Modal, Notice, MarkdownView } from 'obsidian';
 
 export class GitCommitModal extends Modal {
     private commitMessage: string;
     private onSubmit: (message: string) => void;
     private inputEl: HTMLInputElement;
+    private savedCursorPos: any;
+    private savedSelection: any;
 
     constructor(app: App, onSubmit: (message: string) => void) {
         super(app);
@@ -11,6 +13,13 @@ export class GitCommitModal extends Modal {
     }
 
     onOpen() {
+        // 保存当前编辑器状态
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (activeView && activeView.editor) {
+            this.savedCursorPos = activeView.editor.getCursor();
+            this.savedSelection = activeView.editor.getSelection();
+        }
+
         const {contentEl} = this;
         contentEl.empty();
 
@@ -60,16 +69,43 @@ export class GitCommitModal extends Modal {
         // 支持回车确认
         this.inputEl.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
+                event.preventDefault(); // 阻止回车键的默认行为
+                event.stopPropagation(); // 阻止事件冒泡
                 submitAction();
             }
         });
 
-        // 自动聚焦输入框
-        this.inputEl.focus();
+        // 延迟聚焦输入框，避免与编辑器焦点冲突
+        setTimeout(() => {
+            this.inputEl.focus();
+        }, 50);
     }
 
     onClose() {
         const {contentEl} = this;
         contentEl.empty();
+        
+        // 恢复编辑器状态
+        setTimeout(() => {
+            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+            if (activeView && activeView.editor) {
+                // 恢复光标位置
+                if (this.savedCursorPos) {
+                    activeView.editor.setCursor(this.savedCursorPos);
+                }
+                // 恢复选择状态
+                if (this.savedSelection && this.savedSelection.length > 0) {
+                    const from = this.savedCursorPos;
+                    const to = {
+                        line: from.line,
+                        ch: from.ch + this.savedSelection.length
+                    };
+                    activeView.editor.setSelection(from, to);
+                }
+                // 重新聚焦编辑器
+                activeView.editor.focus();
+            }
+        }, 10);
     }
+    
 }
