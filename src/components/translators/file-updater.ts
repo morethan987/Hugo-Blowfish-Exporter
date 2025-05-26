@@ -88,11 +88,7 @@ export class FileUpdater {
             ? translatedParagraph.translatedContent.split(/\r?\n/)
             : [];
             
-        console.log('更新操作:', {
-            targetStart: targetParagraph.startLine,
-            targetEnd: targetParagraph.endLine,
-            sourceLines: translatedLines.length
-        });
+        
         
         if (targetParagraph.endLine < targetParagraph.startLine) {
             // 处理纯新增或纯删除操作
@@ -101,19 +97,19 @@ export class FileUpdater {
                 const deleteCount = targetParagraph.endLine - targetParagraph.startLine + 1;
                 if (startIndex >= 0 && startIndex < lines.length) {
                     lines.splice(startIndex, deleteCount);
-                    console.log(`删除操作: 从索引${startIndex}删除${deleteCount}行`);
+        
                 }
             } else {
                 // 纯新增：在指定位置插入新行
                 if (startIndex >= 0 && startIndex <= lines.length) {
                     lines.splice(startIndex, 0, ...translatedLines);
-                    console.log(`新增操作: 在索引${startIndex}插入${translatedLines.length}行`);
+        
                 }
             }
         } else {
             // 处理正常的替换操作
             if (startIndex < 0 || startIndex >= lines.length) {
-                console.warn('无效的行范围:', { startIndex, linesLength: lines.length });
+
                 return;
             }
             
@@ -122,17 +118,13 @@ export class FileUpdater {
             
             // 检查替换范围是否合理
             if (startIndex + targetLineCount > lines.length) {
-                console.warn('替换范围超出文件长度:', {
-                    startIndex,
-                    targetLineCount,
-                    fileLength: lines.length
-                });
+
                 return;
             }
             
             // 执行替换
             lines.splice(startIndex, targetLineCount, ...translatedLines);
-            console.log(`替换操作: 在位置${startIndex}替换${targetLineCount}行为${translatedLines.length}行`);
+
         }
     }
 
@@ -149,7 +141,7 @@ export class FileUpdater {
         
         // 确保索引有效
         if (insertIndex < 0 || insertIndex > lines.length) {
-            console.warn('Invalid insertion index:', { insertIndex, linesLength: lines.length });
+
             return;
         }
         

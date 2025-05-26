@@ -35,7 +35,7 @@ export class DiffDetector {
 
             return this.parseDiffOutput(diffOutput);
         } catch (error) {
-            console.warn('Git diff detection failed, falling back to timestamp comparison:', error);
+            
             return this.detectByTimestamp(filePath);
         }
     }
@@ -57,7 +57,7 @@ export class DiffDetector {
      * @returns 解析后的差异信息
      */
     private parseDiffOutput(diffOutput: string): GitDiffResult {
-        console.log('Raw git diff output:', diffOutput);  // 添加日志：原始git diff输出
+
         const lines = diffOutput.split('\n');
         const changes: DiffChange[] = [];
         let currentChange: DiffChange | null = null;
@@ -93,7 +93,7 @@ export class DiffDetector {
         }
 
         // 保留日志但移除排序，因为排序会在translator.ts中进行
-        console.log('Detected changes:', JSON.stringify(changes, null, 2));
+
 
         return {
             hasChanges: changes.length > 0,
