@@ -138,88 +138,125 @@ export class Translator {
                 return;
             }
 
-            // 4. 读取并更新文件内容
-            notice.setMessage('正在更新文件内容...');
-            const chineseContent = await this.app.vault.read(currentFile);
+            // 4. 读取文件内容
+            notice.setMessage('正在读取文件内容...');
             const englishContent = await this.readFileContent(englishFilePath);
-
-            const chineseLines = chineseContent.split(/\r?\n/);
             const englishLines = englishContent.split(/\r?\n/);
-            const updatedEnglishLines = [...englishLines];
 
-            // 5. 遍历每个变更，直接翻译修改的行
+            // 5. 构建更新列表，只处理实际修改的行
+            const updates: ParagraphUpdate[] = [];
             for (const change of diffResult.changes) {
-                const { newStart, newCount, addedLines } = change;
+                const { oldStart, oldCount, newStart, newCount, addedLines, removedLines } = change;
+                console.log('正在处理变更:', {
+                    oldStart, oldCount, newStart, newCount,
+                    removedCount: removedLines.length,
+                    addedCount: addedLines.length
+                });
                 
-                // 处理新增和修改的行
-                for (let i = 0; i < newCount; i++) {
-                    const lineIndex = newStart + i - 1; // 转换为0-based索引
-                    const lineContent = chineseLines[lineIndex];
+                notice.setMessage(`正在处理变更 (行 ${oldStart})...`);
+                
+                // 翻译addedLines中的内容
+                const translatedLines: string[] = [];
+                for (const addedLine of addedLines) {
+                    if (!addedLine || !addedLine.trim()) {
+                        // 处理空行
+                        translatedLines.push('');
+                    } else if (this.shouldSkipTranslation(addedLine)) {
+                        // 跳过特殊标记的行
+                        translatedLines.push(addedLine);
+                    } else {
+                        try {
+                            notice.setMessage(`正在翻译: ${addedLine.substring(0, 30)}...`);
+                            const translated = await this.apiClient.translateContent(addedLine, false);  // false表示这是单行翻译
+                            translatedLines.push(translated);
+                        } catch (error) {
+                            console.warn('翻译失败，保持原内容:', error);
+                            translatedLines.push(addedLine);
+                        }
+                    }
+                }
+                
+                // 处理不同类型的变更
+                if (oldCount === 0 && newCount > 0) {
+                    // 纯新增：在目标位置插入新内容
+                    const targetParagraph: Paragraph = {
+                        startLine: newStart + addedLines.length - 1, // 新增内容的实际位置
+                        endLine: newStart - 1, // 新增操作，endLine < startLine
+                        content: '',
+                        type: 'text'
+                    };
                     
-                    // 处理空行
-                    if (!lineContent || !lineContent.trim()) {
-                        // 确保目标数组长度足够
-                        while (updatedEnglishLines.length <= lineIndex) {
-                            updatedEnglishLines.push('');
-                        }
-                        updatedEnglishLines[lineIndex] = '';
-                        continue;
+                    const translatedParagraph: TranslatedParagraph = {
+                        ...targetParagraph,
+                        endLine: newStart + translatedLines.length - 1,
+                        translatedContent: translatedLines.join('\n')
+                    };
+                    
+                    updates.push({ targetParagraph, translatedParagraph });
+                    console.log(`纯新增: 在行${oldStart}插入${translatedLines.length}行`);
+                    
+                } else if (oldCount > 0 && newCount === 0) {
+                    // 纯删除：只删除实际被删除的行
+                    const targetParagraph: Paragraph = {
+                        startLine: newStart,
+                        endLine: newStart + removedLines.length - 1,
+                        content: removedLines.join('\n'),
+                        type: 'text'
+                    };
+                    
+                    const translatedParagraph: TranslatedParagraph = {
+                        ...targetParagraph,
+                        endLine: oldStart - 1, // 删除操作，endLine < startLine
+                        translatedContent: ''
+                    };
+                    
+                    updates.push({ targetParagraph, translatedParagraph });
+                    console.log(`纯删除: 删除行${oldStart}-${oldStart + oldCount - 1}`);
+                    
+                } else {
+                    // 修改：直接使用git diff输出的行（因为-U0参数已经保证只有修改的行）
+                    // 检查修改的行数是否匹配
+                    if (removedLines.length !== oldCount || translatedLines.length !== newCount) {
+                        console.warn('警告：实际的行数与git diff报告的不符', {
+                            期望修改行数: oldCount,
+                            实际删除行数: removedLines.length,
+                            期望新增行数: newCount,
+                            实际翻译行数: translatedLines.length,
+                        });
                     }
-
-                    // 检查行是否包含特殊标记（如frontmatter、代码块等）
-                    if (this.shouldSkipTranslation(lineContent)) {
-                        // 确保目标数组长度足够
-                        while (updatedEnglishLines.length <= lineIndex) {
-                            updatedEnglishLines.push('');
-                        }
-                        updatedEnglishLines[lineIndex] = lineContent;
-                        continue;
-                    }
-
-                    try {
-                        notice.setMessage(`正在翻译第 ${lineIndex + 1} 行...`);
-                        const translated = await this.apiClient.translateContent(lineContent);
-                        // 确保目标数组长度足够
-                        while (updatedEnglishLines.length <= lineIndex) {
-                            updatedEnglishLines.push('');
-                        }
-                        updatedEnglishLines[lineIndex] = translated;
-                    } catch (error) {
-                        console.warn(`翻译第 ${lineIndex + 1} 行失败:`, error);
-                        // 确保目标数组长度足够
-                        while (updatedEnglishLines.length <= lineIndex) {
-                            updatedEnglishLines.push('');
-                        }
-                        updatedEnglishLines[lineIndex] = lineContent;
-                    }
+                    
+                    const targetParagraph: Paragraph = {
+                        startLine: newStart,
+                        endLine: newStart + oldCount - 1,  // 使用git diff报告的行数
+                        content: removedLines.join('\n'),
+                        type: 'text'
+                    };
+                    
+                    const translatedParagraph: TranslatedParagraph = {
+                        startLine: newStart,
+                        endLine: newStart + newCount - 1,  // 使用git diff报告的行数
+                        content: targetParagraph.content,
+                        translatedContent: translatedLines.join('\n'),
+                        type: 'text'
+                    };
+                    
+                    updates.push({
+                        targetParagraph,
+                        translatedParagraph
+                    });
+                    
+                    console.log('替换操作:', {
+                        起始行: newStart,
+                        原始行数: oldCount,
+                        修改行数: newCount,
+                        原始内容: removedLines,
+                        译文: translatedLines
+                    });
                 }
             }
 
-            // 6. 构造更新并写入内容
+            // 6. 应用所有更新
             notice.setMessage('正在保存更新...');
-            const updates: ParagraphUpdate[] = diffResult.changes.map(change => {
-                const { newStart, newCount } = change;
-                // 创建一个表示整个修改区域的段落对象
-                const targetParagraph: Paragraph = {
-                    startLine: newStart,
-                    endLine: newStart + newCount - 1,
-                    content: englishLines.slice(newStart - 1, newStart + newCount - 1).join('\n'),
-                    type: 'text'
-                };
-                
-                // 创建翻译后的段落对象
-                const translatedContent = updatedEnglishLines.slice(newStart - 1, newStart + newCount - 1).join('\n');
-                const translatedParagraph: TranslatedParagraph = {
-                    ...targetParagraph,
-                    translatedContent
-                };
-                
-                return {
-                    targetParagraph,
-                    translatedParagraph
-                };
-            });
-
             await this.fileUpdater.updateTargetFile(englishFilePath, updates);
 
             notice.hide();

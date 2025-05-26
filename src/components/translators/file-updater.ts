@@ -17,14 +17,20 @@ export class FileUpdater {
      * @param targetFilePath 目标文件路径
      * @param updates 要更新的段落信息
      * @returns 更新后的文件内容
-     */
-    async updateTargetFile(
+     */    async updateTargetFile(
         targetFilePath: string, 
         updates: ParagraphUpdate[]
     ): Promise<string> {
         // 读取目标文件内容
         const targetContent = await this.readFile(targetFilePath);
-        const lines = targetContent.split('\n');
+        
+        // 正确处理空文件的情况
+        let lines: string[];
+        if (targetContent === '') {
+            lines = [];
+        } else {
+            lines = targetContent.split(/\r?\n/);
+        }
         
         // 按照行号倒序排序，从后往前更新，避免行号偏移问题
         const sortedUpdates = updates.sort((a, b) => b.targetParagraph.startLine - a.targetParagraph.startLine);
@@ -33,7 +39,7 @@ export class FileUpdater {
             this.applyUpdate(lines, update);
         }
         
-        const updatedContent = lines.join('\n');
+        const updatedContent = lines.join('\n');  // 统一使用 \n 作为换行符
         
         // 保存更新后的文件
         await this.writeFile(targetFilePath, updatedContent);
@@ -67,31 +73,67 @@ export class FileUpdater {
         await this.writeFile(targetFilePath, updatedContent);
         
         return updatedContent;
-    }
-
-    /**
+    }    /**
      * 应用单个段落更新
      * @param lines 文件行数组
      * @param update 更新信息
-     */
-    private applyUpdate(lines: string[], update: ParagraphUpdate): void {
+     */    private applyUpdate(lines: string[], update: ParagraphUpdate): void {
         const { targetParagraph, translatedParagraph } = update;
         
-        // 计算要替换的行范围（转换为0-based索引）
-        const startIndex = targetParagraph.startLine - 1;
-        const endIndex = targetParagraph.endLine - 1;
+        // 注意：所有行号都是基于新文件状态的1-based索引
+        const startIndex = targetParagraph.startLine - 1;  // 转换为0-based
         
-        // 确保索引有效
-        if (startIndex < 0 || endIndex >= lines.length || startIndex > endIndex) {
-            console.warn('Invalid line range for update:', { startIndex, endIndex, linesLength: lines.length });
-            return;
+        // 获取译文内容
+        let translatedLines = translatedParagraph.translatedContent
+            ? translatedParagraph.translatedContent.split(/\r?\n/)
+            : [];
+            
+        console.log('更新操作:', {
+            targetStart: targetParagraph.startLine,
+            targetEnd: targetParagraph.endLine,
+            sourceLines: translatedLines.length
+        });
+        
+        if (targetParagraph.endLine < targetParagraph.startLine) {
+            // 处理纯新增或纯删除操作
+            if (translatedLines.length === 0) {
+                // 纯删除：删除指定范围的行
+                const deleteCount = targetParagraph.endLine - targetParagraph.startLine + 1;
+                if (startIndex >= 0 && startIndex < lines.length) {
+                    lines.splice(startIndex, deleteCount);
+                    console.log(`删除操作: 从索引${startIndex}删除${deleteCount}行`);
+                }
+            } else {
+                // 纯新增：在指定位置插入新行
+                if (startIndex >= 0 && startIndex <= lines.length) {
+                    lines.splice(startIndex, 0, ...translatedLines);
+                    console.log(`新增操作: 在索引${startIndex}插入${translatedLines.length}行`);
+                }
+            }
+        } else {
+            // 处理正常的替换操作
+            if (startIndex < 0 || startIndex >= lines.length) {
+                console.warn('无效的行范围:', { startIndex, linesLength: lines.length });
+                return;
+            }
+            
+            // 计算要替换的行数（基于目标文件的行号）
+            const targetLineCount = targetParagraph.endLine - targetParagraph.startLine + 1;
+            
+            // 检查替换范围是否合理
+            if (startIndex + targetLineCount > lines.length) {
+                console.warn('替换范围超出文件长度:', {
+                    startIndex,
+                    targetLineCount,
+                    fileLength: lines.length
+                });
+                return;
+            }
+            
+            // 执行替换
+            lines.splice(startIndex, targetLineCount, ...translatedLines);
+            console.log(`替换操作: 在位置${startIndex}替换${targetLineCount}行为${translatedLines.length}行`);
         }
-        
-        // 将翻译后的内容分割为行
-        const translatedLines = translatedParagraph.translatedContent.split('\n');
-        
-        // 替换指定范围的行
-        lines.splice(startIndex, endIndex - startIndex + 1, ...translatedLines);
     }
 
     /**

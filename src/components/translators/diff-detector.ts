@@ -27,7 +27,8 @@ export class DiffDetector {
             }
 
             // 获取详细的差异信息
-            const diffOutput = execSync(`git diff HEAD "${filePath}"`, {
+            // 使用 -U0 参数，只显示修改的行，不显示上下文
+            const diffOutput = execSync(`git diff -U0 HEAD "${filePath}"`, {
                 encoding: 'utf8',
                 cwd: (this.plugin.app.vault.adapter as any).basePath || process.cwd()
             });
@@ -56,6 +57,7 @@ export class DiffDetector {
      * @returns 解析后的差异信息
      */
     private parseDiffOutput(diffOutput: string): GitDiffResult {
+        console.log('Raw git diff output:', diffOutput);  // 添加日志：原始git diff输出
         const lines = diffOutput.split('\n');
         const changes: DiffChange[] = [];
         let currentChange: DiffChange | null = null;
@@ -64,8 +66,8 @@ export class DiffDetector {
             const line = lines[i];
             
             if (line.startsWith('@@')) {
-                // 解析行号信息 @@ -old_start,old_count +new_start,new_count @@
-                const match = line.match(/@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@/);
+                // 解析行号信息，忽略@@ ... @@ 后面的上下文信息
+                const match = line.match(/@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@.*$/);
                 if (match) {
                     if (currentChange) {
                         changes.push(currentChange);
@@ -89,6 +91,9 @@ export class DiffDetector {
         if (currentChange) {
             changes.push(currentChange);
         }
+
+        // 保留日志但移除排序，因为排序会在translator.ts中进行
+        console.log('Detected changes:', JSON.stringify(changes, null, 2));
 
         return {
             hasChanges: changes.length > 0,
