@@ -96,6 +96,7 @@ export class DirectExportHelper {
             await this.executeDirectExport(updatedContent, metadata, translatedTitle);
             
             console.debug('✅ [DirectExportHelper] 差异翻译后的直接导出完成');
+            notice.hide();
             
         } catch (error) {
             notice.hide();
