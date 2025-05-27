@@ -1,4 +1,5 @@
 import { TranslationApiClient } from './api-client';
+import { OperationType } from './file-updater';
 import type { Paragraph, TranslatedParagraph, ParagraphUpdate } from './file-updater';
 import type { DiffChange } from './diff-detector';
 
@@ -168,18 +169,20 @@ export class DiffProcessor {
             translatedLines
         });
         
-        // 关键修复：新增操作应该基于旧文件的位置
-        // 对于 @@ -40,0 +41,2 @@ 这样的diff，应该在旧文件第40行后插入
+        // 新增操作：在指定位置插入新内容
+        // 对于 @@ -40,0 +41,2 @@ 这样的diff，应该在第40行后插入内容
         const targetParagraph: Paragraph = {
-            startLine: oldStart + 1,  // 在旧文件的oldStart行后插入，所以是oldStart+1
-            endLine: oldStart,  // 新增操作，endLine < startLine 表示插入
-            content: '',
+            startLine: oldStart + 1,  // 插入位置：在oldStart行后插入
+            endLine: oldStart,        // 对于插入操作，endLine < startLine 用于标识
+            content: addedLines.join('\n'),
             type: 'text'
         };
         
         const translatedParagraph: TranslatedParagraph = {
-            ...targetParagraph,
-            endLine: oldStart + translatedLines.length,  // 修正：应该基于旧文件位置计算
+            startLine: oldStart + 1,
+            endLine: oldStart,
+            content: addedLines.join('\n'),
+            type: 'text',
             translatedContent: translatedLines.join('\n')
         };
         
@@ -188,7 +191,7 @@ export class DiffProcessor {
             translatedParagraph
         });
         
-        return { targetParagraph, translatedParagraph };
+        return { targetParagraph, translatedParagraph, operationType: OperationType.INSERT };
     }
 
     /**
@@ -200,20 +203,35 @@ export class DiffProcessor {
         oldCount: number,
         removedLines: string[]
     ): ParagraphUpdate {
+        console.debug('➖ [DiffProcessor] 处理删除内容:', {
+            newStart,
+            oldStart,
+            oldCount,
+            removedLinesCount: removedLines.length,
+            removedLines
+        });
+        
+        // 删除操作：需要从目标文件中删除指定范围的行
+        // 目标段落应该基于旧文件中被删除的位置
         const targetParagraph: Paragraph = {
-            startLine: newStart,
-            endLine: newStart + removedLines.length - 1,
+            startLine: oldStart,
+            endLine: oldStart + oldCount - 1,
             content: removedLines.join('\n'),
             type: 'text'
         };
         
+        // 对于删除操作，翻译内容为空
         const translatedParagraph: TranslatedParagraph = {
             ...targetParagraph,
-            endLine: oldStart - 1,  // 删除操作，endLine < startLine
             translatedContent: ''
         };
         
-        return { targetParagraph, translatedParagraph };
+        console.debug('✅ [DiffProcessor] 删除内容处理结果:', {
+            targetParagraph,
+            translatedParagraph
+        });
+        
+        return { targetParagraph, translatedParagraph, operationType: OperationType.DELETE };
     }
 
     /**
@@ -242,7 +260,7 @@ export class DiffProcessor {
             type: 'text'
         };
         
-        return { targetParagraph, translatedParagraph };
+        return { targetParagraph, translatedParagraph, operationType: OperationType.REPLACE };
     }
 
     /**

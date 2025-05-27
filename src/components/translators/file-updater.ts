@@ -85,88 +85,42 @@ export class FileUpdater {
      * @param lines 文件行数组
      * @param update 更新信息
      */    private applyUpdate(lines: string[], update: ParagraphUpdate): void {
-        const { targetParagraph, translatedParagraph } = update;
-        
-        console.debug('🔧 [FileUpdater.applyUpdate] 开始应用更新:', {
-            targetParagraph,
-            translatedParagraph,
-            currentLinesLength: lines.length
-        });
-        
-        // 验证行号的合理性
-        if (targetParagraph.startLine < 1) {
-            console.error('❌ [FileUpdater.applyUpdate] Invalid startLine (should be >= 1):', targetParagraph);
-            return;
-        }
-        
-        // 检查是否是特殊的新增操作（endLine < startLine）
-        if (targetParagraph.endLine < targetParagraph.startLine) {
-            console.debug('➕ [FileUpdater.applyUpdate] 检测到新增操作 (endLine < startLine)');
-            this.applyInsertOperation(lines, update);
-            return;
-        }
-        
-        // 注意：所有行号都是基于新文件状态的1-based索引
-        const startIndex = targetParagraph.startLine - 1;  // 转换为0-based
-        const endIndex = targetParagraph.endLine - 1;      // 转换为0-based
-        
-        console.debug('📍 [FileUpdater.applyUpdate] 索引转换:', {
-            startLine: targetParagraph.startLine,
-            endLine: targetParagraph.endLine,
-            startIndex,
-            endIndex
-        });
-        
-        // 获取译文内容
-        let translatedLines = translatedParagraph.translatedContent
-            ? translatedParagraph.translatedContent.split(/\r?\n/)
-            : [];
-            
-        console.debug('📝 [FileUpdater.applyUpdate] 翻译内容:', {
-            original: translatedParagraph.translatedContent,
-            split: translatedLines
-        });
-        
-        // 检查索引范围是否有效
-        if (startIndex < 0 || startIndex >= lines.length) {
-            console.error('❌ [FileUpdater.applyUpdate] Start index out of range:', {
-                startIndex,
-                linesLength: lines.length
-            });
-            return;
-        }
-        
-        // 计算要替换的行数
-        const targetLineCount = targetParagraph.endLine - targetParagraph.startLine + 1;
-        
-        console.debug('🔢 [FileUpdater.applyUpdate] 替换计算:', {
-            targetLineCount,
-            startIndex,
-            endIndex: startIndex + targetLineCount - 1
-        });
-        
-        // 检查替换范围是否合理
-        if (startIndex + targetLineCount > lines.length) {
-            console.error('❌ [FileUpdater.applyUpdate] Replace range exceeds file length:', {
-                startIndex,
-                targetLineCount,
-                linesLength: lines.length
-            });
-            return;
-        }
-        
-        console.debug('🔄 [FileUpdater.applyUpdate] 执行替换操作:', {
-            method: 'splice',
-            startIndex,
-            deleteCount: targetLineCount,
-            insertItems: translatedLines
-        });
-        
-        // 执行替换操作
-        lines.splice(startIndex, targetLineCount, ...translatedLines);
-        
-        console.debug('✅ [FileUpdater.applyUpdate] 替换完成，新文件行数:', lines.length);
-    }
+         const { targetParagraph, translatedParagraph, operationType } = update;
+         
+         console.debug('🔧 [FileUpdater.applyUpdate] 开始应用更新:', {
+             targetParagraph,
+             translatedParagraph,
+             operationType,
+             currentLinesLength: lines.length
+         });
+         
+         // 验证行号的合理性
+         if (targetParagraph.startLine < 1) {
+             console.error('❌ [FileUpdater.applyUpdate] Invalid startLine (should be >= 1):', targetParagraph);
+             return;
+         }
+         
+         // 根据操作类型分别处理
+         switch (operationType) {
+             case OperationType.INSERT:
+                 console.debug('➕ [FileUpdater.applyUpdate] 处理插入操作');
+                 this.applyInsertOperation(lines, update);
+                 break;
+                 
+             case OperationType.DELETE:
+                 console.debug('➖ [FileUpdater.applyUpdate] 处理删除操作');
+                 this.applyDeleteOperation(lines, update);
+                 break;
+                 
+             case OperationType.REPLACE:
+                 console.debug('🔄 [FileUpdater.applyUpdate] 处理替换操作');
+                 this.applyReplaceOperation(lines, update);
+                 break;
+                 
+             default:
+                 console.error('❌ [FileUpdater.applyUpdate] 未知的操作类型:', operationType);
+         }
+     }
 
     /**
      * 应用插入操作（用于处理新增内容）
@@ -208,6 +162,146 @@ export class FileUpdater {
         lines.splice(insertIndex, 0, ...translatedLines);
         
         console.debug('✅ [FileUpdater.applyInsertOperation] 插入完成，新文件行数:', lines.length);
+    }
+
+    /**
+     * 应用删除操作
+     * @param lines 文件行数组
+     * @param update 更新信息
+     */
+    private applyDeleteOperation(lines: string[], update: ParagraphUpdate): void {
+        const { targetParagraph } = update;
+        
+        console.debug('➖ [FileUpdater.applyDeleteOperation] 处理删除操作:', {
+            targetParagraph,
+            currentLinesLength: lines.length
+        });
+        
+        // 对于删除操作，从目标文件中移除指定的行
+        const startIndex = targetParagraph.startLine - 1;  // 转换为0-based
+        const deleteCount = targetParagraph.endLine - targetParagraph.startLine + 1;
+        
+        console.debug('📍 [FileUpdater.applyDeleteOperation] 删除范围:', {
+            startIndex,
+            deleteCount,
+            startLine: targetParagraph.startLine,
+            endLine: targetParagraph.endLine
+        });
+        
+        // 检查删除范围是否有效
+        if (startIndex < 0 || startIndex >= lines.length) {
+            console.error('❌ [FileUpdater.applyDeleteOperation] Start index out of range:', {
+                startIndex,
+                linesLength: lines.length
+            });
+            return;
+        }
+        
+        if (startIndex + deleteCount > lines.length) {
+            console.error('❌ [FileUpdater.applyDeleteOperation] Delete range exceeds file length:', {
+                startIndex,
+                deleteCount,
+                linesLength: lines.length
+            });
+            return;
+        }
+        
+        console.debug('🔄 [FileUpdater.applyDeleteOperation] 执行删除操作');
+        
+        // 删除指定范围的行
+        lines.splice(startIndex, deleteCount);
+        
+        console.debug('✅ [FileUpdater.applyDeleteOperation] 删除完成，新文件行数:', lines.length);
+    }
+
+    /**
+     * 应用替换操作
+     * @param lines 文件行数组
+     * @param update 更新信息
+     */
+    private applyReplaceOperation(lines: string[], update: ParagraphUpdate): void {
+        const { targetParagraph, translatedParagraph } = update;
+        
+        console.debug('🔄 [FileUpdater.applyReplaceOperation] 处理替换操作:', {
+            targetParagraph,
+            translatedParagraph,
+            currentLinesLength: lines.length
+        });
+        
+        // 注意：所有行号都是基于目标文件状态的1-based索引
+        const startIndex = targetParagraph.startLine - 1;  // 转换为0-based
+        const targetLineCount = Math.max(0, targetParagraph.endLine - targetParagraph.startLine + 1);
+        
+        console.debug('📍 [FileUpdater.applyReplaceOperation] 索引转换:', {
+            startLine: targetParagraph.startLine,
+            endLine: targetParagraph.endLine,
+            startIndex,
+            targetLineCount,
+            note: targetLineCount === 0 ? '特殊情况：targetLineCount为0，可能是边缘case' : ''
+        });
+        
+        // 特殊处理：当 targetLineCount 为 0 或负数时，这可能是一个边缘情况
+        if (targetLineCount <= 0) {
+            console.warn('⚠️ [FileUpdater.applyReplaceOperation] 检测到特殊情况: targetLineCount <= 0, 将作为插入操作处理', {
+                targetLineCount,
+                targetParagraph
+            });
+            
+            // 作为插入操作处理：在 startIndex 位置插入翻译内容
+            let translatedLines = translatedParagraph.translatedContent
+                ? translatedParagraph.translatedContent.split(/\r?\n/)
+                : [];
+                
+            console.debug('🔄 [FileUpdater.applyReplaceOperation] 执行特殊插入操作:', {
+                startIndex,
+                insertItems: translatedLines
+            });
+            
+            lines.splice(startIndex, 0, ...translatedLines);
+            console.debug('✅ [FileUpdater.applyReplaceOperation] 特殊插入完成，新文件行数:', lines.length);
+            return;
+        }
+        
+        // 获取译文内容
+        let translatedLines = translatedParagraph.translatedContent
+            ? translatedParagraph.translatedContent.split(/\r?\n/)
+            : [];
+            
+        console.debug('📝 [FileUpdater.applyReplaceOperation] 翻译内容:', {
+            original: translatedParagraph.translatedContent,
+            split: translatedLines
+        });
+        
+        // 检查索引范围是否有效
+        if (startIndex < 0 || startIndex >= lines.length) {
+            console.error('❌ [FileUpdater.applyReplaceOperation] Start index out of range:', {
+                startIndex,
+                linesLength: lines.length
+            });
+            return;
+        }
+        
+        // 检查替换范围是否合理
+        if (startIndex + targetLineCount > lines.length) {
+            console.error('❌ [FileUpdater.applyReplaceOperation] Replace range exceeds file length:', {
+                startIndex,
+                targetLineCount,
+                linesLength: lines.length
+            });
+            return;
+        }
+        
+        console.debug('🔄 [FileUpdater.applyReplaceOperation] 执行替换操作:', {
+            method: 'splice',
+            startIndex,
+            deleteCount: targetLineCount,
+            insertItems: translatedLines
+        });
+        
+        // 执行替换操作
+        lines.splice(startIndex, targetLineCount, ...translatedLines);
+        
+        console.debug('✅ [FileUpdater.applyReplaceOperation] 替换完成，新文件行数:', lines.length);
     }
 
     /**
@@ -325,6 +419,15 @@ export class FileUpdater {
 }
 
 /**
+ * 操作类型枚举
+ */
+export enum OperationType {
+    INSERT = 'insert',
+    DELETE = 'delete',
+    REPLACE = 'replace'
+}
+
+/**
  * 段落信息
  */
 export interface Paragraph {
@@ -347,6 +450,7 @@ export interface TranslatedParagraph extends Paragraph {
 export interface ParagraphUpdate {
     targetParagraph: Paragraph;
     translatedParagraph: TranslatedParagraph;
+    operationType: OperationType; // 明确指定操作类型
 }
 
 /**

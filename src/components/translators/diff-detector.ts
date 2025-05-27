@@ -119,11 +119,11 @@ export class DiffDetector {
                         // 原文件的起始行号（从1开始计数）
                         oldStart: parseInt(match[1]),
                         // 原文件的行数，如果没有指定则默认为1
-                        oldCount: parseInt(match[2]) || 0,  // 修复：空字符串应该是0而不是1
+                        oldCount: match[2] === '' ? 1 : parseInt(match[2]),  // 修复：空字符串表示1行
                         // 新文件的起始行号（从1开始计数）
                         newStart: parseInt(match[3]),
                         // 新文件的行数，如果没有指定则默认为1
-                        newCount: parseInt(match[4]) || 0,  // 修复：空字符串应该是0而不是1
+                        newCount: match[4] === '' ? 1 : parseInt(match[4]),  // 修复：空字符串表示1行
                         // 存储被删除的行内容
                         removedLines: [],
                         // 存储新增的行内容
