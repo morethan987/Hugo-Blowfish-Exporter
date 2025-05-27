@@ -164,7 +164,10 @@ export class GitDiffModal extends Modal {
 
             let formattedContent = '';
             for (const line of file.content) {
-                if (line.startsWith('+')) {
+                if (line.startsWith('+++') || line.startsWith('---')) {
+                    // 直接去掉文件头信息行
+                    continue;
+                } else if (line.startsWith('+')) {
                     formattedContent += `<span style="display: block; background-color: rgba(0, 255, 0, 0.1);">${line}</span>`;
                 } else if (line.startsWith('-')) {
                     formattedContent += `<span style="display: block; background-color: rgba(255, 0, 0, 0.1);">${line}</span>`;
