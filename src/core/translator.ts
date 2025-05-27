@@ -1,12 +1,10 @@
 import { App, MarkdownView, Notice } from 'obsidian';
-import * as path from 'path';
 import HugoBlowfishExporter from './plugin';
 import {
     TranslationValidator,
     TranslationApiClient,
     TranslationFileOperations,
     DirectExportHelper,
-    DiffDetector,
     FileUpdater,
     LineAlignment,
     DiffValidator,
@@ -20,7 +18,6 @@ export class Translator {
     private apiClient: TranslationApiClient;
     private fileOps: TranslationFileOperations;
     private directExport: DirectExportHelper;
-    private diffDetector: DiffDetector;
     private fileUpdater: FileUpdater;
     private diffValidator: DiffValidator;
     private diffProcessor: DiffProcessor;
@@ -34,7 +31,6 @@ export class Translator {
         this.apiClient = new TranslationApiClient(plugin);
         this.fileOps = new TranslationFileOperations(plugin);
         this.directExport = new DirectExportHelper(plugin, app);
-        this.diffDetector = new DiffDetector(plugin);
         this.fileUpdater = new FileUpdater(plugin, app);
         this.diffValidator = new DiffValidator(app, plugin);
         this.diffProcessor = new DiffProcessor(this.apiClient);

@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 
 /**
  * 验证翻译所需的配置

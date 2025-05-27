@@ -1,4 +1,4 @@
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 
 /**
  * 翻译API客户端助手

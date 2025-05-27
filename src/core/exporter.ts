@@ -2,9 +2,9 @@ import { App, Editor, MarkdownView, Notice, TFile } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import HugoBlowfishExporter from './plugin';
-import { ConfirmationModal } from '../utils/confirmationModal';
-import { BatchExportModal } from '../utils/batchExportModal';
-import { ExportNameModal } from '../utils/exportNameModal';
+import { ConfirmationModal } from 'src/utils/confirmationModal';
+import { BatchExportModal } from 'src/utils/batchExportModal';
+import { ExportNameModal } from 'src/utils/exportNameModal';
 
 export class Exporter {
     constructor(

@@ -1,6 +1,6 @@
 import { App } from 'obsidian';
 import * as fs from 'fs';
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 
 /**
  * 行对齐处理器

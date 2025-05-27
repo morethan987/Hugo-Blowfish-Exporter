@@ -1,7 +1,5 @@
 import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 
 /**
  * 文件差异检测器

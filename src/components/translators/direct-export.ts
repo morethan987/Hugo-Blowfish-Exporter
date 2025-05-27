@@ -1,5 +1,5 @@
 import { App, Notice, MarkdownView } from 'obsidian';
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 import { TranslationFileOperations } from './file-operations';
 
 /**

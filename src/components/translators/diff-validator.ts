@@ -1,5 +1,5 @@
 import { App, MarkdownView, Notice } from 'obsidian';
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 import { DiffDetector } from './diff-detector';
 import { FileUpdater } from './file-updater';
 import { determineTargetFilePath } from './determine-target-file';

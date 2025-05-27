@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import HugoBlowfishExporter from '../../core/plugin';
+import HugoBlowfishExporter from 'src/core/plugin';
 
 /**
  * 翻译文件操作助手
