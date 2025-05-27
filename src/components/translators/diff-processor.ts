@@ -112,7 +112,7 @@ export class DiffProcessor {
                 console.debug('✅ [DiffProcessor] API翻译结果:', JSON.stringify(translated));
                 
                 // 分割翻译结果
-                const translatedParts = translated.split('\n');
+                const translatedParts = translated.split('\n').filter(part => part !== '');
                 console.debug('🔀 [DiffProcessor] 分割后的翻译部分:', translatedParts);
                 
                 // 将翻译结果放回对应位置
