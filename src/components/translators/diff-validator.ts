@@ -2,7 +2,6 @@ import { App, MarkdownView, Notice } from 'obsidian';
 import HugoBlowfishExporter from '../../core/plugin';
 import { DiffDetector } from './diff-detector';
 import { FileUpdater } from './file-updater';
-import { LineAlignment } from './line-alignment';
 import { determineTargetFilePath } from './determine-target-file';
 
 /**
@@ -11,7 +10,6 @@ import { determineTargetFilePath } from './determine-target-file';
 export class DiffValidator {
     private diffDetector: DiffDetector;
     private fileUpdater: FileUpdater;
-    private lineAlignment: LineAlignment;
 
     constructor(
         private app: App,
@@ -19,7 +17,6 @@ export class DiffValidator {
     ) {
         this.diffDetector = new DiffDetector(plugin);
         this.fileUpdater = new FileUpdater(plugin, app);
-        this.lineAlignment = new LineAlignment(app, plugin);
     }
 
     /**
@@ -61,10 +58,10 @@ export class DiffValidator {
 
         // 确定英文翻译文件路径
         console.debug('🎯 [DiffValidator] 确定英文翻译文件路径...');
-        const englishFilePath = await determineTargetFilePath(currentFile.path, this.plugin);
-        console.debug('📂 [DiffValidator] 英文文件路径:', englishFilePath);
+        const targetFilePath = await determineTargetFilePath(currentFile.path, this.plugin);
+        console.debug('📂 [DiffValidator] 英文文件路径:', targetFilePath);
         
-        if (!englishFilePath) {
+        if (!targetFilePath) {
             console.debug('❌ [DiffValidator] 无法确定对应的英文翻译文件路径');
             new Notice('无法确定对应的英文翻译文件路径');
             return null;
@@ -72,24 +69,18 @@ export class DiffValidator {
 
         // 检查英文文件是否存在
         console.debug('✅ [DiffValidator] 检查英文文件是否可以安全更新...');
-        const canUpdate = await this.fileUpdater.canSafelyUpdate(englishFilePath);
+        const canUpdate = await this.fileUpdater.canSafelyUpdate(targetFilePath);
         console.debug('🔒 [DiffValidator] 文件安全检查结果:', canUpdate);
         
         if (!canUpdate) {
-            console.debug('❌ [DiffValidator] 英文翻译文件不存在或无法更新:', englishFilePath);
-            new Notice(`英文翻译文件不存在: ${englishFilePath}`);
+            console.debug('❌ [DiffValidator] 英文翻译文件不存在或无法更新:', targetFilePath);
+            new Notice(`英文翻译文件不存在: ${targetFilePath}`);
             return null;
         }
 
-        // 检测是否需要行对齐
-        console.debug('🔍 [DiffValidator] 检测是否需要行对齐...');
-        const needsLineAlignment = await this.checkLineAlignment(currentFile, englishFilePath);
-        console.debug('📊 [DiffValidator] 行对齐检测结果:', needsLineAlignment);
-
         const result = {
             diffResult,
-            englishFilePath,
-            needsLineAlignment
+            targetFilePath: targetFilePath
         };
         
         console.debug('✅ [DiffValidator] 验证成功，返回结果:', result);
@@ -99,27 +90,43 @@ export class DiffValidator {
     /**
      * 检测是否需要行对齐
      * @param currentFile 当前文件
-     * @param englishFilePath 英文文件路径
+     * @param targetFilePath 目标文件路径
      * @returns 是否需要行对齐
      */
-    private async checkLineAlignment(currentFile: any, englishFilePath: string): Promise<boolean> {
+    async checkLineAlignment(targetFilePath: string): Promise<boolean | null> {
         try {
+            console.debug('🔍 [DiffValidator.checkLineAlignment]\n开始验证差异翻译后是否满足行对齐');
+        
+            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+            if (!activeView) {
+                console.debug('❌ [DiffValidator.checkLineAlignment] 没有打开的文件');
+                new Notice('没有打开的文件');
+                return null;
+            }
+
+            const currentFile = activeView.file;
+            if (!currentFile) {
+                console.debug('❌ [DiffValidator.checkLineAlignment] 无法获取当前文件');
+                new Notice('无法获取当前文件');
+                return null;
+            }
+
             // 读取当前文件内容
             const currentContent = await this.app.vault.read(currentFile);
             
             // 读取英文文件内容
             const fs = require('fs');
-            const englishContent = await fs.promises.readFile(englishFilePath, 'utf8');
+            const targetContent = await fs.promises.readFile(targetFilePath, 'utf8');
 
             // 分割成行
             const currentLines = currentContent.split('\n');
-            const englishLines = englishContent.split('\n');
+            const targetLines = targetContent.split('\n');
 
             // 检查行数是否一致
-            if (currentLines.length !== englishLines.length) {
+            if (currentLines.length !== targetLines.length) {
                 console.debug('📏 [DiffValidator] 行数不一致，需要对齐:', {
                     currentLines: currentLines.length,
-                    englishLines: englishLines.length
+                    englishLines: targetLines.length
                 });
                 return true;
             }
@@ -127,13 +134,13 @@ export class DiffValidator {
             // 检查空行和非空行是否严格对应
             for (let i = 0; i < currentLines.length; i++) {
                 const currentIsEmpty = currentLines[i].trim() === '';
-                const englishIsEmpty = englishLines[i].trim() === '';
+                const targetIsEmpty = targetLines[i].trim() === '';
                 
-                if (currentIsEmpty !== englishIsEmpty) {
+                if (currentIsEmpty !== targetIsEmpty) {
                     console.debug('📏 [DiffValidator] 空行结构不匹配，需要对齐:', {
                         line: i + 1,
                         currentEmpty: currentIsEmpty,
-                        englishEmpty: englishIsEmpty
+                        englishEmpty: targetIsEmpty
                     });
                     return true;
                 }
@@ -153,6 +160,5 @@ export interface DiffValidationResult {
         hasChanges: boolean;
         changes: any[];
     };
-    englishFilePath: string;
-    needsLineAlignment: boolean;
+    targetFilePath: string;
 }

@@ -128,36 +128,17 @@ export class Translator {
                 return;
             }
 
-            const { diffResult, englishFilePath, needsLineAlignment } = validationResult;
+            const { diffResult, targetFilePath } = validationResult;
             console.debug('✅ [Translator] 验证成功:', {
                 hasChanges: diffResult.hasChanges,
                 changesCount: diffResult.changes.length,
-                englishFilePath,
-                needsLineAlignment
+                targetFilePath: targetFilePath,
             });
-
-            // 如果需要行对齐，先执行行对齐
-            if (needsLineAlignment) {
-                notice.setMessage('正在执行行对齐...');
-                console.debug('🔄 [Translator] 开始执行行对齐...');
-                try {
-                    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-                    if (activeView && activeView.file) {
-                        const currentContent = await this.app.vault.read(activeView.file);
-                        await this.lineAlignment.alignFiles(currentContent, englishFilePath);
-                        console.debug('✅ [Translator] 行对齐完成');
-                    }
-                } catch (alignError) {
-                    console.error('❌ [Translator] 行对齐失败:', alignError.message);
-                    new Notice(`❌ 行对齐失败: ${alignError.message}\n请手动进行对齐操作`, 5000);
-                    return;
-                }
-            }
 
             // 读取文件内容
             notice.setMessage('正在读取文件内容...');
-            console.debug('📖 [Translator] 读取英文文件内容:', englishFilePath);
-            const englishContent = await this.readFileContent(englishFilePath);
+            console.debug('📖 [Translator] 读取英文文件内容:', targetFilePath);
+            const englishContent = await this.readFileContent(targetFilePath);
             console.debug('📄 [Translator] 文件内容长度:', englishContent.length);
 
             // 处理差异内容
@@ -169,15 +150,44 @@ export class Translator {
             // 应用更新
             notice.setMessage('正在保存更新...');
             console.debug('💾 [Translator] 开始应用更新到目标文件...');
-            await this.fileUpdater.updateTargetFile(englishFilePath, updates);
+            await this.fileUpdater.updateTargetFile(targetFilePath, updates);
             console.debug('✅ [Translator] 文件更新完成');
+
+            // 检查是否需要行对齐
+            const needsLineAlignment = await this.diffValidator.checkLineAlignment(targetFilePath);
+            console.debug('🔍 [Translator] 检查是否需要行对齐:', needsLineAlignment);
+
+            if (needsLineAlignment === null) {
+                console.debug('❌ [Translator] 行对齐检查失败');
+                notice.hide();
+                new Notice('行对齐检查失败，请手动检查文件', 5000);
+                return;
+            }
+
+            // 如果需要行对齐，先执行行对齐
+            if (needsLineAlignment === true) {
+                notice.setMessage('正在执行行对齐...');
+                console.debug('🔄 [Translator] 开始执行行对齐...');
+                try {
+                    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+                    if (activeView && activeView.file) {
+                        const currentContent = await this.app.vault.read(activeView.file);
+                        await this.lineAlignment.alignFiles(currentContent, targetFilePath);
+                        console.debug('✅ [Translator] 行对齐完成');
+                    }
+                } catch (alignError) {
+                    console.error('❌ [Translator] 行对齐失败:', alignError.message);
+                    new Notice(`❌ 行对齐失败: ${alignError.message}\n请手动进行对齐操作`, 5000);
+                    return;
+                }
+            }
 
             // 检查是否需要直接导出
             if (this.plugin.settings.directExportAfterTranslation) {
                 notice.setMessage('正在执行直接导出...');
                 console.debug('📤 [Translator] 开始执行直接导出...');
                 try {
-                    await this.directExport.executeDirectExportFromFile(englishFilePath);
+                    await this.directExport.executeDirectExportFromFile(targetFilePath);
                     console.debug('✅ [Translator] 直接导出完成');
                 } catch (exportError) {
                     console.warn('⚠️ [Translator] 直接导出失败:', exportError.message);
@@ -187,7 +197,7 @@ export class Translator {
 
             notice.hide();
             console.debug('🎉 [Translator] 差异翻译流程完成');
-            new Notice(`✅ 差异翻译完成！\n已更新文件: ${englishFilePath}`, 8000);
+            new Notice(`✅ 差异翻译完成！\n已更新文件: ${targetFilePath}`, 8000);
 
         } catch (error) {
             console.error('❌ [Translator] 差异翻译流程失败:', error);
