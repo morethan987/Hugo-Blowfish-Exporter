@@ -50,7 +50,7 @@ export class DiffProcessor {
             } else {
                 // 处理修改情况
                 console.debug('✏️  [DiffProcessor] 识别为修改操作');
-                update = this.handleModifiedContent(newStart, oldCount, newCount, removedLines, translatedLines);
+                update = this.handleModifiedContent(oldStart, oldCount, newCount, removedLines, translatedLines);
             }
             
             console.debug(`💾 [DiffProcessor] 第${i+1}个变更处理结果:`, JSON.stringify(update, null, 2));
@@ -179,7 +179,7 @@ export class DiffProcessor {
         
         const translatedParagraph: TranslatedParagraph = {
             ...targetParagraph,
-            endLine: newStart + translatedLines.length - 1,
+            endLine: oldStart + translatedLines.length,  // 修正：应该基于旧文件位置计算
             translatedContent: translatedLines.join('\n')
         };
         
@@ -220,22 +220,23 @@ export class DiffProcessor {
      * 处理修改的内容
      */
     private handleModifiedContent(
-        newStart: number,
+        oldStart: number,
         oldCount: number,
         newCount: number,
         removedLines: string[],
         translatedLines: string[]
     ): ParagraphUpdate {
+        // 修正：目标段落应该基于旧文件的位置
         const targetParagraph: Paragraph = {
-            startLine: newStart,
-            endLine: newStart + oldCount - 1,
+            startLine: oldStart,
+            endLine: oldStart + oldCount - 1,
             content: removedLines.join('\n'),
             type: 'text'
         };
         
         const translatedParagraph: TranslatedParagraph = {
-            startLine: newStart,
-            endLine: newStart + newCount - 1,
+            startLine: oldStart,
+            endLine: oldStart + newCount - 1,
             content: targetParagraph.content,
             translatedContent: translatedLines.join('\n'),
             type: 'text'
