@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { App, Notice, MarkdownView } from 'obsidian';
 import HugoBlowfishExporter from '../../core/plugin';
 import { TranslationFileOperations } from './file-operations';
 
@@ -8,7 +8,10 @@ import { TranslationFileOperations } from './file-operations';
 export class DirectExportHelper {
     private fileOps: TranslationFileOperations;
 
-    constructor(private plugin: HugoBlowfishExporter) {
+    constructor(
+        private plugin: HugoBlowfishExporter,
+        private app?: App
+    ) {
         this.fileOps = new TranslationFileOperations(plugin);
     }
 
@@ -51,6 +54,67 @@ export class DirectExportHelper {
             notice.hide();
             new Notice(`❌ 直接导出失败: ${error.message}`, 4000);
             console.error('Direct export error:', error);
+        }
+    }
+
+    /**
+     * 执行差异翻译后的直接导出
+     * @param englishFilePath 英文文件路径
+     */
+    async executeDirectExportFromFile(englishFilePath: string): Promise<void> {
+        if (!this.app) {
+            throw new Error('App 实例未初始化，无法执行文件直接导出');
+        }
+
+        const notice = new Notice('正在执行直接导出...', 0);
+
+        try {
+            console.debug('📤 [DirectExportHelper] 开始执行差异翻译后的直接导出...');
+            
+            // 读取更新后的文件内容
+            notice.setMessage('正在读取文件内容...');
+            const updatedContent = await this.readFileContent(englishFilePath);
+            console.debug('📄 [DirectExportHelper] 文件内容长度:', updatedContent.length);
+            
+            // 获取当前文件的元数据
+            notice.setMessage('正在获取文件元数据...');
+            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+            if (!activeView || !activeView.file) {
+                throw new Error('无法获取当前文件');
+            }
+            
+            const metadata = this.app.metadataCache.getFileCache(activeView.file);
+            console.debug('📋 [DirectExportHelper] 获取元数据:', metadata?.frontmatter);
+            
+            // 从文件路径提取标题（去掉路径和扩展名）
+            const fileName = englishFilePath.split(/[\\/]/).pop() || '';
+            const translatedTitle = fileName.replace(/\.(md|markdown)$/i, '');
+            console.debug('📝 [DirectExportHelper] 提取标题:', translatedTitle);
+            
+            // 执行直接导出
+            notice.setMessage('正在执行导出...');
+            await this.executeDirectExport(updatedContent, metadata, translatedTitle);
+            
+            console.debug('✅ [DirectExportHelper] 差异翻译后的直接导出完成');
+            
+        } catch (error) {
+            notice.hide();
+            console.error('❌ [DirectExportHelper] 差异翻译后的直接导出失败:', error);
+            throw new Error(`差异翻译后的直接导出失败: ${error.message}`);
+        }
+    }
+
+    /**
+     * 读取文件内容
+     * @param filePath 文件路径
+     * @returns 文件内容
+     */
+    private async readFileContent(filePath: string): Promise<string> {
+        const fs = require('fs').promises;
+        try {
+            return await fs.readFile(filePath, 'utf8');
+        } catch (error) {
+            throw new Error(`无法读取文件: ${filePath} - ${error.message}`);
         }
     }
 

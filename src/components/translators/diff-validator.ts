@@ -2,6 +2,8 @@ import { App, MarkdownView, Notice } from 'obsidian';
 import HugoBlowfishExporter from '../../core/plugin';
 import { DiffDetector } from './diff-detector';
 import { FileUpdater } from './file-updater';
+import { LineAlignment } from './line-alignment';
+import { determineTargetFilePath } from './determine-target-file';
 
 /**
  * 差异翻译验证器
@@ -9,6 +11,7 @@ import { FileUpdater } from './file-updater';
 export class DiffValidator {
     private diffDetector: DiffDetector;
     private fileUpdater: FileUpdater;
+    private lineAlignment: LineAlignment;
 
     constructor(
         private app: App,
@@ -16,6 +19,7 @@ export class DiffValidator {
     ) {
         this.diffDetector = new DiffDetector(plugin);
         this.fileUpdater = new FileUpdater(plugin, app);
+        this.lineAlignment = new LineAlignment(app, plugin);
     }
 
     /**
@@ -57,7 +61,7 @@ export class DiffValidator {
 
         // 确定英文翻译文件路径
         console.debug('🎯 [DiffValidator] 确定英文翻译文件路径...');
-        const englishFilePath = await this.determineEnglishFilePath(currentFile.path);
+        const englishFilePath = await determineTargetFilePath(currentFile.path, this.plugin);
         console.debug('📂 [DiffValidator] 英文文件路径:', englishFilePath);
         
         if (!englishFilePath) {
@@ -77,9 +81,15 @@ export class DiffValidator {
             return null;
         }
 
+        // 检测是否需要行对齐
+        console.debug('🔍 [DiffValidator] 检测是否需要行对齐...');
+        const needsLineAlignment = await this.checkLineAlignment(currentFile, englishFilePath);
+        console.debug('📊 [DiffValidator] 行对齐检测结果:', needsLineAlignment);
+
         const result = {
             diffResult,
-            englishFilePath
+            englishFilePath,
+            needsLineAlignment
         };
         
         console.debug('✅ [DiffValidator] 验证成功，返回结果:', result);
@@ -87,47 +97,54 @@ export class DiffValidator {
     }
 
     /**
-     * 确定英文翻译文件路径
-     * @param chineseFilePath 中文文件路径
-     * @returns 英文文件路径
+     * 检测是否需要行对齐
+     * @param currentFile 当前文件
+     * @param englishFilePath 英文文件路径
+     * @returns 是否需要行对齐
      */
-    private async determineEnglishFilePath(chineseFilePath: string): Promise<string | null> {
-        const path = require('path');
-        const fs = require('fs');
-        
-        // 获取中文文件的文件名（不包含路径）
-        const chineseFileName = path.basename(chineseFilePath);
-        
-        // 提取文件名开头的数字
-        const numberMatch = chineseFileName.match(/^(\d+)\./);
-        if (!numberMatch) {
-            return null;
-        }
-        
-        const fileNumber = numberMatch[1];
-        const translatedExportPath = this.plugin.settings.translatedExportPath;
-        
-        if (!translatedExportPath) {
-            return null;
-        }
-        
+    private async checkLineAlignment(currentFile: any, englishFilePath: string): Promise<boolean> {
         try {
-            // 读取翻译文件目录下的所有文件
-            const files = fs.readdirSync(translatedExportPath);
+            // 读取当前文件内容
+            const currentContent = await this.app.vault.read(currentFile);
             
-            // 寻找以相同数字开头的英文文件
-            const englishFile = files.find((file: string) => {
-                return file.startsWith(`${fileNumber}.`) && file.endsWith('.md');
-            });
-            
-            if (englishFile) {
-                return path.join(translatedExportPath, englishFile);
+            // 读取英文文件内容
+            const fs = require('fs');
+            const englishContent = await fs.promises.readFile(englishFilePath, 'utf8');
+
+            // 分割成行
+            const currentLines = currentContent.split('\n');
+            const englishLines = englishContent.split('\n');
+
+            // 检查行数是否一致
+            if (currentLines.length !== englishLines.length) {
+                console.debug('📏 [DiffValidator] 行数不一致，需要对齐:', {
+                    currentLines: currentLines.length,
+                    englishLines: englishLines.length
+                });
+                return true;
             }
+
+            // 检查空行和非空行是否严格对应
+            for (let i = 0; i < currentLines.length; i++) {
+                const currentIsEmpty = currentLines[i].trim() === '';
+                const englishIsEmpty = englishLines[i].trim() === '';
+                
+                if (currentIsEmpty !== englishIsEmpty) {
+                    console.debug('📏 [DiffValidator] 空行结构不匹配，需要对齐:', {
+                        line: i + 1,
+                        currentEmpty: currentIsEmpty,
+                        englishEmpty: englishIsEmpty
+                    });
+                    return true;
+                }
+            }
+
+            console.debug('✅ [DiffValidator] 行结构已对齐，无需处理');
+            return false;
         } catch (error) {
-            return null;
+            console.warn('⚠️ [DiffValidator] 行对齐检测失败，默认需要对齐:', error.message);
+            return true; // 检测失败时默认需要对齐
         }
-        
-        return null;
     }
 }
 
@@ -137,4 +154,5 @@ export interface DiffValidationResult {
         changes: any[];
     };
     englishFilePath: string;
+    needsLineAlignment: boolean;
 }

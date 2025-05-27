@@ -8,3 +8,5 @@ export { FileUpdater } from './file-updater';
 export type { ParagraphUpdate, Paragraph, TranslatedParagraph } from './file-updater';
 export { DiffValidator } from './diff-validator';
 export { DiffProcessor } from './diff-processor';
+export { LineAlignment } from './line-alignment';
+export { determineTargetFilePath } from './determine-target-file';

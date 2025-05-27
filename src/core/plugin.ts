@@ -86,6 +86,13 @@ export default class HugoBlowfishExporter {
             editorCallback: this.translator.translateDifference.bind(this.translator)
         });
 
+        // 添加行对齐命令
+        this.plugin.addCommand({
+            id: 'align-lines',
+            name: 'Line Alignment',
+            editorCallback: this.translator.alignCurrentNote.bind(this.translator)
+        });
+
         // 添加更改查看命令，类似于git diff
         this.plugin.addCommand({
             id: 'show-diff',
