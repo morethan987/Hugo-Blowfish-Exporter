@@ -84,8 +84,9 @@ export class Translator {
                 // 使用当前文件内容进行行对齐
                 await this.lineAlignment.alignFiles(content, translatedFilePath);
             } catch (alignError) {
-                console.warn('⚠️ [Translator] 行对齐处理失败，继续执行:', alignError.message);
-                // 行对齐失败不影响主流程，只记录警告
+                new Notice('❌行对齐处理失败，请手动调整', 5000);
+                console.error('⚠️ [Translator] 行对齐处理失败，继续执行:', alignError.message);
+                return;
             }
             
             notice.hide();
