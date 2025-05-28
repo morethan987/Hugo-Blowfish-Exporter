@@ -61,7 +61,7 @@ export class Translator {
             // 获取文件的元数据和内容
             const metadata = this.app.metadataCache.getFileCache(currentFile);
             const content = await this.app.vault.read(currentFile);
-            console.log('📄 [Translator] 当前文件内容:', content);
+            console.debug('📄 [Translator.whole_note] 当前文件内容:', content);
 
             notice = new Notice('开始翻译...', 0);
 
@@ -72,7 +72,7 @@ export class Translator {
             // 翻译内容
             notice.setMessage('正在翻译内容...');
             const translatedContent = await this.apiClient.translateContent(content, true);
-            console.log('✅ [Translator] 翻译完成:', translatedContent)
+            console.debug('✅ [Translator.whole_note] 翻译完成:', translatedContent)
 
             // 保存翻译文件
             notice.setMessage('正在保存翻译结果...');
