@@ -12,8 +12,8 @@ export class TranslationValidator {
      * @returns 如果验证通过返回 true，否则返回 false
      */
     validateConfiguration(): boolean {
-        if (!process.env.API_KEY) {
-            new Notice('请先配置OpenAI API密钥');
+        if (!this.plugin.settings.ApiKey) {
+            new Notice('请先配置API密钥');
             return false;
         }
 
