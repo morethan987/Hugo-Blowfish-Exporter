@@ -1,11 +1,16 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import { exec } from 'child_process';
+import HugoBlowfishExporter from 'src/core/plugin';
 
 export class ApiKeyModal extends Modal {
     private apiKey: string;
+    private plugin: HugoBlowfishExporter;
+    private onSave?: () => void;
 
-    constructor(app: App) {
+    constructor(app: App, plugin: HugoBlowfishExporter, onSave?: () => void) {
         super(app);
+        this.plugin = plugin;
+        this.apiKey = this.plugin.settings.ApiKey || '';
+        this.onSave = onSave;
     }
 
     onOpen() {
@@ -15,9 +20,10 @@ export class ApiKeyModal extends Modal {
 
         new Setting(contentEl)
             .setName('API密钥')
-            .setDesc('输入您的API密钥，它将被保存为系统环境变量API_KEY')
+            .setDesc('输入您的API密钥，它将被安全地保存在插件设置中')
             .addText(text => text
                 .setPlaceholder('sk-...')
+                .setValue(this.apiKey)
                 .onChange(value => {
                     this.apiKey = value;
                 }));
@@ -26,51 +32,31 @@ export class ApiKeyModal extends Modal {
             .addButton(btn => btn
                 .setButtonText('保存')
                 .setCta()
-                .onClick(() => {
+                .onClick(async () => {
                     if (!this.apiKey) {
+                        new Notice('请输入API密钥');
                         return;
                     }
 
-                    // 自动检测操作系统
-                    const platform = process.platform;
-
-                    if (platform === 'win32') {
-                        // Windows: 使用setx命令设置持久化环境变量
-                        exec(`setx API_KEY "${this.apiKey}"`, (error, stdout, stderr) => {
-                            if (error) {
-                                console.error('设置环境变量失败:', error);
-                                new Notice('设置环境变量失败，请检查权限');
-                                return;
-                            }
-                            
-                            // 设置当前进程的环境变量
-                            process.env.API_KEY = this.apiKey;
-                            new Notice('API密钥已保存到系统环境变量');
-                            this.close();
-                        });
-                    } else if (platform === 'linux' || platform === 'darwin') {
-                        process.env.API_KEY = this.apiKey;
-
-                        const homeDir = require('os').homedir();
-                        const shell = process.env.SHELL || '/bin/bash';
-                        const configFile = shell.includes('zsh') ? `${homeDir}/.zshrc` : `${homeDir}/.bashrc`;
-                        const exportLine = `export API_KEY="${this.apiKey}"`;
-
-                        // 先检查是否已存在，如果存在则替换，否则追加
-                        const command = `grep -q "^export API_KEY=" ${configFile} && sed -i 's/^export API_KEY=.*/export API_KEY="${this.apiKey}"/' ${configFile} || echo '${exportLine}' >> ${configFile}`;
+                    try {
+                        // 保存到插件设置
+                        this.plugin.settings.ApiKey = this.apiKey;
+                        await this.plugin.saveSettings();
                         
-                        exec(command, (error, stdout, stderr) => {
-                            if (error) {
-                                console.error('自动设置失败:', error);
-                                new Notice(`API密钥已设置到当前会话\n请手动添加到 ${configFile}:\n${exportLine}`);
-                            } else {
-                                new Notice(`API密钥已保存到 ${configFile}\n请重新启动终端或执行 source ${configFile}`);
-                            }
-                            this.close();
+                        // 重新初始化OpenAI客户端
+                        const OpenAI = (await import('openai')).default;
+                        this.plugin.client = new OpenAI({
+                            baseURL: this.plugin.settings.BaseURL,
+                            apiKey: this.plugin.settings.ApiKey,
+                            dangerouslyAllowBrowser: true
                         });
-                    } else {
-                        console.error('不支持的操作系统:', platform);
-                        new Notice('不支持的操作系统');
+
+                        new Notice('API密钥已保存成功');
+                        this.onSave?.(); // 调用回调函数刷新设置页面
+                        this.close();
+                    } catch (error) {
+                        console.error('保存API密钥失败:', error);
+                        new Notice('保存API密钥失败，请检查设置');
                     }
                 }))
             .addButton(btn => btn
@@ -78,6 +64,30 @@ export class ApiKeyModal extends Modal {
                 .onClick(() => {
                     this.close();
                 }));
+
+        // 如果已有API密钥，添加删除按钮
+        if (this.plugin.settings.ApiKey) {
+            new Setting(contentEl)
+                .addButton(btn => btn
+                    .setButtonText('删除API密钥')
+                    .setWarning()
+                    .onClick(async () => {
+                        this.plugin.settings.ApiKey = '';
+                        await this.plugin.saveSettings();
+                        
+                        // 重新初始化OpenAI客户端（使用空密钥）
+                        const OpenAI = (await import('openai')).default;
+                        this.plugin.client = new OpenAI({
+                            baseURL: this.plugin.settings.BaseURL,
+                            apiKey: '',
+                            dangerouslyAllowBrowser: true
+                        });
+
+                        new Notice('API密钥已删除');
+                        this.onSave?.(); // 调用回调函数刷新设置页面
+                        this.close();
+                    }));
+        }
     }
 
     onClose() {

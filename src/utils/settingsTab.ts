@@ -74,16 +74,20 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                 }))
             .settingEl.addClass('baseurl-setting');
                 
-        new Setting(containerEl)
+        const apiKeySetting = new Setting(containerEl)
             .setName('API密钥')
-            .setDesc('设置用于翻译功能的大模型API密钥')
+            .setDesc(`设置用于翻译功能的大模型API密钥${this.plugin.settings.ApiKey ? ' (已设置)' : ' (未设置)'}`)
             .addButton(button => button
-                .setButtonText('设置API密钥')
+                .setButtonText(this.plugin.settings.ApiKey ? '修改API密钥' : '设置API密钥')
                 .setCta()
                 .onClick(() => {
-                    new ApiKeyModal(this.app).open();
-                }))
-            .settingEl.addClass('api-key-setting');
+                    new ApiKeyModal(this.app, this.plugin, () => {
+                        // 刷新API密钥设置的显示
+                        this.refreshApiKeySetting(apiKeySetting);
+                    }).open();
+                }));
+        
+        apiKeySetting.settingEl.addClass('api-key-setting');
         
         new Setting(containerEl)
             .setName('模型名称')
@@ -232,5 +236,16 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('default-disp-name-setting');
+    }
+
+    private refreshApiKeySetting(apiKeySetting: Setting) {
+        // 更新描述文本
+        apiKeySetting.setDesc(`设置用于翻译功能的大模型API密钥${this.plugin.settings.ApiKey ? ' (已设置)' : ' (未设置)'}`);
+        
+        // 更新按钮文本
+        const buttonEl = apiKeySetting.controlEl.querySelector('button');
+        if (buttonEl) {
+            buttonEl.textContent = this.plugin.settings.ApiKey ? '修改API密钥' : '设置API密钥';
+        }
     }
 }

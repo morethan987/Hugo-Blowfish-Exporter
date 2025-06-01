@@ -50,7 +50,7 @@ export default class HugoBlowfishExporter {
         // 初始化OpenAI客户端
         this.client = new OpenAI({
             baseURL: this.settings.BaseURL,
-            apiKey: process.env.API_KEY || '',
+            apiKey: this.settings.ApiKey || '',
             dangerouslyAllowBrowser: true
         });
 
