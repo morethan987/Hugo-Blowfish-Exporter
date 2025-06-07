@@ -81,9 +81,13 @@ export class BatchExportModal {
 
             const modifiedContent = await this.modifyContent(content, 'batch');
 
-            let fileName = this.settings.useDefaultExportName
-                ? this.settings.defaultExportName.replace('{{title}}', file.basename)
-                : file.basename;
+            let fileName = file.basename;
+            if (this.settings.useDefaultExportName) {
+                fileName = this.settings.defaultExportName_zh_cn;
+                if (metadata.frontmatter.language === 'en') {
+                    fileName = this.settings.defaultExportName_en;
+                }
+            }
 
             const outputPath = path.join(slugDir, `${fileName}.md`);
             fs.writeFileSync(outputPath, modifiedContent, 'utf8');

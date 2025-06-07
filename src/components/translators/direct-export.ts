@@ -59,9 +59,9 @@ export class DirectExportHelper {
 
     /**
      * 执行差异翻译后的直接导出
-     * @param englishFilePath 英文文件路径
+     * @param targetFilePath 英文文件路径
      */
-    async executeDirectExportFromFile(englishFilePath: string): Promise<void> {
+    async executeDirectExportFromFile(targetFilePath: string): Promise<void> {
         if (!this.app) {
             throw new Error('App 实例未初始化，无法执行文件直接导出');
         }
@@ -73,7 +73,7 @@ export class DirectExportHelper {
             
             // 读取更新后的文件内容
             notice.setMessage('正在读取文件内容...');
-            const updatedContent = await this.readFileContent(englishFilePath);
+            const updatedContent = await this.readFileContent(targetFilePath);
             console.debug('📄 [DirectExportHelper] 文件内容长度:', updatedContent.length);
             
             // 获取当前文件的元数据
@@ -87,7 +87,7 @@ export class DirectExportHelper {
             console.debug('📋 [DirectExportHelper] 获取元数据:', metadata?.frontmatter);
             
             // 从文件路径提取标题（去掉路径和扩展名）
-            const fileName = englishFilePath.split(/[\\/]/).pop() || '';
+            const fileName = targetFilePath.split(/[\\/]/).pop() || '';
             const translatedTitle = fileName.replace(/\.(md|markdown)$/i, '');
             console.debug('📝 [DirectExportHelper] 提取标题:', translatedTitle);
             

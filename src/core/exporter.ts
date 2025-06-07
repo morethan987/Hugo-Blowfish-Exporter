@@ -42,6 +42,10 @@ export class Exporter {
                 new Notice('⚠️ 当前文件缺少 slug 属性，请在 frontmatter 中添加 slug 字段');
                 return;
             }
+            if (!metadata?.frontmatter?.language) {
+                new Notice('⚠️ 当前文件缺少 language 属性，请在 frontmatter 中添加 language 字段');
+                return;
+            }
 
             // 读取文件内容并修改
             const content = await this.app.vault.read(currentFile);
@@ -58,7 +62,10 @@ export class Exporter {
             let fileName: string;
             if (this.plugin.settings.useDefaultExportName) {
                 // 替换文件名中的占位符
-                fileName = this.plugin.settings.defaultExportName;
+                fileName = this.plugin.settings.defaultExportName_zh_cn; // 默认中文名
+                if (metadata.frontmatter.language === 'en') {
+                    fileName = this.plugin.settings.defaultExportName_en;
+                }
                 fileName = fileName.replace('{{title}}', currentFile.basename);
             } else {
                 // 使用对话框获取文件名

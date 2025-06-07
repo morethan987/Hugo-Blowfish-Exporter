@@ -32,7 +32,7 @@ export class TranslationFileOperations {
      * @returns 文件名（不包含扩展名）
      */
     getDirectExportFileName(): string {
-        if (this.plugin.settings.targetLanguage === '中文') {
+        if (this.plugin.settings.targetLanguage === 'zh-cn') {
             return 'index.zh-cn';
         } else {
             return 'index.en';

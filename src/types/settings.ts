@@ -16,7 +16,9 @@ export interface HugoBlowfishExporterSettings {
     blogPath: string; // 博客文章存放文件夹配置
     coverPath: string; // 封面图片文件夹配置
     useDefaultExportName: boolean;  // 是否使用默认导出文件名
-    defaultExportName: string;      // 默认导出文件名
+    defaultExportName_zh_cn: string;      // 中文默认导出文件名
+    defaultExportName_en: string;      // 英文默认导出文件名
     useDefaultDispName: boolean;    // 是否使用默认展示性链接文件名
-    defaultDispName: string;        // 默认展示性链接文件名
+    defaultDispName_zh_cn: string;        // 中文默认展示性链接文件名
+    defaultDispName_en: string;        // 英文默认展示性链接文件名
 }

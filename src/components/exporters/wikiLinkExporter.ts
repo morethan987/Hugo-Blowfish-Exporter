@@ -59,12 +59,23 @@ export class WikiLinkExporter {
                         }
                         return;
                     }
+                    if (!metadata?.frontmatter?.language) {
+                        if (mode === 'single') {
+                            new Notice(`⚠️ 警告: ${file.basename} 缺少language属性\n请在文件frontmatter中添加language字段`, 20000);
+                        } else {
+                            console.warn(`文件 ${file.basename} 缺少language属性`);
+                        }
+                        return;
+                    }
 
                     if (isDisplayLink) {
                         // 处理展示性链接
                         let fileName: string;
                         if (settings.useDefaultDispName) {
-                            fileName = settings.defaultDispName;
+                            fileName = settings.defaultDispName_zh_cn;
+                            if (metadata.frontmatter.language === 'en') {
+                                fileName = settings.defaultDispName_en;
+                            }
                         } else {
                             fileName = await new Promise((resolve) => {
                                 new ExportDispNameModal(this.app, 'index.zh-cn.md', (name) => {

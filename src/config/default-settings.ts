@@ -12,13 +12,15 @@ export const DEFAULT_SETTINGS: HugoBlowfishExporterSettings = {
     BaseURL: 'https://api.deepseek.com/v1',
     ApiKey: '',
     ModelName: 'deepseek-chat',
-    targetLanguage: '英文',
+    targetLanguage: 'en',
     directExportAfterTranslation: false,
     translatedFilePrefix: '',
     blogPath: 'posts',
     coverPath: '.featured',
     useDefaultExportName: false,
-    defaultExportName: '{{title}}',  // 支持使用 {{title}} 作为文件名占位符
+    defaultExportName_zh_cn: 'index.zh-cn',  // 支持使用 {{title}} 作为文件名占位符
+    defaultExportName_en: 'index.en',  // 支持使用 {{title}} 作为文件名占位符
     useDefaultDispName: false,
-    defaultDispName: 'index.zh-cn.md'
+    defaultDispName_zh_cn: 'index.zh-cn.md',
+    defaultDispName_en: 'index.en.md'
 }

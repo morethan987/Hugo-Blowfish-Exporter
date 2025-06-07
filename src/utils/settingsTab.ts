@@ -102,18 +102,6 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
             .settingEl.addClass('model-name-setting');
 
         new Setting(containerEl)
-            .setName('目标翻译语言')
-            .setDesc('设置要翻译成的目标语言')
-            .addDropdown(dropdown => dropdown
-                .addOption('英文', 'English')
-                .addOption('中文', '中文')
-                .setValue(this.plugin.settings.targetLanguage)
-                .onChange(async (value) => {
-                    this.plugin.settings.targetLanguage = value;
-                    await this.plugin.saveSettings();
-                }));
-
-        new Setting(containerEl)
             .setName('翻译文件前缀')
             .setDesc('设置翻译后文件的文件名前缀，默认为空')
             .addText(text => text
@@ -203,16 +191,28 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
             .settingEl.addClass('default-name-toggle-setting');
 
         new Setting(containerEl)
-            .setName('默认导出文件名')
-            .setDesc('设置默认的导出文件名，支持使用 {{title}} 作为文件名占位符')
+            .setName('中文版面默认导出文件名')
+            .setDesc('设置中文版面默认的导出文件名，支持使用 {{title}} 作为文件名占位符')
             .addText(text => text
-                .setPlaceholder('{{title}}')
-                .setValue(this.plugin.settings.defaultExportName)
+                .setPlaceholder('index.zh-cn')
+                .setValue(this.plugin.settings.defaultExportName_zh_cn)
                 .onChange(async (value) => {
-                    this.plugin.settings.defaultExportName = value;
+                    this.plugin.settings.defaultExportName_zh_cn = value;
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('default-name-setting');
+        
+        new Setting(containerEl)
+        .setName('英文版面默认导出文件名')
+        .setDesc('设置英文版面默认的导出文件名，支持使用 {{title}} 作为文件名占位符')
+        .addText(text => text
+            .setPlaceholder('index.en')
+            .setValue(this.plugin.settings.defaultExportName_en)
+            .onChange(async (value) => {
+                this.plugin.settings.defaultExportName_en = value;
+                await this.plugin.saveSettings();
+            }))
+        .settingEl.addClass('default-name-setting');
 
         new Setting(containerEl)
             .setName('使用默认展示性链接语言版本')
@@ -226,16 +226,28 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
             .settingEl.addClass('default-disp-name-toggle-setting');
 
         new Setting(containerEl)
-            .setName('默认展示性链接语言版本')
-            .setDesc('设置默认的展示性链接语言版本，其实就是您的网站下不同语言文章的文件名')
+            .setName('中文默认展示性链接语言版本')
+            .setDesc('设置中文默认的展示性链接语言版本，其实就是您的网站下不同语言文章的文件名')
             .addText(text => text
                 .setPlaceholder('index.zh-cn.md')
-                .setValue(this.plugin.settings.defaultDispName)
+                .setValue(this.plugin.settings.defaultDispName_zh_cn)
                 .onChange(async (value) => {
-                    this.plugin.settings.defaultDispName = value;
+                    this.plugin.settings.defaultDispName_zh_cn = value;
                     await this.plugin.saveSettings();
                 }))
             .settingEl.addClass('default-disp-name-setting');
+        
+        new Setting(containerEl)
+        .setName('英文默认展示性链接语言版本')
+        .setDesc('设置英文默认的展示性链接语言版本，其实就是您的网站下不同语言文章的文件名')
+        .addText(text => text
+            .setPlaceholder('index.en.md')
+            .setValue(this.plugin.settings.defaultDispName_en)
+            .onChange(async (value) => {
+                this.plugin.settings.defaultDispName_en = value;
+                await this.plugin.saveSettings();
+            }))
+        .settingEl.addClass('default-disp-name-setting');
     }
 
     private refreshApiKeySetting(apiKeySetting: Setting) {

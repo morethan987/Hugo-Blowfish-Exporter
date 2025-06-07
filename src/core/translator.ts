@@ -60,6 +60,13 @@ export class Translator {
 
             // 获取文件的元数据和内容
             const metadata = this.app.metadataCache.getFileCache(currentFile);
+            // 更新targetLanguage设置
+            if (metadata && metadata.frontmatter) {
+                if (metadata.frontmatter.language) {
+                    this.plugin.settings.targetLanguage = metadata.frontmatter.language === 'zh-cn' ? 'en' : 'zh-cn';
+                    this.plugin.saveSettings();
+                }
+            }
             const content = await this.app.vault.read(currentFile);
             console.debug('📄 [Translator.whole_note] 当前文件内容:', content);
 
@@ -74,9 +81,35 @@ export class Translator {
             const translatedContent = await this.apiClient.translateContent(content, true);
             console.debug('✅ [Translator.whole_note] 翻译完成:', translatedContent)
 
+            // 修正元数据中的language标签
+            let correctedContent = translatedContent;
+            const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---/;
+            const frontmatterMatch = translatedContent.match(frontmatterRegex);
+            
+            if (frontmatterMatch) {
+                const frontmatter = frontmatterMatch[1];
+                // 匹配language字段并替换其值
+                const languageRegex = /^(\s*language\s*:\s*)(['"]?)([^'"\n]+)\2(\s*)$/m;
+                const languageMatch = frontmatter.match(languageRegex);
+                
+                if (languageMatch) {
+                    const newFrontmatter = frontmatter.replace(
+                        languageRegex,
+                        `$1$2${this.plugin.settings.targetLanguage}$2$4`
+                    );
+                    correctedContent = translatedContent.replace(frontmatterMatch[0], `---\n${newFrontmatter}\n---`);
+                    console.debug('✅ [Translator.whole_note] 已修正language标签:', this.plugin.settings.targetLanguage);
+                } else {
+                    console.debug('⚠️ [Translator.whole_note] 未找到language标签，跳过修正');
+                }
+            } else {
+                console.debug('⚠️ [Translator.whole_note] 未找到frontmatter，跳过language标签修正');
+            }
+
+
             // 保存翻译文件
             notice.setMessage('正在保存翻译结果...');
-            const translatedFilePath = this.fileOps.saveTranslatedFile(translatedTitle, translatedContent);
+            const translatedFilePath = this.fileOps.saveTranslatedFile(translatedTitle, correctedContent);
             
             // 行对齐处理
             notice.setMessage('正在执行行对齐...');
@@ -94,7 +127,7 @@ export class Translator {
 
             // 检查是否需要直接导出
             if (this.plugin.settings.directExportAfterTranslation) {
-                await this.directExport.executeDirectExport(translatedContent, metadata, translatedTitle);
+                await this.directExport.executeDirectExport(correctedContent, metadata, translatedTitle);
             }
         } catch (error) {
             if (notice) {
@@ -106,6 +139,28 @@ export class Translator {
 
     async translateDifference() {
         let notice: Notice | null = null;
+
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeView) {
+            new Notice('没有打开的文件');
+            return;
+        }
+
+        const currentFile = activeView.file;
+        if (!currentFile) {
+            new Notice('无法获取当前文件');
+            return;
+        }
+
+        // 获取文件的元数据和内容
+        const metadata = this.app.metadataCache.getFileCache(currentFile);
+        // 更新targetLanguage设置
+        if (metadata && metadata.frontmatter) {
+            if (metadata.frontmatter.language) {
+                this.plugin.settings.targetLanguage = metadata.frontmatter.language === 'zh-cn' ? 'en' : 'zh-cn';
+                this.plugin.saveSettings();
+            }
+        }
         
         try {
             console.debug('🚀 [Translator] 开始差异翻译流程');
