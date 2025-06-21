@@ -96,6 +96,8 @@ export class GitHandler {
     async commitAndPush() {
         // 获取目标仓库的父级目录路径
         const repoPath = path.dirname(path.resolve(this.plugin.settings.exportPath));
+        // 获取当前Obsidian库的根目录路径
+        const vaultPath = (this.app.vault.adapter as any).basePath || (this.app.vault.adapter as any).path;
 
         // 检查目录是否存在
         if (!fs.existsSync(repoPath)) {
@@ -115,9 +117,24 @@ export class GitHandler {
                     
                     try {
                         new Notice('正在执行Git操作...');
+                        
+                        // 在目标仓库中执行git操作
                         await execPromise('git add .', { cwd: repoPath });
                         await execPromise(`git commit -m "${commitMessage}"`, { cwd: repoPath });
                         await execPromise('git push', { cwd: repoPath });
+                        
+                        // 在当前Obsidian库根目录中执行git操作
+                        if (vaultPath && fs.existsSync(vaultPath)) {
+                            try {
+                                await execPromise('git add .', { cwd: vaultPath });
+                                await execPromise(`git commit -m "${commitMessage}"`, { cwd: vaultPath });
+                            } catch (vaultError) {
+                                console.warn('Obsidian库Git操作失败:', vaultError);
+                                // 不抛出错误，因为主要的git操作已经完成
+                                new Notice('Obsidian库Git操作失败，请手动提交本仓库的git更新，避免影响下一次的差异翻译功能');
+                            }
+                        }
+                        
                         new Notice('Git操作完成');
                         resolve(true);
                     } catch (error) {
