@@ -98,12 +98,12 @@ export class ASTProcessor {
       
       case 'Paragraph':
         const content = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return content + '\n\n';
+        return content + '\n';
       
       case 'Heading':
         const level = (node.level as number) || 1;
         const headingContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return '#'.repeat(level) + ' ' + headingContent + '\n\n';
+        return '#'.repeat(level) + ' ' + headingContent + '\n';
       
       case 'Text':
         return node.value || '';
@@ -121,7 +121,7 @@ export class ASTProcessor {
       
       case 'CodeBlock':
         const lang = node.lang ? `\`\`\`${node.lang}\n` : '```\n';
-        return lang + (node.value || '') + '\n```\n\n';
+        return lang + (node.value || '') + '\n```\n';
       
       case 'Link':
         return `[${node.label || ''}](${node.url || ''})`;
@@ -142,26 +142,26 @@ export class ASTProcessor {
       
       case 'BlockQuote':
         const quoteContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n\n';
+        return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';
       
       case 'Callout':
         const calloutType = node.calloutType || 'note';
         const calloutTitle = node.calloutTitle || '';
         const calloutContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `> [!${calloutType}] ${calloutTitle}\n> ${calloutContent}\n\n`;
+        return `> [!${calloutType}] ${calloutTitle}\n> ${calloutContent}\n`;
       
       case 'MathBlock':
-        return `$$\n${node.value || ''}\n$$\n\n`;
+        return `$$\n${node.value || ''}\n$$\n`;
       
       case 'MathSpan':
         return `$${node.value || ''}$`;
       
       case 'HorizontalRule':
-        return '---\n\n';
+        return '---\n';
       
       case 'Table':
         // 简化表格输出
-        return `${node.header || ''}\n${node.align || ''}\n${((node.rows as string[]) || []).join('\n')}\n\n`;
+        return `${node.header || ''}\n${node.align || ''}\n${((node.rows as string[]) || []).join('\n')}\n`;
       
       case 'WikiLink':
         return `[[${node.value || ''}]]`;
@@ -192,10 +192,11 @@ export class ASTProcessor {
       
       case 'FootnoteDef':
         const footnoteContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `[^${node.id || ''}]: ${footnoteContent}\n\n`;
+        return `[^${node.id || ''}]: ${footnoteContent}\n`;
       
       case 'HtmlComment':
       case 'FrontMatter':
+        return `---\n${node.value || ''}\n---\n`;
       case 'HtmlBlock':
       case 'HtmlInline':
         return node.value || '';

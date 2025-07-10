@@ -1,3 +1,6 @@
+import { NodeType } from "../ast/parser";
+import { RuleBuilder } from "../ast/rule";
+
 export class CalloutExporter {
     transformCallouts(content: string): string {
         // 识别代码块的位置
@@ -30,7 +33,7 @@ export class CalloutExporter {
                 const type = match[1];
                 const contents = match[3];
                 const cleanContents = this.cleanCalloutContent(contents);
-                const contributes = this.getCalloutAttributes(type);
+                const contributes = getCalloutAttributes(type);
                 result += this.generateCalloutHtml(cleanContents, contributes);
             }
             lastIndex = match.index + match[0].length;
@@ -49,44 +52,65 @@ export class CalloutExporter {
             .join('\n');
     }
 
-    private getCalloutAttributes(type: string): string {
-        switch (type.toLowerCase()) {
-            case 'note':
-                return 'icon="pencil" cardColor="#1E3A8A" textColor="#E0E7FF"';
-            case 'info':
-                return 'icon="circle-info" cardColor="#b0c4de" textColor="#333333"';
-            case 'todo':
-                return 'icon="square-check" iconColor="#4682B4" cardColor="#e0ffff" textColor="#333333"';
-            case 'tip':
-            case 'hint':
-            case 'important':
-                return 'icon="lightbulb" cardColor="#fff5b7" textColor="#333333"';
-            case 'success':
-            case 'check':
-            case 'done':
-                return 'icon="check" cardColor="#32CD32" textColor="#fff" iconColor="#ffffff"';
-            case 'warning':
-            case 'caution':
-            case 'attention':
-                return 'icon="triangle-exclamation" cardColor="#ffcc00" textColor="#333333" iconColor="#8B6914"';
-            case 'question':
-            case 'help':
-            case 'faq':
-                return 'icon="circle-question" cardColor="#ffeb3b" textColor="#333333" iconColor="#3b3b3b"';
-            case 'danger':
-            case 'error':
-                return 'icon="fire" cardColor="#e63946" iconColor="#ffffff" textColor="#ffffff"';
-            case 'example':
-                return 'icon="list" cardColor="#d8bfd8" iconColor="#8B008B" textColor="#333333"';
-            default:
-                return '';
-
-        }
-    }
-
     private generateCalloutHtml(content: string, attributes: string): string {
         return `\n{{< alert ${attributes} >}}
 ${content}
 {{< /alert >}}\n`;
 	}
+}
+
+export const calloutRule = new RuleBuilder('callout转换')
+    .describe('将callout块转换为对应的hugo简码')
+    .matchType(NodeType.Callout)
+    .transform((node, context) => {
+      // 获取 callout 类型和标题
+      const type = (node.calloutType as string) || 'note';
+      const title = (node.calloutTitle as string) || '';
+      const calloutContent = (node.calloutContent as string) || '';
+      
+      // 生成 Hugo 简码格式
+      const attributes = getCalloutAttributes(type);
+      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}\n{{< /alert >}}\n`;
+      
+      // 创建新的文本节点
+      return {
+        type: NodeType.Text,
+        value: hugoShortcode
+      };
+    })
+    .build();
+
+export function getCalloutAttributes(type: string): string {
+    switch (type.toLowerCase()) {
+        case 'note':
+            return 'icon="pencil" cardColor="#1E3A8A" textColor="#E0E7FF"';
+        case 'info':
+            return 'icon="circle-info" cardColor="#b0c4de" textColor="#333333"';
+        case 'todo':
+            return 'icon="square-check" iconColor="#4682B4" cardColor="#e0ffff" textColor="#333333"';
+        case 'tip':
+        case 'hint':
+        case 'important':
+            return 'icon="lightbulb" cardColor="#fff5b7" textColor="#333333"';
+        case 'success':
+        case 'check':
+        case 'done':
+            return 'icon="check" cardColor="#32CD32" textColor="#fff" iconColor="#ffffff"';
+        case 'warning':
+        case 'caution':
+        case 'attention':
+            return 'icon="triangle-exclamation" cardColor="#ffcc00" textColor="#333333" iconColor="#8B6914"';
+        case 'question':
+        case 'help':
+        case 'faq':
+            return 'icon="circle-question" cardColor="#ffeb3b" textColor="#333333" iconColor="#3b3b3b"';
+        case 'danger':
+        case 'error':
+            return 'icon="fire" cardColor="#e63946" iconColor="#ffffff" textColor="#ffffff"';
+        case 'example':
+            return 'icon="list" cardColor="#d8bfd8" iconColor="#8B008B" textColor="#333333"';
+        default:
+            return '';
+
+    }
 }

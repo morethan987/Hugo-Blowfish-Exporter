@@ -1,0 +1,10 @@
+---
+description: 直接运行TS文件进行测试时的命令
+globs:
+alwaysApply: Agent Requested
+---
+
+当你需要直接运行某个TS文件进行测试的时候，请使用如下命令：
+```bash
+pnpm tsx src/path/to/the/test/file.ts
+```

@@ -46,6 +46,47 @@ export class ImageExporter {
         return modifiedContent;
     }
 
+    async transformImages_AST(content: string, mode: 'batch' | 'single', settings: any, slug: string): Promise<string> {
+        // 处理 wiki 链接格式 ![[...]]
+        const imgLinkRegex = /!\[\[(.*?)\]\]/g;
+        // 处理标准 Markdown 格式 ![alt](filename "description")
+        const markdownImgRegex = /!\[([^\]]*)\]\(([^)]+?)\s*(?:"([^"]*)")?\)/g;
+        
+        let modifiedContent = content;
+
+        // 处理 wiki 链接格式
+        const wikiMatches = Array.from(content.matchAll(imgLinkRegex));
+        for (const match of wikiMatches) {
+            const wikiPath = match[1];
+            modifiedContent = await this.processWikiImage(modifiedContent, wikiPath, mode, settings, slug);
+        }
+
+        // 处理标准 Markdown 格式
+        const markdownMatches = Array.from(content.matchAll(markdownImgRegex));
+        for (const match of markdownMatches) {
+            const altText = match[1];
+            const imagePath = match[2];
+            const description = match[3] || '';
+            const originalText = match[0];
+            
+            // 从路径中提取纯文件名（去掉引号中的描述）
+            const fileName = imagePath.trim();
+            
+            modifiedContent = await this.processMarkdownImage(
+                modifiedContent, 
+                fileName, 
+                altText, 
+                description, 
+                originalText, 
+                mode, 
+                settings, 
+                slug
+            );
+        }
+        
+        return modifiedContent;
+    }
+
     private async processWikiImage(content: string, wikiPath: string, mode: 'batch' | 'single', settings: any, slug: string): Promise<string> {
         try {
             const attachmentFile = this.app.metadataCache.getFirstLinkpathDest(wikiPath, '');

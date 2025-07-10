@@ -8,6 +8,15 @@ export class MermaidExporter {
         });
     }
 
+    transformMermaid_AST(content: string): string {
+        const mermaidRegex = /```mermaid\n([\s\S]*?)\n```/g;
+        
+        return content.replace(mermaidRegex, (match, mermaidContent) => {
+            const cleanMermaidContent = this.cleanMermaidContent(mermaidContent);
+            return this.generateMermaidHtml(cleanMermaidContent);
+        });
+    }
+
     private cleanMermaidContent(mermaidContent: string): string {
         return mermaidContent
             .split('\n')
