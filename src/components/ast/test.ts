@@ -1,3 +1,4 @@
+import { calloutRule } from '../exporters/calloutExporter';
 import { ASTProcessor } from './main';
 import { NodeType } from './parser';
 import { mathRule } from 'src/components/exporters/mathExporter';
@@ -25,6 +26,9 @@ title: 测试文档
 > [!warning] 警告
 > 这是一个警告 callout
 
+> [!warning] 警告
+> 这是一个警告 callout并且嵌入了\`ls -a\`内联代码块
+
 \`\`\`javascript
 // 代码块中的 callout 不应该被转换
 > [!info] 代码块中的 callout
@@ -43,6 +47,26 @@ x = y + z
 $$
 
 $x = y + z$
+
+![[图片.png]]
+
+[[非展示图片.png|非展示图片]]
+
+[[10.代码协同方案|文章引用]]
+
+[[#MATLAB用法|内部段落引用]]
+
+[[10.代码协同方案#MATLAB用法|外部段落引用]]
+
+[标准markdown链接](https://www.baidu.com)
+
+[标准图片链接](图片.png)
+
+![展示型标准图片链接](图片.png)
+
+![带有描述的图片链接](Transformer.png "引用自第 16 页")
+
+这里有一个内联代码块\`ls -a\`这里有一个内联代码块
 `;
 
 /**
@@ -93,12 +117,10 @@ function testRuleSystem() {
   console.log('重新启用规则后:', processor.getStats());
 }
 
-function testMathRule() {
-  console.log('\n=== 测试math规则 ===');
+function testCallout() {
+  console.log('=== callout功能测试 ===');
   const processor = new ASTProcessor();
-  processor.addRules(mathRule);
-  const result = processor.processToString(testMarkdown);
-  console.log(result);
+  processor.addRule(calloutRule)
 }
 
 /**
@@ -107,7 +129,7 @@ function testMathRule() {
 function runTests() {
   // testBasicFunctionality();
   // testRuleSystem();
-  testMathRule();
+  testCallout();
   console.log('\n=== 测试完成 ===');
 }
 

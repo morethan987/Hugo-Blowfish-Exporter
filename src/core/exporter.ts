@@ -5,9 +5,12 @@ import HugoBlowfishExporter from './plugin';
 import { ConfirmationModal } from 'src/utils/confirmationModal';
 import { BatchExportModal } from 'src/utils/batchExportModal';
 import { ExportNameModal } from 'src/utils/exportNameModal';
-import { ASTProcessor } from 'src/components/ast/main';
+import { ASTProcessor, NodeType } from 'src/components/ast/main';
 import { calloutRule } from 'src/components/exporters/calloutExporter';
 import { mathRule } from 'src/components/exporters/mathExporter';
+import { mermaidRule } from 'src/components/exporters/mermaidExporter';
+import { imageRule } from 'src/components/exporters/imageExporter';
+import { wikiLinkRule } from 'src/components/exporters/wikiLinkExporter';
 
 export class Exporter {
     constructor(
@@ -206,12 +209,49 @@ export class Exporter {
 
     async modifyContent_AST(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
         try {
-            const processor = new ASTProcessor();
+            // 构造 context
+            const activeFile = this.app.workspace.getActiveFile();
+            const metadata = activeFile ? this.app.metadataCache.getFileCache(activeFile) : null;
+            const slug = metadata?.frontmatter?.slug;
+            const lang = metadata?.frontmatter?.language;
+            const fileName = activeFile ? activeFile.basename : '未知文件';
+            if (!slug) {
+                if (mode === 'single') {
+                    new Notice(`⚠️ 警告: ${fileName} 缺少 slug 属性\n请在文件 frontmatter 中添加 slug 字段`, 20000);
+                } else {
+                    console.warn(`文件 ${fileName} 缺少 slug 属性`);
+                }
+                return content;
+            }
+            if (!lang) {
+                if (mode === 'single') {
+                    new Notice(`⚠️ 警告: ${fileName} 缺少 language 属性\n请在文件 frontmatter 中添加 language 字段`, 20000);
+                } else {
+                    console.warn(`文件 ${fileName} 缺少 language 属性`);
+                }
+                return content;
+            }
+            // 1. 先创建 context（不带 processor）
+            const context: any = {
+                data: { app: this.app, settings: this.plugin.settings, slug, lang, imageFiles: [] }
+            };
+            // 2. 创建 processor 实例
+            const processor = new ASTProcessor(context);
+            // 3. 将 processor 挂载到 context.processor
+            context.processor = processor;
             processor.addRules([
                 calloutRule,
                 ...mathRule,
+                imageRule,
+                ...wikiLinkRule,
+                mermaidRule,
             ]);
-            const result = processor.processToString(content);
+            // 4. 处理 AST，传递 context
+            const ast = processor.process(content, context);
+            const result = processor.astToString(ast);
+            // AST处理后统一复制图片
+            const { copyImagesAfterAst } = await import('src/components/exporters/imageExporter');
+            await copyImagesAfterAst(this.app, context.data.imageFiles, this.plugin.settings, slug);
             return result;
         } catch (error) {
             console.error('Error modifying content:', error);

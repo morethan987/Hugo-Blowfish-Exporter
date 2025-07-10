@@ -9,9 +9,11 @@ import { RuleExecutor, createExecutor, transformAST, ChainExecutor } from './exe
 export class ASTProcessor {
   private executor: RuleExecutor;
   private customRules: Rule[] = [];
+  private context?: any;
 
-  constructor() {
-    this.executor = createExecutor();
+  constructor(context?: any) {
+    this.context = context;
+    this.executor = context ? new RuleExecutor(context) : createExecutor();
   }
 
   /**
@@ -65,19 +67,19 @@ export class ASTProcessor {
   /**
    * 处理 Markdown 文本
    */
-  process(markdown: string): MarkdownNode {
+  process(markdown: string, context?: any): MarkdownNode {
     // 1. 解析为 AST
     const ast = parseMarkdown(markdown);
     
     // 2. 应用规则转换
-    return this.executor.execute(ast);
+    return this.executor.execute(ast, context || this.context);
   }
 
   /**
    * 获取处理后的 Markdown 文本
    */
-  processToString(markdown: string): string {
-    const ast = this.process(markdown);
+  processToString(markdown: string, context?: any): string {
+    const ast = this.process(markdown, context);
     return this.astToString(ast);
   }
 
@@ -127,11 +129,15 @@ export class ASTProcessor {
         return `[${node.label || ''}](${node.url || ''})`;
       
       case 'Image':
-        return `![${node.alt || ''}](${node.url || ''})`;
+        if (node.title) {
+          return node.embed ? `![${node.alt || ''}](${node.url || ''} "${node.title || ''}" )` : `[${node.alt || ''}](${node.url || ''} "${node.title || ''}")`;
+        } else {
+          return node.embed ? `![${node.alt || ''}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
+        }
       
       case 'List':
         const listItems = (node.children as MarkdownNode[])?.map(child => this.nodeToString(child)).join('') || '';
-        return listItems + '\n';
+        return listItems;
       
       case 'ListItem':
         const itemContent = node.children?.map(child => this.nodeToString(child)).join('') || '';

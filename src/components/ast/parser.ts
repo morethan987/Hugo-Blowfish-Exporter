@@ -361,15 +361,68 @@ function parseInline(text: string): MarkdownNode[] {
       }
     }
 
-    /** 3. Wikilink & 4. Embed */
+    /** 3. Wikilink & 4. Embed（增强结构化） */
     if (text.startsWith('![[', i) || text.startsWith('[[', i)) {
       const embed = text.startsWith('![[', i);
       const start = i + (embed ? 3 : 2);
       const end = text.indexOf(']]', start);
       if (end !== -1) {
-        const content = text.slice(start, end);
+        const content = text.slice(start, end).trim();
         flush();
-        nodes.push({ type: embed ? NodeType.Embed : NodeType.WikiLink, value: content.trim() });
+        // 结构化解析
+        // 1. 先分离 alias
+        let main = content;
+        let alias: string | undefined = undefined;
+        const pipeIdx = content.indexOf('|');
+        if (pipeIdx !== -1) {
+          main = content.slice(0, pipeIdx).trim();
+          alias = content.slice(pipeIdx + 1).trim();
+        }
+        // 2. 判断是否有段落引用（#）
+        let file: string | undefined = undefined;
+        let heading: string | undefined = undefined;
+        if (main.startsWith('#')) {
+          // 内部段落引用
+          heading = main.slice(1);
+        } else {
+          const hashIdx = main.indexOf('#');
+          if (hashIdx !== -1) {
+            file = main.slice(0, hashIdx).trim();
+            heading = main.slice(hashIdx + 1).trim();
+          } else {
+            file = main;
+          }
+        }
+        // 3. 判断是否为图片
+        if (file && /\.(png|jpg|jpeg|gif|svg|bmp|webp)$/i.test(file)) {
+          // 解析为标准Image结点
+          nodes.push({
+            type: NodeType.Image,
+            alt: alias || '',
+            url: file,
+            title: '',
+            wiki: true, // 标记来自wiki
+            embed: embed,
+          });
+        } else {
+          // 其他wiki链接保持结构化
+          let linkType: string = 'article';
+          if (embed) {
+            linkType = 'embed';
+          } else if (heading && file) {
+            linkType = 'external-heading';
+          } else if (heading && !file) {
+            linkType = 'internal-heading';
+          }
+          nodes.push({
+            type: embed ? NodeType.Embed : NodeType.WikiLink,
+            value: content,
+            file: file,
+            heading: heading,
+            alias: alias,
+            linkType: linkType,
+          });
+        }
         i = end + 2; continue;
       }
     }
@@ -393,8 +446,15 @@ function parseInline(text: string): MarkdownNode[] {
       if (altEnd !== -1 && parenStart !== -1 && parenEnd !== -1) {
         flush();
         const alt = text.slice(i + 2, altEnd);
-        const url = text.slice(parenStart + 1, parenEnd);
-        nodes.push({ type: NodeType.Image, alt, url });
+        const raw = text.slice(parenStart + 1, parenEnd).trim();
+        let url = raw;
+        let title = '';
+        const match = raw.match(/^([^\s]+)\s+(?:"([^"]*)"|'([^']*)')$/);
+        if (match) {
+          url = match[1];
+          title = match[2] || match[3] || '';
+        }
+        nodes.push({ type: NodeType.Image, alt, url, title, wiki: false, embed: true });
         i = parenEnd + 1; continue;
       }
     }
@@ -408,7 +468,11 @@ function parseInline(text: string): MarkdownNode[] {
         flush();
         const label = text.slice(i + 1, altEnd);
         const url = text.slice(parenStart + 1, parenEnd);
-        nodes.push({ type: NodeType.Link, label, url });
+        if (/\.(png|jpg|jpeg|gif|svg|bmp|webp)$/i.test(url)) {
+          nodes.push({ type: NodeType.Image, alt: label, url, wiki: false, embed: false });
+        } else {
+          nodes.push({ type: NodeType.Link, label, url });
+        }
         i = parenEnd + 1; continue;
       }
     }
@@ -526,3 +590,28 @@ function parseInline(text: string): MarkdownNode[] {
 // > > > [!example]  你甚至可以使用多层嵌套。
 // `;
 // console.dir(parseMarkdown(md2), {depth: null});
+
+console.log('测试 3: 解析各种链接');
+const md3 = `
+![[图片.png]]
+
+[[非展示图片.png|非展示图片]]
+
+[[10.代码协同方案|文章引用]]
+
+![[10.代码协同方案|文章引用]]
+
+[[#MATLAB用法|内部段落引用]]
+
+[[10.代码协同方案#MATLAB用法|外部段落引用]]
+
+[标准markdown链接](https://www.baidu.com)
+
+[标准图片链接](图片.png)
+
+![展示型标准图片链接](图片.png)
+
+![带有描述的图片链接](Transformer.png "引用自第 16 页")
+
+`;
+console.dir(parseMarkdown(md3), {depth: null});

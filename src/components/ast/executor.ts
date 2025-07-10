@@ -9,12 +9,16 @@ export class RuleExecutor {
   private rules: Rule[] = [];
   private context: RuleContext;
 
-  constructor() {
-    this.context = {
-      path: [],
-      data: {},
-      root: { type: NodeType.Document, children: [] }
-    };
+  constructor(context?: RuleContext) {
+    if (context) {
+      this.context = context;
+    } else {
+      this.context = {
+        path: [],
+        data: {},
+        root: { type: NodeType.Document, children: [] }
+      };
+    }
   }
 
   /**
@@ -44,7 +48,7 @@ export class RuleExecutor {
   /**
    * 执行规则转换
    */
-  execute(ast: MarkdownNode): MarkdownNode {
+  execute(ast: MarkdownNode, context?: RuleContext): MarkdownNode {
     // 按优先级排序规则
     const sortedRules = [...this.rules].sort((a, b) => {
       const priorityA = a.priority ?? 100;
@@ -52,9 +56,12 @@ export class RuleExecutor {
       return priorityA - priorityB;
     });
 
-    // 更新上下文
+    // 如果传入外部context，则引用之
+    if (context) {
+      this.context = context;
+    }
     this.context.root = ast;
-    this.context.data = {};
+    // 不重置data，保持外部传入的data引用
 
     // 执行规则
     return this.applyRules(ast, sortedRules, []);

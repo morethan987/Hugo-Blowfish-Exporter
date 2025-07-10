@@ -66,12 +66,21 @@ export const calloutRule = new RuleBuilder('callout转换')
       // 获取 callout 类型和标题
       const type = (node.calloutType as string) || 'note';
       const title = (node.calloutTitle as string) || '';
-      const calloutContent = (node.calloutContent as string) || '';
-      
+      // 递归渲染 callout 内部所有子节点为字符串
+      let calloutContent = '';
+      if (node.children && node.children.length > 0) {
+        const processor = (context as any).processor;
+        if (processor && typeof processor.astToString === 'function') {
+          calloutContent = node.children.map(child => processor.astToString(child)).join('');
+        } else {
+          calloutContent = node.children.map(child => child.value || '').join('');
+        }
+      } else {
+        calloutContent = (node.calloutContent as string) || '';
+      }
       // 生成 Hugo 简码格式
       const attributes = getCalloutAttributes(type);
-      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}\n{{< /alert >}}\n`;
-      
+      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}{{< /alert >}}\n`;
       // 创建新的文本节点
       return {
         type: NodeType.Text,
