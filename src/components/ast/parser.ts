@@ -227,36 +227,49 @@ export function parseMarkdown(src: string): MarkdownNode {
     /* ---------- 列表 (任务/无序/有序) ---------------------------------- */
     const listMatch = /^([ \t]*)([-+*]|\d+\.)\s+(.*)$/.exec(line);
     if (listMatch) {
-      const indentBase = listMatch[1].length;
-      const ordered = /\d+\./.test(listMatch[2]);
-      const items: MarkdownNode[] = [];
-      
-      while (i < lines.length) {
-        const currentLine = lines[i];
-        // 修复：如果是空行，跳过
-        if (currentLine.trim() === '') {
+      // 嵌套列表递归解析函数
+      function parseList(startIdx: number, baseIndent: number, level: number): { node: MarkdownNode, nextIdx: number } {
+        const ordered = /\d+\./.test(lines[startIdx].replace(/^([ \t]*)([-+*]|\d+\.)\s+.*/, '$2'));
+        const items: MarkdownNode[] = [];
+        let i = startIdx;
+        while (i < lines.length) {
+          const currentLine = lines[i];
+          if (currentLine.trim() === '') { i++; break; }
+          const li = /^([ \t]*)([-+*]|\d+\.)\s+(.*)$/.exec(currentLine);
+          if (!li) break;
+          const currentIndent = li[1].length;
+          if (currentIndent < baseIndent) break;
+          if (currentIndent > baseIndent) {
+            // 嵌套子列表
+            const { node: subList, nextIdx } = parseList(i, currentIndent, level + 1);
+            if (items.length > 0) {
+              // 挂到上一个 ListItem 的 children
+              const lastItem = items[items.length - 1];
+              if (!lastItem.children) lastItem.children = [];
+              lastItem.children.push(subList);
+            }
+            i = nextIdx;
+            continue;
+          }
+          const taskMatch = /^\[( |x)\]\s+/.exec(li[3]);
+          const content = taskMatch ? li[3].slice(taskMatch[0].length) : li[3];
+          items.push({
+            type: NodeType.ListItem,
+            task: taskMatch ? (taskMatch[1] === 'x') : undefined,
+            level,
+            children: parseInline(content),
+          });
           i++;
-          break;
         }
-        
-        // 修复：使用更精确的正则匹配
-        const li = /^([ \t]*)([-+*]|\d+\.)\s+(.*)$/.exec(currentLine);
-        if (!li) break;
-        
-        const currentIndent = li[1].length;
-        // 修复：检查缩进层级，如果不匹配则停止
-        if (currentIndent !== indentBase) break;
-        
-        const taskMatch = /^\[( |x)\]\s+/.exec(li[3]);
-        const content = taskMatch ? li[3].slice(taskMatch[0].length) : li[3];
-        items.push({
-          type: NodeType.ListItem,
-          task: taskMatch ? (taskMatch[1] === 'x') : undefined,
-          children: parseInline(content),
-        });
-        i++;
+        return {
+          node: { type: NodeType.List, ordered, level, children: items },
+          nextIdx: i
+        };
       }
-      root.children!.push({ type: NodeType.List, ordered, children: items });
+      const baseIndent = listMatch[1].length;
+      const { node: listNode, nextIdx } = parseList(i, baseIndent, 0);
+      root.children!.push(listNode);
+      i = nextIdx;
       continue;
     }
 
@@ -591,27 +604,51 @@ function parseInline(text: string): MarkdownNode[] {
 // `;
 // console.dir(parseMarkdown(md2), {depth: null});
 
-console.log('测试 3: 解析各种链接');
-const md3 = `
-![[图片.png]]
+// console.log('测试 3: 解析各种链接');
+// const md3 = `
+// ![[图片.png]]
 
-[[非展示图片.png|非展示图片]]
+// [[非展示图片.png|非展示图片]]
 
-[[10.代码协同方案|文章引用]]
+// [[10.代码协同方案|文章引用]]
 
-![[10.代码协同方案|文章引用]]
+// ![[10.代码协同方案|文章引用]]
 
-[[#MATLAB用法|内部段落引用]]
+// [[#MATLAB用法|内部段落引用]]
 
-[[10.代码协同方案#MATLAB用法|外部段落引用]]
+// [[10.代码协同方案#MATLAB用法|外部段落引用]]
 
-[标准markdown链接](https://www.baidu.com)
+// [标准markdown链接](https://www.baidu.com)
 
-[标准图片链接](图片.png)
+// [标准图片链接](图片.png)
 
-![展示型标准图片链接](图片.png)
+// ![展示型标准图片链接](图片.png)
 
-![带有描述的图片链接](Transformer.png "引用自第 16 页")
+// ![带有描述的图片链接](Transformer.png "引用自第 16 页")
 
-`;
-console.dir(parseMarkdown(md3), {depth: null});
+// `;
+// console.dir(parseMarkdown(md3), {depth: null});
+
+// console.log('测试 3: 解析列表');
+// const md4 = `
+// 1. xxx
+// 2. xxxx
+// 3. yyy
+// 4. yyyy
+
+// - 8
+// - 9
+// - 10
+
+// 1. xxx
+//     - 555
+//     - 666
+// 2. yyy
+//     - 111
+//     - 222
+//     - 333
+// 3. rrr
+//     - [ ] xxxxxxx
+//     - [x] kkkkkkk
+// `;
+// console.dir(parseMarkdown(md4), {depth: null});

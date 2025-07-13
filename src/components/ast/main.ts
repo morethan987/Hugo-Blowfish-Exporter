@@ -93,7 +93,7 @@ export class ASTProcessor {
   /**
    * 递归转换节点为字符串
    */
-  private nodeToString(node: MarkdownNode): string {
+  private nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?: number }): string {
     switch (node.type) {
       case 'Document':
         return node.children?.map(child => this.nodeToString(child)).join('\n') || '';
@@ -135,17 +135,38 @@ export class ASTProcessor {
           return node.embed ? `![${node.alt || ''}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
         }
       
-      case 'List':
-        const listItems = (node.children as MarkdownNode[])?.map(child => this.nodeToString(child)).join('') || '';
-        return listItems;
-      
-      case 'ListItem':
-        const itemContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        const prefix = node.task !== undefined ? 
-          (node.task ? '- [x] ' : '- [ ] ') : 
-          '- ';
-        return prefix + itemContent + '\n';
-      
+      case 'List': {
+        const ordered = !!node.ordered;
+        const children = node.children as MarkdownNode[];
+        return children?.map((child, idx) => this.nodeToString(child, { ordered, index: idx + 1 })).join('') || '';
+      }
+      case 'ListItem': {
+        const level = typeof node.level === 'number' ? node.level : 0;
+        const indent = ' '.repeat(level * 4);
+        let prefix = '- ';
+        if (node.task !== undefined) {
+          prefix = node.task ? '- [x] ' : '- [ ] ';
+        } else if (options?.ordered) {
+          prefix = `${options.index || 1}. `;
+        }
+        // 区分行内内容和嵌套列表
+        let inlineContent = '';
+        let nestedListContent = '';
+        if (node.children && node.children.length > 0) {
+          for (const child of node.children) {
+            if (child.type === 'List') {
+              nestedListContent += this.nodeToString(child);
+            } else {
+              inlineContent += this.nodeToString(child);
+            }
+          }
+        }
+        let result = indent + prefix + inlineContent + '\n';
+        if (nestedListContent) {
+          result += nestedListContent;
+        }
+        return result;
+      }
       case 'BlockQuote':
         const quoteContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
         return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';

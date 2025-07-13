@@ -67,6 +67,26 @@ $x = y + z$
 ![带有描述的图片链接](Transformer.png "引用自第 16 页")
 
 这里有一个内联代码块\`ls -a\`这里有一个内联代码块
+
+1. xxx
+2. xxxxxxx
+
+- 666
+- 6666666
+
+- [x] 这是已完成的任务。
+- [ ] 这是未完成的任务。
+
+1. xxx
+    - 555
+    - 666
+2. yyy
+    - 111
+    - 222
+    - 333
+3. rrr
+    - [ ] xxxxxxx
+    - [x] kkkkkkk
 `;
 
 /**
@@ -120,7 +140,9 @@ function testRuleSystem() {
 function testCallout() {
   console.log('=== callout功能测试 ===');
   const processor = new ASTProcessor();
-  processor.addRule(calloutRule)
+  const result = processor.processToString(testMarkdown);
+  console.log('\n处理后的文档:');
+  console.log(result);
 }
 
 /**
