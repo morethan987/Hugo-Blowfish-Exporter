@@ -253,10 +253,17 @@ export function parseMarkdown(src: string): MarkdownNode {
           }
           const taskMatch = /^\[( |x)\]\s+/.exec(li[3]);
           const content = taskMatch ? li[3].slice(taskMatch[0].length) : li[3];
+          // 提取有序列表编号
+          let number: number | undefined = undefined;
+          if (ordered) {
+            const numMatch = li[2].match(/^(\d+)\./);
+            if (numMatch) number = parseInt(numMatch[1], 10);
+          }
           items.push({
             type: NodeType.ListItem,
             task: taskMatch ? (taskMatch[1] === 'x') : undefined,
             level,
+            number,
             children: parseInline(content),
           });
           i++;

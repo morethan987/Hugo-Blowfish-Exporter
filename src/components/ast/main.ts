@@ -147,7 +147,12 @@ export class ASTProcessor {
         if (node.task !== undefined) {
           prefix = node.task ? '- [x] ' : '- [ ] ';
         } else if (options?.ordered) {
-          prefix = `${options.index || 1}. `;
+          // 优先使用用户编号
+          if (typeof node.number === 'number') {
+            prefix = `${node.number}. `;
+          } else {
+            prefix = `${options.index || 1}. `;
+          }
         }
         // 区分行内内容和嵌套列表
         let inlineContent = '';

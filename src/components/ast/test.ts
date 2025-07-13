@@ -87,6 +87,13 @@ $x = y + z$
 3. rrr
     - [ ] xxxxxxx
     - [x] kkkkkkk
+
+1. 生成验证文件 \`id_rsa.pub\`
+
+2. 本地创建 \`authorized_keys\` 文件，并将 \`id_rsa.pub\` 中的内容写入这个文件
+
+3. 在服务器中默认目录下创建 \`.ssh\` 文件夹，然后将 \`authorized_keys\` 文件从本地拷贝进去即可
+
 `;
 
 /**
