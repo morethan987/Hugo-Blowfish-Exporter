@@ -130,9 +130,9 @@ export class ASTProcessor {
       
       case 'Image':
         if (node.title) {
-          return node.embed ? `![${node.alt || ''}](${node.url || ''} "${node.title || ''}" )` : `[${node.alt || ''}](${node.url || ''} "${node.title || ''}")`;
+          return node.embed ? `![${node.alt || node.url}](${node.url || ''} "${node.title || ''}" )` : `[${node.alt || ''}](${node.url || ''} "${node.title || ''}")`;
         } else {
-          return node.embed ? `![${node.alt || ''}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
+          return node.embed ? `![${node.alt || node.url}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
         }
       
       case 'List': {

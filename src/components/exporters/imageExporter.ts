@@ -167,6 +167,7 @@ export const imageRule = new RuleBuilder('图片链接转换')
     .transform((node, context) => {
         if (!context.data.imageFiles) context.data.imageFiles = [];
         context.data.imageFiles.push(node.url);
+        node.url = context.data.settings.imageExportPath + '/' + node.url
         return node;
     })
     .build();
