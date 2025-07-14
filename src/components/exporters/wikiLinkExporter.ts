@@ -3,6 +3,7 @@ import { ExportDispNameModal } from 'src/utils/exportDispNameModal';
 import { HugoBlowfishExporterSettings } from 'src/types/settings';
 import { RuleBuilder } from '../ast/main';
 import { NodeType } from '../ast/parser';
+import { getSlugByName, getLangByName } from 'src/components/exporters/utils';
 
 export class WikiLinkExporter {
     constructor(private app: App) {}
@@ -217,10 +218,11 @@ export const wikiLinkRule = [
             const formated_heading = heading.replace(/[A-Z]/g, (char) => char.toLowerCase()).replace(/\s+/g, "-").replace(/[^\w\-\u4e00-\u9fa5]/g, ""); // 保留中文汉字，但移除特殊标点符号
             const alias = (node.alias as string) || '';
             const linkType = node.linkType as string;
+            const file_name = node.file as string || '';
 
             let hugoLink = ''
-            if(linkType === 'external-heading'){
-                hugoLink = `[${alias}]({{< ref "/${context.data.settings.blogPath}/${context.data.slug}/${formated_heading ? '#' + formated_heading : ''}" >}})`;
+            if(linkType === 'external-heading' || linkType === 'article'){
+                hugoLink = `[${alias}]({{< ref "/${context.data.settings.blogPath}/${getSlugByName(context.data.app, file_name)}/${formated_heading ? '#' + formated_heading : ''}" >}})`;
             } else if(linkType === 'internal-heading'){
                 hugoLink = `[${alias}]({{< relref "#${formated_heading}" >}})`;
             }

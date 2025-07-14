@@ -617,6 +617,8 @@ function parseInline(text: string): MarkdownNode[] {
 
 // [[非展示图片.png|非展示图片]]
 
+// [[10.代码协同方案]]
+
 // [[10.代码协同方案|文章引用]]
 
 // ![[10.代码协同方案|文章引用]]
@@ -636,26 +638,20 @@ function parseInline(text: string): MarkdownNode[] {
 // `;
 // console.dir(parseMarkdown(md3), {depth: null});
 
-// console.log('测试 3: 解析列表');
-// const md4 = `
-// 1. xxx
-// 2. xxxx
-// 3. yyy
-// 4. yyyy
+// console.log('测试 4: 解析列表');
+// const md4_1 = `
+// - 我：建模 + 代码 + 部分论文撰写
+// - CL：建模 + 论文撰写 + 部分代码
+// - HWJ：论文美化
 
-// - 8
-// - 9
-// - 10
+// ### 工作流程
 
-// 1. xxx
-//     - 555
-//     - 666
-// 2. yyy
-//     - 111
-//     - 222
-//     - 333
-// 3. rrr
-//     - [ ] xxxxxxx
-//     - [x] kkkkkkk
+// 整个 A 题的代码部分大致可以分为两个系统：
+// - 计算系统：
+// 	- 功能：接受输入数据与参数，返回需要的结果
+// 	- 性质：直接由题目决定，不同题目有不同的计算系统，需要临时构建
+// - 优化系统：
+// 	- 功能： 接受计算系统并将其作为可优化的目标函数，执行自身的优化逻辑，最后返回计算结果
+// 	- 性质：方法体系较为成熟，可以在**比赛前**就进行多种优化系统的准备
 // `;
-// console.dir(parseMarkdown(md4), {depth: null});
+// console.dir(parseMarkdown(md4_1), {depth: null});
