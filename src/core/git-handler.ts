@@ -120,17 +120,36 @@ export class GitHandler {
                         
                         // 在目标仓库中执行git操作
                         await execPromise('git add .', { cwd: repoPath });
-                        await execPromise(`git commit -m "${commitMessage}"`, { cwd: repoPath });
+                        try {
+                            await execPromise(`git commit -m "${commitMessage}"`, { cwd: repoPath });
+                        } catch (commitError) {
+                            if (commitError && commitError.stderr &&
+                                (commitError.stderr.includes('nothing to commit') || commitError.stderr.includes('no changes added to commit'))
+                            ) {
+                                new Notice('没有需要提交的更改。');
+                            } else {
+                                throw commitError;
+                            }
+                        }
                         await execPromise('git push', { cwd: repoPath });
                         
                         // 在当前Obsidian库根目录中执行git操作
                         if (vaultPath && fs.existsSync(vaultPath)) {
                             try {
                                 await execPromise('git add .', { cwd: vaultPath });
-                                await execPromise(`git commit -m "${commitMessage}"`, { cwd: vaultPath });
+                                try {
+                                    await execPromise(`git commit -m "${commitMessage}"`, { cwd: vaultPath });
+                                } catch (vaultCommitError) {
+                                    if (vaultCommitError && vaultCommitError.stderr &&
+                                        (vaultCommitError.stderr.includes('nothing to commit') || vaultCommitError.stderr.includes('no changes added to commit'))
+                                    ) {
+                                        new Notice('Obsidian库没有需要提交的更改。');
+                                    } else {
+                                        throw vaultCommitError;
+                                    }
+                                }
                             } catch (vaultError) {
                                 console.warn('Obsidian库Git操作失败:', vaultError);
-                                // 不抛出错误，因为主要的git操作已经完成
                                 new Notice('Obsidian库Git操作失败，请手动提交本仓库的git更新，避免影响下一次的差异翻译功能');
                             }
                         }
