@@ -222,9 +222,9 @@ export const wikiLinkRule = [
 
             let hugoLink = ''
             if(linkType === 'external-heading' || linkType === 'article'){
-                hugoLink = `[${alias}]({{< ref "/${context.data.settings.blogPath}/${getSlugByName(context.data.app, file_name)}/${formated_heading ? '#' + formated_heading : ''}" >}})`;
+                hugoLink = `[${alias || heading}]({{< ref "/${context.data.settings.blogPath}/${getSlugByName(context.data.app, file_name)}/${formated_heading ? '#' + formated_heading : ''}" >}})`;
             } else if(linkType === 'internal-heading'){
-                hugoLink = `[${alias}]({{< relref "#${formated_heading}" >}})`;
+                hugoLink = `[${alias || heading}]({{< relref "#${formated_heading}" >}})`;
             }
 
             return {

@@ -1,7 +1,7 @@
 import { calloutRule } from '../exporters/calloutExporter';
 import { ASTProcessor } from './main';
 import { NodeType } from './parser';
-import { mathRule } from 'src/components/exporters/mathExporter';
+import { wikiLinkRule } from 'src/components/exporters/wikiLinkExporter';
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---
@@ -159,9 +159,10 @@ function testRuleSystem() {
   console.log('重新启用规则后:', processor.getStats());
 }
 
-function testCallout() {
-  console.log('=== callout功能测试 ===');
+function testWikiLink() {
+  console.log('=== wikiLink功能测试 ===');
   const processor = new ASTProcessor();
+  processor.addRules(wikiLinkRule);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');
   console.log(result);
@@ -173,7 +174,7 @@ function testCallout() {
 function runTests() {
   // testBasicFunctionality();
   // testRuleSystem();
-  testCallout();
+  testWikiLink();
   console.log('\n=== 测试完成 ===');
 }
 

@@ -623,6 +623,8 @@ function parseInline(text: string): MarkdownNode[] {
 
 // ![[10.代码协同方案|文章引用]]
 
+// [[#MATLAB用法]]
+
 // [[#MATLAB用法|内部段落引用]]
 
 // [[10.代码协同方案#MATLAB用法|外部段落引用]]
