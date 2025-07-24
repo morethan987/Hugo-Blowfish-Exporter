@@ -169,53 +169,36 @@ export function parseMarkdown(src: string): MarkdownNode {
     /* ---------- Callout (> [!note] ...) --------------------------------- */
     if (/^>\s*\[![^\]]+\]/.test(line)) {
       const calloutLines: string[] = [];
-      
       // 收集当前 callout 的所有行
       while (i < lines.length) {
         const currentLine = lines[i];
-        
         // 如果是空行，结束当前 callout
         if (currentLine.trim() === '') {
           i++;
           break;
         }
-        
         // 如果不是引用行，结束当前 callout
         if (!/^>\s*/.test(currentLine)) {
           break;
         }
-        
         calloutLines.push(currentLine);
         i++;
       }
-      
       // 提取 callout 类型和内容
       const firstLine = calloutLines[0].replace(/^>\s*/, '');
       const typeMatch = /^\[!([^\]]+)\](.*)$/.exec(firstLine);
       const calloutType = typeMatch ? typeMatch[1] : 'note';
-      const calloutTitle = typeMatch ? typeMatch[2].trim() : '';
-      
+      const calloutTitleRaw = typeMatch ? typeMatch[2].trim() : '';
       // 去掉第一行，并对剩余每一行去掉一层 > 引用标记
       const inner = calloutLines
         .slice(1)
         .map(l => l.replace(/^>\s?/, ''))
         .join('\n');
-      
       // 解析内部内容
       const innerAst = parseMarkdown(inner);
-      
-      // 提取 callout 内容文本
-      const calloutContent = innerAst.children?.map(child => {
-        if (child.type === NodeType.Text) {
-          return child.value || '';
-        } else if (child.type === NodeType.Paragraph) {
-          return child.children?.map(grandChild => 
-            grandChild.type === NodeType.Text ? grandChild.value || '' : ''
-          ).join('') || '';
-        }
-        return '';
-      }).filter(line => line.length > 0).join('\n') || '';
-      
+      // 行内解析 calloutTitle 和 calloutContent
+      const calloutTitle = parseInline(calloutTitleRaw);
+      const calloutContent = parseInline(inner);
       root.children!.push({
         type: NodeType.Callout,
         calloutType,
@@ -633,13 +616,19 @@ function parseInline(text: string): MarkdownNode[] {
 // `;
 // console.dir(parseMarkdown(md1), {depth: null});
 
-// console.log('测试 2: 解析 Callout 多级嵌套');
+// console.log('测试 2: 解析 Callout 嵌套');
 // const md2 = `
 // 下面是一个嵌套的 callout
 
 // > [!note] 注意
 // > > [!todo] 可以。
 // > > > [!example]  你甚至可以使用多层嵌套。
+
+// > [!warning] 警告
+// > 这是一个警告 callout并且嵌入了\`ls -a\`内联代码块
+
+// > [!warning] 警告
+// > 这是一个警告 callout并且嵌入了$ls -a$内联公式块
 // `;
 // console.dir(parseMarkdown(md2), {depth: null});
 

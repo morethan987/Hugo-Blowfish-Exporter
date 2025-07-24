@@ -30,6 +30,9 @@ title: 测试文档
 > [!warning] 警告
 > 这是一个警告 callout并且嵌入了\`ls -a\`内联代码块
 
+> [!warning] 警告
+> 这是一个警告 callout并且嵌入了$ls -a$内联公式块
+
 | 符号             | 含义                  |
 | -------------- | ------------------- |
 | $x$            | 目标问题                |
@@ -177,9 +180,14 @@ function testRuleSystem() {
 
 function testWikiLink() {
   console.log('=== wikiLink功能测试 ===');
-  const processor = new ASTProcessor();
   // processor.addRules(wikiLinkRule);
-  processor.addRules(mathRule);
+  const context: any = {};
+  const processor = new ASTProcessor(context);
+  context.processor = processor;
+  processor.addRules([
+    ...mathRule,
+    calloutRule
+  ]);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');
   console.log(result);

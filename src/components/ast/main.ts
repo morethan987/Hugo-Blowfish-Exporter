@@ -176,11 +176,12 @@ export class ASTProcessor {
         const quoteContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
         return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';
       
-      case 'Callout':
+      case 'Callout': {
         const calloutType = node.calloutType || 'note';
-        const calloutTitle = node.calloutTitle || '';
-        const calloutContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
+        const calloutTitle = Array.isArray(node.calloutTitle) ? node.calloutTitle.map((n: any) => this.nodeToString(n)).join('') : (node.calloutTitle || '');
+        const calloutContent = Array.isArray(node.calloutContent) ? node.calloutContent.map((n: any) => this.nodeToString(n)).join('') : (node.calloutContent || '');
         return `> [!${calloutType}] ${calloutTitle}\n> ${calloutContent}\n`;
+      }
       
       case 'MathBlock':
         return `$$\n${node.value || ''}\n$$\n`;

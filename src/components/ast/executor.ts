@@ -106,6 +106,21 @@ export class RuleExecutor {
         }))
       }));
       return tableNode;
+    } else if (transformedNode.type === NodeType.Callout) {
+      // 处理 calloutTitle, calloutContent, children
+      if (Array.isArray((transformedNode as any).calloutTitle)) {
+        (transformedNode as any).calloutTitle = (transformedNode as any).calloutTitle.map((child: MarkdownNode, idx: number) => this.applyRules(child, rules, path.concat(idx)));
+      }
+      if (Array.isArray((transformedNode as any).calloutContent)) {
+        (transformedNode as any).calloutContent = (transformedNode as any).calloutContent.map((child: MarkdownNode, idx: number) => this.applyRules(child, rules, path.concat(idx)));
+      }
+      if (transformedNode.children) {
+        transformedNode.children = transformedNode.children.map((child, index) => {
+          const childPath = [...path, index];
+          return this.applyRules(child, rules, childPath);
+        });
+      }
+      return transformedNode;
     } else if (transformedNode.children) {
       transformedNode.children = transformedNode.children.map((child, index) => {
         const childPath = [...path, index];

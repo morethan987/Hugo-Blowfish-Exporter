@@ -63,25 +63,39 @@ export const calloutRule = new RuleBuilder('callout转换')
     .describe('将callout块转换为对应的hugo简码')
     .matchType(NodeType.Callout)
     .transform((node, context) => {
-      // 获取 callout 类型和标题
       const type = (node.calloutType as string) || 'note';
-      const title = (node.calloutTitle as string) || '';
-      // 递归渲染 callout 内部所有子节点为字符串
       let calloutContent = '';
-      if (node.children && node.children.length > 0) {
-        const processor = (context as any).processor;
-        if (processor && typeof processor.astToString === 'function') {
-          calloutContent = node.children.map(child => processor.astToString(child)).join('');
+      const processor = (context as any).processor;
+      // 递归处理 calloutContent
+      if (Array.isArray(node.calloutContent)) {
+        if (processor && typeof processor.astToString === 'function' && processor.executor) {
+          calloutContent = node.calloutContent
+            .map((n: any) => {
+              // 递归应用所有规则
+              const transformed = processor.executor.execute(n, context);
+              return processor.astToString(transformed);
+            })
+            .join('');
+        } else {
+          calloutContent = node.calloutContent.map((n: any) => n.value || '').join('');
+        }
+      } else if (node.children && node.children.length > 0) {
+        // 兼容旧结构
+        if (processor && typeof processor.astToString === 'function' && processor.executor) {
+          calloutContent = node.children
+            .map(child => {
+              const transformed = processor.executor.execute(child, context);
+              return processor.astToString(transformed);
+            })
+            .join('');
         } else {
           calloutContent = node.children.map(child => child.value || '').join('');
         }
       } else {
         calloutContent = (node.calloutContent as string) || '';
       }
-      // 生成 Hugo 简码格式
       const attributes = getCalloutAttributes(type);
-      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}{{< /alert >}}\n`;
-      // 创建新的文本节点
+      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}\n{{< /alert >}}\n`;
       return {
         type: NodeType.Text,
         value: hugoShortcode
