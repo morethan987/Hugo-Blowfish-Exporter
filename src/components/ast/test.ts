@@ -2,6 +2,7 @@ import { calloutRule } from '../exporters/calloutExporter';
 import { ASTProcessor } from './main';
 import { NodeType } from './parser';
 import { wikiLinkRule } from 'src/components/exporters/wikiLinkExporter';
+import { mathRule } from 'src/components/exporters/mathExporter';
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---
@@ -28,6 +29,21 @@ title: 测试文档
 
 > [!warning] 警告
 > 这是一个警告 callout并且嵌入了\`ls -a\`内联代码块
+
+| 符号             | 含义                  |
+| -------------- | ------------------- |
+| $x$            | 目标问题                |
+| $M$            | 目标小模型               |
+| $T$            | 小模型使用 MCTS 生成的搜索树   |
+| $s$            | 推理中间步               |
+| $t$            | 候选路径，$T$ 中的一条完整推理路径 |
+| $ans$          | $M$ 解决 $x$ 的最终推理路径  |
+| $Score$        | 推理路径评价函数            |
+| $a$            | 从动作空间中采样得到的一个动作     |
+| $s_{d}$        | 终止推理步，包含问题的答案       |
+| $\hat{M}$      | "同伴"小模型             |
+| $T_{validate}$ | 经过路径评估函数剪枝后的 $T$    |
+| $Estimate$     | 路径评估函数              |
 
 \`\`\`javascript
 // 代码块中的 callout 不应该被转换
@@ -162,7 +178,8 @@ function testRuleSystem() {
 function testWikiLink() {
   console.log('=== wikiLink功能测试 ===');
   const processor = new ASTProcessor();
-  processor.addRules(wikiLinkRule);
+  // processor.addRules(wikiLinkRule);
+  processor.addRules(mathRule);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');
   console.log(result);

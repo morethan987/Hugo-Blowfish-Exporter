@@ -191,9 +191,17 @@ export class ASTProcessor {
       case 'HorizontalRule':
         return '---\n';
       
-      case 'Table':
-        // 简化表格输出
-        return `${node.header || ''}\n${node.align || ''}\n${((node.rows as string[]) || []).join('\n')}\n`;
+      case 'Table': {
+        const headerRow = (node.header as any[]).map((cell: any) => cell.content.map((n: any) => this.nodeToString(n)).join('')).join(' | ');
+        const alignRow = (node.align as string[]).map(a => {
+          if (a === 'left') return ':-----';
+          if (a === 'center') return ':-----:';
+          if (a === 'right') return '-----:';
+          return '-----';
+        }).join(' | ');
+        const bodyRows = (node.rows as any[]).map((row: any) => row.cells.map((cell: any) => cell.content.map((n: any) => this.nodeToString(n)).join('')).join(' | ')).join('\n');
+        return `${headerRow}\n${alignRow}\n${bodyRows}\n`;
+      }
       
       case 'WikiLink':
         return `[[${node.value || ''}]]`;

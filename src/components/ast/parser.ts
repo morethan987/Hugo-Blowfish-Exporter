@@ -58,6 +58,19 @@ export interface MarkdownNode {
   [key: string]: unknown;
 }
 
+// 表格相关类型
+export interface TableCell {
+  content: MarkdownNode[];
+}
+export interface TableRow {
+  cells: TableCell[];
+}
+export interface TableNode extends MarkdownNode {
+  type: NodeType.Table;
+  header: TableCell[];
+  align: string[];
+  rows: TableRow[];
+}
 
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -302,15 +315,34 @@ export function parseMarkdown(src: string): MarkdownNode {
 
     /* ---------- 表格 ---------------------------------------------------- */
     if (line.includes('|') && i + 1 < lines.length && /\|\s*:?-+:?\s*\|/.test(lines[i + 1])) {
-      const header = line.trim();
-      const align = lines[i + 1].trim();
-      const rows: string[] = [];
+      // 拆分表头和对齐行
+      const splitRow = (row: string) => {
+        // 去除首尾 |，再按 | 分割
+        return row.replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
+      };
+      const headerCells = splitRow(line.trim());
+      const alignCells = splitRow(lines[i + 1].trim());
+      // 解析对齐方式
+      const align: string[] = alignCells.map(cell => {
+        if (/^:?-+:?$/.test(cell)) {
+          if (cell.startsWith(':') && cell.endsWith(':')) return 'center';
+          if (cell.startsWith(':')) return 'left';
+          if (cell.endsWith(':')) return 'right';
+        }
+        return 'none';
+      });
+      // 解析表头单元格内容
+      const header: TableCell[] = headerCells.map(cell => ({ content: parseInline(cell) }));
+      // 解析数据行
+      const rows: TableRow[] = [];
       i += 2;
       while (i < lines.length && lines[i].includes('|')) {
-        rows.push(lines[i].trim());
+        const rowCells = splitRow(lines[i].trim());
+        rows.push({ cells: rowCells.map(cell => ({ content: parseInline(cell) })) });
         i++;
       }
-      root.children!.push({ type: NodeType.Table, header, align, rows });
+      const tableNode: TableNode = { type: NodeType.Table, header, align, rows };
+      root.children!.push(tableNode);
       continue;
     }
 
