@@ -58,6 +58,19 @@ export interface MarkdownNode {
   [key: string]: unknown;
 }
 
+// 表格相关类型
+export interface TableCell {
+  content: MarkdownNode[];
+}
+export interface TableRow {
+  cells: TableCell[];
+}
+export interface TableNode extends MarkdownNode {
+  type: NodeType.Table;
+  header: TableCell[];
+  align: string[];
+  rows: TableRow[];
+}
 
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -156,53 +169,36 @@ export function parseMarkdown(src: string): MarkdownNode {
     /* ---------- Callout (> [!note] ...) --------------------------------- */
     if (/^>\s*\[![^\]]+\]/.test(line)) {
       const calloutLines: string[] = [];
-      
       // 收集当前 callout 的所有行
       while (i < lines.length) {
         const currentLine = lines[i];
-        
         // 如果是空行，结束当前 callout
         if (currentLine.trim() === '') {
           i++;
           break;
         }
-        
         // 如果不是引用行，结束当前 callout
         if (!/^>\s*/.test(currentLine)) {
           break;
         }
-        
         calloutLines.push(currentLine);
         i++;
       }
-      
       // 提取 callout 类型和内容
       const firstLine = calloutLines[0].replace(/^>\s*/, '');
       const typeMatch = /^\[!([^\]]+)\](.*)$/.exec(firstLine);
       const calloutType = typeMatch ? typeMatch[1] : 'note';
-      const calloutTitle = typeMatch ? typeMatch[2].trim() : '';
-      
+      const calloutTitleRaw = typeMatch ? typeMatch[2].trim() : '';
       // 去掉第一行，并对剩余每一行去掉一层 > 引用标记
       const inner = calloutLines
         .slice(1)
         .map(l => l.replace(/^>\s?/, ''))
         .join('\n');
-      
       // 解析内部内容
       const innerAst = parseMarkdown(inner);
-      
-      // 提取 callout 内容文本
-      const calloutContent = innerAst.children?.map(child => {
-        if (child.type === NodeType.Text) {
-          return child.value || '';
-        } else if (child.type === NodeType.Paragraph) {
-          return child.children?.map(grandChild => 
-            grandChild.type === NodeType.Text ? grandChild.value || '' : ''
-          ).join('') || '';
-        }
-        return '';
-      }).filter(line => line.length > 0).join('\n') || '';
-      
+      // 行内解析 calloutTitle 和 calloutContent
+      const calloutTitle = parseInline(calloutTitleRaw);
+      const calloutContent = parseInline(inner);
       root.children!.push({
         type: NodeType.Callout,
         calloutType,
@@ -227,36 +223,56 @@ export function parseMarkdown(src: string): MarkdownNode {
     /* ---------- 列表 (任务/无序/有序) ---------------------------------- */
     const listMatch = /^([ \t]*)([-+*]|\d+\.)\s+(.*)$/.exec(line);
     if (listMatch) {
-      const indentBase = listMatch[1].length;
-      const ordered = /\d+\./.test(listMatch[2]);
-      const items: MarkdownNode[] = [];
-      
-      while (i < lines.length) {
-        const currentLine = lines[i];
-        // 修复：如果是空行，跳过
-        if (currentLine.trim() === '') {
+      // 嵌套列表递归解析函数
+      function parseList(startIdx: number, baseIndent: number, level: number): { node: MarkdownNode, nextIdx: number } {
+        const ordered = /\d+\./.test(lines[startIdx].replace(/^([ \t]*)([-+*]|\d+\.)\s+.*/, '$2'));
+        const items: MarkdownNode[] = [];
+        let i = startIdx;
+        while (i < lines.length) {
+          const currentLine = lines[i];
+          if (currentLine.trim() === '') { i++; break; }
+          const li = /^([ \t]*)([-+*]|\d+\.)\s+(.*)$/.exec(currentLine);
+          if (!li) break;
+          const currentIndent = li[1].length;
+          if (currentIndent < baseIndent) break;
+          if (currentIndent > baseIndent) {
+            // 嵌套子列表
+            const { node: subList, nextIdx } = parseList(i, currentIndent, level + 1);
+            if (items.length > 0) {
+              // 挂到上一个 ListItem 的 children
+              const lastItem = items[items.length - 1];
+              if (!lastItem.children) lastItem.children = [];
+              lastItem.children.push(subList);
+            }
+            i = nextIdx;
+            continue;
+          }
+          const taskMatch = /^\[( |x)\]\s+/.exec(li[3]);
+          const content = taskMatch ? li[3].slice(taskMatch[0].length) : li[3];
+          // 提取有序列表编号
+          let number: number | undefined = undefined;
+          if (ordered) {
+            const numMatch = li[2].match(/^(\d+)\./);
+            if (numMatch) number = parseInt(numMatch[1], 10);
+          }
+          items.push({
+            type: NodeType.ListItem,
+            task: taskMatch ? (taskMatch[1] === 'x') : undefined,
+            level,
+            number,
+            children: parseInline(content),
+          });
           i++;
-          break;
         }
-        
-        // 修复：使用更精确的正则匹配
-        const li = /^([ \t]*)([-+*]|\d+\.)\s+(.*)$/.exec(currentLine);
-        if (!li) break;
-        
-        const currentIndent = li[1].length;
-        // 修复：检查缩进层级，如果不匹配则停止
-        if (currentIndent !== indentBase) break;
-        
-        const taskMatch = /^\[( |x)\]\s+/.exec(li[3]);
-        const content = taskMatch ? li[3].slice(taskMatch[0].length) : li[3];
-        items.push({
-          type: NodeType.ListItem,
-          task: taskMatch ? (taskMatch[1] === 'x') : undefined,
-          children: parseInline(content),
-        });
-        i++;
+        return {
+          node: { type: NodeType.List, ordered, level, children: items },
+          nextIdx: i
+        };
       }
-      root.children!.push({ type: NodeType.List, ordered, children: items });
+      const baseIndent = listMatch[1].length;
+      const { node: listNode, nextIdx } = parseList(i, baseIndent, 0);
+      root.children!.push(listNode);
+      i = nextIdx;
       continue;
     }
 
@@ -282,15 +298,34 @@ export function parseMarkdown(src: string): MarkdownNode {
 
     /* ---------- 表格 ---------------------------------------------------- */
     if (line.includes('|') && i + 1 < lines.length && /\|\s*:?-+:?\s*\|/.test(lines[i + 1])) {
-      const header = line.trim();
-      const align = lines[i + 1].trim();
-      const rows: string[] = [];
+      // 拆分表头和对齐行
+      const splitRow = (row: string) => {
+        // 去除首尾 |，再按 | 分割
+        return row.replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
+      };
+      const headerCells = splitRow(line.trim());
+      const alignCells = splitRow(lines[i + 1].trim());
+      // 解析对齐方式
+      const align: string[] = alignCells.map(cell => {
+        if (/^:?-+:?$/.test(cell)) {
+          if (cell.startsWith(':') && cell.endsWith(':')) return 'center';
+          if (cell.startsWith(':')) return 'left';
+          if (cell.endsWith(':')) return 'right';
+        }
+        return 'none';
+      });
+      // 解析表头单元格内容
+      const header: TableCell[] = headerCells.map(cell => ({ content: parseInline(cell) }));
+      // 解析数据行
+      const rows: TableRow[] = [];
       i += 2;
       while (i < lines.length && lines[i].includes('|')) {
-        rows.push(lines[i].trim());
+        const rowCells = splitRow(lines[i].trim());
+        rows.push({ cells: rowCells.map(cell => ({ content: parseInline(cell) })) });
         i++;
       }
-      root.children!.push({ type: NodeType.Table, header, align, rows });
+      const tableNode: TableNode = { type: NodeType.Table, header, align, rows };
+      root.children!.push(tableNode);
       continue;
     }
 
@@ -361,15 +396,68 @@ function parseInline(text: string): MarkdownNode[] {
       }
     }
 
-    /** 3. Wikilink & 4. Embed */
+    /** 3. Wikilink & 4. Embed（增强结构化） */
     if (text.startsWith('![[', i) || text.startsWith('[[', i)) {
       const embed = text.startsWith('![[', i);
       const start = i + (embed ? 3 : 2);
       const end = text.indexOf(']]', start);
       if (end !== -1) {
-        const content = text.slice(start, end);
+        const content = text.slice(start, end).trim();
         flush();
-        nodes.push({ type: embed ? NodeType.Embed : NodeType.WikiLink, value: content.trim() });
+        // 结构化解析
+        // 1. 先分离 alias
+        let main = content;
+        let alias: string | undefined = undefined;
+        const pipeIdx = content.indexOf('|');
+        if (pipeIdx !== -1) {
+          main = content.slice(0, pipeIdx).trim();
+          alias = content.slice(pipeIdx + 1).trim();
+        }
+        // 2. 判断是否有段落引用（#）
+        let file: string | undefined = undefined;
+        let heading: string | undefined = undefined;
+        if (main.startsWith('#')) {
+          // 内部段落引用
+          heading = main.slice(1);
+        } else {
+          const hashIdx = main.indexOf('#');
+          if (hashIdx !== -1) {
+            file = main.slice(0, hashIdx).trim();
+            heading = main.slice(hashIdx + 1).trim();
+          } else {
+            file = main;
+          }
+        }
+        // 3. 判断是否为图片
+        if (file && /\.(png|jpg|jpeg|gif|svg|bmp|webp)$/i.test(file)) {
+          // 解析为标准Image结点
+          nodes.push({
+            type: NodeType.Image,
+            alt: alias || '',
+            url: file,
+            title: '',
+            wiki: true, // 标记来自wiki
+            embed: embed,
+          });
+        } else {
+          // 其他wiki链接保持结构化
+          let linkType: string = 'article';
+          if (embed) {
+            linkType = 'embed';
+          } else if (heading && file) {
+            linkType = 'external-heading';
+          } else if (heading && !file) {
+            linkType = 'internal-heading';
+          }
+          nodes.push({
+            type: embed ? NodeType.Embed : NodeType.WikiLink,
+            value: content,
+            file: file,
+            heading: heading,
+            alias: alias,
+            linkType: linkType,
+          });
+        }
         i = end + 2; continue;
       }
     }
@@ -393,8 +481,15 @@ function parseInline(text: string): MarkdownNode[] {
       if (altEnd !== -1 && parenStart !== -1 && parenEnd !== -1) {
         flush();
         const alt = text.slice(i + 2, altEnd);
-        const url = text.slice(parenStart + 1, parenEnd);
-        nodes.push({ type: NodeType.Image, alt, url });
+        const raw = text.slice(parenStart + 1, parenEnd).trim();
+        let url = raw;
+        let title = '';
+        const match = raw.match(/^([^\s]+)\s+(?:"([^"]*)"|'([^']*)')$/);
+        if (match) {
+          url = match[1];
+          title = match[2] || match[3] || '';
+        }
+        nodes.push({ type: NodeType.Image, alt, url, title, wiki: false, embed: true });
         i = parenEnd + 1; continue;
       }
     }
@@ -408,7 +503,11 @@ function parseInline(text: string): MarkdownNode[] {
         flush();
         const label = text.slice(i + 1, altEnd);
         const url = text.slice(parenStart + 1, parenEnd);
-        nodes.push({ type: NodeType.Link, label, url });
+        if (/\.(png|jpg|jpeg|gif|svg|bmp|webp)$/i.test(url)) {
+          nodes.push({ type: NodeType.Image, alt: label, url, wiki: false, embed: false });
+        } else {
+          nodes.push({ type: NodeType.Link, label, url });
+        }
         i = parenEnd + 1; continue;
       }
     }
@@ -517,12 +616,65 @@ function parseInline(text: string): MarkdownNode[] {
 // `;
 // console.dir(parseMarkdown(md1), {depth: null});
 
-// console.log('测试 2: 解析 Callout 多级嵌套');
+// console.log('测试 2: 解析 Callout 嵌套');
 // const md2 = `
 // 下面是一个嵌套的 callout
 
 // > [!note] 注意
 // > > [!todo] 可以。
 // > > > [!example]  你甚至可以使用多层嵌套。
+
+// > [!warning] 警告
+// > 这是一个警告 callout并且嵌入了\`ls -a\`内联代码块
+
+// > [!warning] 警告
+// > 这是一个警告 callout并且嵌入了$ls -a$内联公式块
 // `;
 // console.dir(parseMarkdown(md2), {depth: null});
+
+// console.log('测试 3: 解析各种链接');
+// const md3 = `
+// ![[图片.png]]
+
+// [[非展示图片.png|非展示图片]]
+
+// [[10.代码协同方案]]
+
+// [[10.代码协同方案|文章引用]]
+
+// ![[10.代码协同方案|文章引用]]
+
+// [[#MATLAB用法]]
+
+// [[#MATLAB用法|内部段落引用]]
+
+// [[10.代码协同方案#MATLAB用法|外部段落引用]]
+
+// [标准markdown链接](https://www.baidu.com)
+
+// [标准图片链接](图片.png)
+
+// ![展示型标准图片链接](图片.png)
+
+// ![带有描述的图片链接](Transformer.png "引用自第 16 页")
+
+// `;
+// console.dir(parseMarkdown(md3), {depth: null});
+
+// console.log('测试 4: 解析列表');
+// const md4_1 = `
+// - 我：建模 + 代码 + 部分论文撰写
+// - CL：建模 + 论文撰写 + 部分代码
+// - HWJ：论文美化
+
+// ### 工作流程
+
+// 整个 A 题的代码部分大致可以分为两个系统：
+// - 计算系统：
+// 	- 功能：接受输入数据与参数，返回需要的结果
+// 	- 性质：直接由题目决定，不同题目有不同的计算系统，需要临时构建
+// - 优化系统：
+// 	- 功能： 接受计算系统并将其作为可优化的目标函数，执行自身的优化逻辑，最后返回计算结果
+// 	- 性质：方法体系较为成熟，可以在**比赛前**就进行多种优化系统的准备
+// `;
+// console.dir(parseMarkdown(md4_1), {depth: null});

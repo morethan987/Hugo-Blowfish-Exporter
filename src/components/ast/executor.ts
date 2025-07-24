@@ -1,4 +1,4 @@
-import { MarkdownNode, NodeType } from './parser';
+import { MarkdownNode, NodeType, TableNode, TableRow, TableCell } from './parser';
 import { Rule, RuleContext, RuleCondition, RuleTransform } from './rule';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -9,12 +9,16 @@ export class RuleExecutor {
   private rules: Rule[] = [];
   private context: RuleContext;
 
-  constructor() {
-    this.context = {
-      path: [],
-      data: {},
-      root: { type: NodeType.Document, children: [] }
-    };
+  constructor(context?: RuleContext) {
+    if (context) {
+      this.context = context;
+    } else {
+      this.context = {
+        path: [],
+        data: {},
+        root: { type: NodeType.Document, children: [] }
+      };
+    }
   }
 
   /**
@@ -44,7 +48,7 @@ export class RuleExecutor {
   /**
    * 执行规则转换
    */
-  execute(ast: MarkdownNode): MarkdownNode {
+  execute(ast: MarkdownNode, context?: RuleContext): MarkdownNode {
     // 按优先级排序规则
     const sortedRules = [...this.rules].sort((a, b) => {
       const priorityA = a.priority ?? 100;
@@ -52,9 +56,12 @@ export class RuleExecutor {
       return priorityA - priorityB;
     });
 
-    // 更新上下文
+    // 如果传入外部context，则引用之
+    if (context) {
+      this.context = context;
+    }
     this.context.root = ast;
-    this.context.data = {};
+    // 不重置data，保持外部传入的data引用
 
     // 执行规则
     return this.applyRules(ast, sortedRules, []);
@@ -83,7 +90,38 @@ export class RuleExecutor {
     }
 
     // 递归处理子节点
-    if (transformedNode.children) {
+    if (transformedNode.type === NodeType.Table) {
+      // 处理表头
+      const tableNode = transformedNode as TableNode;
+      tableNode.header = tableNode.header.map(cell => ({
+        ...cell,
+        content: cell.content.map(child => this.applyRules(child, rules, path))
+      }));
+      // 处理每一行
+      tableNode.rows = tableNode.rows.map(row => ({
+        ...row,
+        cells: row.cells.map(cell => ({
+          ...cell,
+          content: cell.content.map(child => this.applyRules(child, rules, path))
+        }))
+      }));
+      return tableNode;
+    } else if (transformedNode.type === NodeType.Callout) {
+      // 处理 calloutTitle, calloutContent, children
+      if (Array.isArray((transformedNode as any).calloutTitle)) {
+        (transformedNode as any).calloutTitle = (transformedNode as any).calloutTitle.map((child: MarkdownNode, idx: number) => this.applyRules(child, rules, path.concat(idx)));
+      }
+      if (Array.isArray((transformedNode as any).calloutContent)) {
+        (transformedNode as any).calloutContent = (transformedNode as any).calloutContent.map((child: MarkdownNode, idx: number) => this.applyRules(child, rules, path.concat(idx)));
+      }
+      if (transformedNode.children) {
+        transformedNode.children = transformedNode.children.map((child, index) => {
+          const childPath = [...path, index];
+          return this.applyRules(child, rules, childPath);
+        });
+      }
+      return transformedNode;
+    } else if (transformedNode.children) {
       transformedNode.children = transformedNode.children.map((child, index) => {
         const childPath = [...path, index];
         return this.applyRules(child, rules, childPath);

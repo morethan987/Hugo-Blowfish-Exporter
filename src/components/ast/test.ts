@@ -1,5 +1,8 @@
-import { ASTProcessor, CommonRules, RuleBuilder } from './main';
+import { calloutRule } from '../exporters/calloutExporter';
+import { ASTProcessor } from './main';
 import { NodeType } from './parser';
+import { wikiLinkRule } from 'src/components/exporters/wikiLinkExporter';
+import { mathRule } from 'src/components/exporters/mathExporter';
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---
@@ -24,6 +27,27 @@ title: 测试文档
 > [!warning] 警告
 > 这是一个警告 callout
 
+> [!warning] 警告
+> 这是一个警告 callout并且嵌入了\`ls -a\`内联代码块
+
+> [!warning] 警告
+> 这是一个警告 callout并且嵌入了$ls -a$内联公式块
+
+| 符号             | 含义                  |
+| -------------- | ------------------- |
+| $x$            | 目标问题                |
+| $M$            | 目标小模型               |
+| $T$            | 小模型使用 MCTS 生成的搜索树   |
+| $s$            | 推理中间步               |
+| $t$            | 候选路径，$T$ 中的一条完整推理路径 |
+| $ans$          | $M$ 解决 $x$ 的最终推理路径  |
+| $Score$        | 推理路径评价函数            |
+| $a$            | 从动作空间中采样得到的一个动作     |
+| $s_{d}$        | 终止推理步，包含问题的答案       |
+| $\hat{M}$      | "同伴"小模型             |
+| $T_{validate}$ | 经过路径评估函数剪枝后的 $T$    |
+| $Estimate$     | 路径评估函数              |
+
 \`\`\`javascript
 // 代码块中的 callout 不应该被转换
 > [!info] 代码块中的 callout
@@ -36,6 +60,74 @@ title: 测试文档
 
 > [!danger] 危险
 > 这是一个危险 callout
+
+$$
+x = y + z
+$$
+
+$x = y + z$
+
+![[图片.png]]
+
+[[非展示图片.png|非展示图片]]
+
+[[10.代码协同方案|文章引用]]
+
+[[#MATLAB用法|内部段落引用]]
+
+[[10.代码协同方案#MATLAB用法|外部段落引用]]
+
+[标准markdown链接](https://www.baidu.com)
+
+[标准图片链接](图片.png)
+
+![展示型标准图片链接](图片.png)
+
+![带有描述的图片链接](Transformer.png "引用自第 16 页")
+
+这里有一个内联代码块\`ls -a\`这里有一个内联代码块
+
+1. xxx
+2. xxxxxxx
+
+- 666
+- 6666666
+
+- [x] 这是已完成的任务。
+- [ ] 这是未完成的任务。
+
+1. xxx
+    - 555
+    - 666
+2. yyy
+    - 111
+    - 222
+    - 333
+3. rrr
+    - [ ] xxxxxxx
+    - [x] kkkkkkk
+
+1. 生成验证文件 \`id_rsa.pub\`
+
+2. 本地创建 \`authorized_keys\` 文件，并将 \`id_rsa.pub\` 中的内容写入这个文件
+
+3. 在服务器中默认目录下创建 \`.ssh\` 文件夹，然后将 \`authorized_keys\` 文件从本地拷贝进去即可
+
+
+- 我：建模 + 代码 + 部分论文撰写
+- CL：建模 + 论文撰写 + 部分代码
+- HWJ：论文美化
+
+### 工作流程
+
+整个 A 题的代码部分大致可以分为两个系统：
+- 计算系统：
+	- 功能：接受输入数据与参数，返回需要的结果
+	- 性质：直接由题目决定，不同题目有不同的计算系统，需要临时构建
+- 优化系统：
+	- 功能： 接受计算系统并将其作为可优化的目标函数，执行自身的优化逻辑，最后返回计算结果
+	- 性质：方法体系较为成熟，可以在**比赛前**就进行多种优化系统的准备
+
 `;
 
 /**
@@ -86,85 +178,19 @@ function testRuleSystem() {
   console.log('重新启用规则后:', processor.getStats());
 }
 
-/**
- * callout块转换测试 - 仿照 calloutExporter.ts 的逻辑
- */
-function testCalloutBlockConversion() {
-  console.log('=== 测试 callout 块转换 ===');
-  
-  const processor = new ASTProcessor();
-  
-  // 创建 callout 转换规则，仿照 calloutExporter.ts 的逻辑
-  const calloutRule = new RuleBuilder('callout转换')
-    .describe('将callout块转换为对应的hugo简码')
-    .matchType(NodeType.Callout)
-    .transform((node, context) => {
-      // 获取 callout 类型和标题
-      const type = (node.calloutType as string) || 'note';
-      const title = (node.calloutTitle as string) || '';
-      
-      // 直接使用节点中的 calloutContent 字段
-      const calloutContent = (node.calloutContent as string) || '';
-      
-      // 生成 Hugo 简码格式
-      const attributes = getCalloutAttributes(type);
-      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}\n{{< /alert >}}\n`;
-      
-      // 创建新的文本节点
-      return {
-        type: NodeType.Text,
-        value: hugoShortcode
-      };
-    })
-    .build();
-  
-  // 添加 callout 转换规则
-  processor.addRule(calloutRule);
-  
+function testWikiLink() {
+  console.log('=== wikiLink功能测试 ===');
+  // processor.addRules(wikiLinkRule);
+  const context: any = {};
+  const processor = new ASTProcessor(context);
+  context.processor = processor;
+  processor.addRules([
+    ...mathRule,
+    calloutRule
+  ]);
   const result = processor.processToString(testMarkdown);
-  
-  console.log('原始文档:');
-  console.log(testMarkdown);
   console.log('\n处理后的文档:');
   console.log(result);
-  console.log('\n规则统计:', processor.getStats());
-}
-
-/**
- * 获取 callout 属性 - 仿照 calloutExporter.ts 的逻辑
- */
-function getCalloutAttributes(type: string): string {
-  switch (type.toLowerCase()) {
-    case 'note':
-      return 'icon="pencil" cardColor="#1E3A8A" textColor="#E0E7FF"';
-    case 'info':
-      return 'icon="circle-info" cardColor="#b0c4de" textColor="#333333"';
-    case 'todo':
-      return 'icon="square-check" iconColor="#4682B4" cardColor="#e0ffff" textColor="#333333"';
-    case 'tip':
-    case 'hint':
-    case 'important':
-      return 'icon="lightbulb" cardColor="#fff5b7" textColor="#333333"';
-    case 'success':
-    case 'check':
-    case 'done':
-      return 'icon="check" cardColor="#32CD32" textColor="#fff" iconColor="#ffffff"';
-    case 'warning':
-    case 'caution':
-    case 'attention':
-      return 'icon="triangle-exclamation" cardColor="#ffcc00" textColor="#333333" iconColor="#8B6914"';
-    case 'question':
-    case 'help':
-    case 'faq':
-      return 'icon="circle-question" cardColor="#ffeb3b" textColor="#333333" iconColor="#3b3b3b"';
-    case 'danger':
-    case 'error':
-      return 'icon="fire" cardColor="#e63946" iconColor="#ffffff" textColor="#ffffff"';
-    case 'example':
-      return 'icon="list" cardColor="#d8bfd8" iconColor="#8B008B" textColor="#333333"';
-    default:
-      return '';
-  }
 }
 
 /**
@@ -173,7 +199,7 @@ function getCalloutAttributes(type: string): string {
 function runTests() {
   // testBasicFunctionality();
   // testRuleSystem();
-  testCalloutBlockConversion();
+  testWikiLink();
   console.log('\n=== 测试完成 ===');
 }
 
@@ -182,4 +208,4 @@ if (require.main === module) {
   runTests();
 }
 
-export { runTests }; 
+export { runTests };

@@ -72,6 +72,13 @@ export default class HugoBlowfishExporter {
             editorCallback: this.exporter.exportCurrentNote.bind(this.exporter)
         });
 
+        // 添加导出命令
+        this.plugin.addCommand({
+            id: 'export-to-hugo-blowfish-ast',
+            name: 'Export to Hugo Blowfish AST',
+            editorCallback: this.exporter.exportCurrentNote_AST.bind(this.exporter)
+        });
+
         // 添加全文翻译命令
         this.plugin.addCommand({
             id: 'translate-to-the-other-language',
