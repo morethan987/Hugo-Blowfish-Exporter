@@ -32,3 +32,19 @@ export function getLangByName(app: App, file_name: string): string {
 
     return metadata.frontmatter.language
 }
+
+export function getFrontmatterByName(app: App, file_name: string): Record<string, any> | null {
+    const file = this.app.metadataCache.getFirstLinkpathDest(file_name, '');
+    if (!file) {
+        new Notice(`❌ 未找到文件: ${file_name}`);
+        return null;
+    }
+
+    const metadata = this.app.metadataCache.getFileCache(file);
+    if (!metadata?.frontmatter) {
+        new Notice(`⚠️ 警告: ${file.basename} 缺少frontmatter属性`, 20000);
+        return null;
+    }
+
+    return metadata.frontmatter;
+}

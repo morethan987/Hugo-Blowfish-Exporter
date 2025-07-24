@@ -108,7 +108,7 @@ export class Exporter {
                 return;
             }
 
-            // 获取文件的元数据
+            // 获取文件的元数据并检测必要字段
             const metadata = this.app.metadataCache.getFileCache(currentFile);
             if (!metadata?.frontmatter?.slug) {
                 new Notice('⚠️ 当前文件缺少 slug 属性，请在 frontmatter 中添加 slug 字段');
@@ -121,7 +121,7 @@ export class Exporter {
 
             // 读取文件内容并修改
             const content = await this.app.vault.read(currentFile);
-            const modifiedContent = await this.modifyContent_AST(content, 'single');
+            const modifiedContent = await this.modifyContent_AST(content, 'single', metadata.frontmatter);
 
             // 根据slug创建目标目录
             let exportDir = path.resolve(this.plugin.settings.exportPath);
@@ -207,30 +207,11 @@ export class Exporter {
         }
     }
 
-    async modifyContent_AST(content: string, mode: 'batch' | 'single' = 'single'): Promise<string> {
+    async modifyContent_AST(content: string, mode: 'batch' | 'single' = 'single', frontmatter: Record<string, any>): Promise<string> {
         try {
             // 构造 context
-            const activeFile = this.app.workspace.getActiveFile();
-            const metadata = activeFile ? this.app.metadataCache.getFileCache(activeFile) : null;
-            const slug = metadata?.frontmatter?.slug;
-            const lang = metadata?.frontmatter?.language;
-            const fileName = activeFile ? activeFile.basename : '未知文件';
-            if (!slug) {
-                if (mode === 'single') {
-                    new Notice(`⚠️ 警告: ${fileName} 缺少 slug 属性\n请在文件 frontmatter 中添加 slug 字段`, 20000);
-                } else {
-                    console.warn(`文件 ${fileName} 缺少 slug 属性`);
-                }
-                return content;
-            }
-            if (!lang) {
-                if (mode === 'single') {
-                    new Notice(`⚠️ 警告: ${fileName} 缺少 language 属性\n请在文件 frontmatter 中添加 language 字段`, 20000);
-                } else {
-                    console.warn(`文件 ${fileName} 缺少 language 属性`);
-                }
-                return content;
-            }
+            const slug = frontmatter.slug as string;
+            const lang = frontmatter.language as string;
             // 1. 先创建 context（不带 processor）
             const context: any = {
                 data: { app: this.app, settings: this.plugin.settings, slug, lang, imageFiles: [] }
