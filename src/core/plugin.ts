@@ -2,12 +2,7 @@ import { App } from 'obsidian';
 import OpenAI from 'openai';
 import { HugoBlowfishExporterSettings } from 'src/types/settings';
 import { DEFAULT_SETTINGS } from 'src/config/default-settings';
-import { MathExporter } from 'src/components/exporters/mathExporter';
-import { MermaidExporter } from 'src/components/exporters/mermaidExporter';
-import { CalloutExporter } from 'src/components/exporters/calloutExporter';
-import { ImageExporter } from 'src/components/exporters/imageExporter';
-import { CoverChooser } from 'src/components/exporters/coverChooser';
-import { WikiLinkExporter } from 'src/components/exporters/wikiLinkExporter';
+import { CoverChooser } from 'src/components/rules/coverChooser';
 import { HugoBlowfishExporterSettingTab } from 'src/utils/settingsTab';
 import { Exporter } from './exporter';
 import { Translator } from './translator';
@@ -15,12 +10,7 @@ import { GitHandler } from './git-handler';
 
 export default class HugoBlowfishExporter {
     settings: HugoBlowfishExporterSettings;
-    mathExporter: MathExporter;
-    mermaidExporter: MermaidExporter;
-    calloutExporter: CalloutExporter;
-    imageExporter: ImageExporter;
     coverChooser: CoverChooser;
-    wikiLinkExporter: WikiLinkExporter;
     client: OpenAI;
     exporter: Exporter;
     translator: Translator;
@@ -39,13 +29,8 @@ export default class HugoBlowfishExporter {
     async initialize() {
         await this.loadSettings();
         
-        // 初始化各种导出器
-        this.mathExporter = new MathExporter();
-        this.mermaidExporter = new MermaidExporter();
-        this.calloutExporter = new CalloutExporter();
-        this.imageExporter = new ImageExporter(this.app);
+        // 初始化封面导出器
         this.coverChooser = new CoverChooser();
-        this.wikiLinkExporter = new WikiLinkExporter(this.app);
         
         // 初始化OpenAI客户端
         this.client = new OpenAI({
@@ -61,7 +46,7 @@ export default class HugoBlowfishExporter {
 
         // 添加导出按钮到ribbon
         const ribbonIconEl = this.plugin.addRibbonIcon('arrow-right-from-line', 'Export all the file in vault', (evt: MouseEvent) => {
-            this.exporter.exportToHugo();
+            this.exporter.exportAllNotes();
         });
         ribbonIconEl.addClass('hugo-blowfish-exporter-ribbon-class');
 
@@ -70,13 +55,6 @@ export default class HugoBlowfishExporter {
             id: 'export-to-hugo-blowfish',
             name: 'Export to Hugo Blowfish',
             editorCallback: this.exporter.exportCurrentNote.bind(this.exporter)
-        });
-
-        // 添加导出命令
-        this.plugin.addCommand({
-            id: 'export-to-hugo-blowfish-ast',
-            name: 'Export to Hugo Blowfish AST',
-            editorCallback: this.exporter.exportCurrentNote_AST.bind(this.exporter)
         });
 
         // 添加全文翻译命令

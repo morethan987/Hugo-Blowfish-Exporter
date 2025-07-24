@@ -2,15 +2,14 @@ import { App, Notice, TFile } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import { HugoBlowfishExporterSettings } from 'src/types/settings';
-import { ImageExporter } from 'src/components/exporters/imageExporter';
-import { CoverChooser } from 'src/components/exporters/coverChooser';
+import { CoverChooser } from 'src/components/rules/coverChooser';
 
 // 批量导出的模态框
 export class BatchExportModal {
     constructor(
         private app: App,
         private settings: HugoBlowfishExporterSettings,
-        private modifyContent: (content: string, mode: 'batch' | 'single') => Promise<string>
+        private modifyContent: (content: string, frontmatter: Record<string, any>) => Promise<string>
     ) {}
 
     async export() {
@@ -74,12 +73,7 @@ export class BatchExportModal {
             }
 
             let content = await this.app.vault.read(file);
-
-            // 特有的对于imageExporter的再次调用，这样能够保证在文件夹里面的文件链接的图片也能够被导出
-            const imageExporter = new ImageExporter(this.app);
-            content = await imageExporter.transformImages(content, 'batch', this.settings, metadata.frontmatter.slug);
-
-            const modifiedContent = await this.modifyContent(content, 'batch');
+            const modifiedContent = await this.modifyContent(content, metadata.frontmatter);
 
             let fileName = file.basename;
             if (this.settings.useDefaultExportName) {

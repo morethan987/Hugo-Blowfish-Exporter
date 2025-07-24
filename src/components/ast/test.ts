@@ -1,8 +1,8 @@
-import { calloutRule } from '../exporters/calloutExporter';
+import { calloutRule } from '../rules/callout';
 import { ASTProcessor } from './main';
 import { NodeType } from './parser';
-import { wikiLinkRule } from 'src/components/exporters/wikiLinkExporter';
-import { mathRule } from 'src/components/exporters/mathExporter';
+import { wikiLinkRule } from 'src/components/rules/wikiLink';
+import { mathRule } from 'src/components/rules/math';
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---

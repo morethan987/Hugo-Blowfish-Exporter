@@ -1,63 +1,6 @@
 import { NodeType } from "../ast/parser";
 import { RuleBuilder } from "../ast/rule";
 
-export class CalloutExporter {
-    transformCallouts(content: string): string {
-        // 识别代码块的位置
-        const codeBlockPositions: {start: number, end: number}[] = [];
-        const codeBlockRegex = /```[\s\S]*?```/g;
-        let match: RegExpExecArray | null;
-        while ((match = codeBlockRegex.exec(content)) !== null) {
-            codeBlockPositions.push({
-                start: match.index,
-                end: match.index + match[0].length
-            });
-        }
-
-        const calloutRegex = /^>\s*\[!(\w+)\]\s*(.*)?\n((?:>[^\n]*\n?)*)/gm;
-        let result = '';
-        let lastIndex = 0;
-
-        while ((match = calloutRegex.exec(content)) !== null) {
-            // 检查当前匹配是否在任何代码块内
-            const isInCodeBlock = codeBlockPositions.some(pos => 
-                match !== null && match.index >= pos.start && match.index < pos.end
-            );
-
-            if (isInCodeBlock) {
-                // 如果在代码块内，保持原样
-                result += content.slice(lastIndex, match.index + match[0].length);
-            } else {
-                // 如果不在代码块内，进行转换
-                result += content.slice(lastIndex, match.index);
-                const type = match[1];
-                const contents = match[3];
-                const cleanContents = this.cleanCalloutContent(contents);
-                const contributes = getCalloutAttributes(type);
-                result += this.generateCalloutHtml(cleanContents, contributes);
-            }
-            lastIndex = match.index + match[0].length;
-        }
-
-        // 添加剩余内容
-        result += content.slice(lastIndex);
-        return result;
-    }
-
-    private cleanCalloutContent(contents: string): string {
-        return contents
-            .split('\n')
-            .map((line: string) => line.replace(/^>\s?/, '').trim())
-            .filter((line: string) => line.length > 0)
-            .join('\n');
-    }
-
-    private generateCalloutHtml(content: string, attributes: string): string {
-        return `\n{{< alert ${attributes} >}}
-${content}
-{{< /alert >}}\n`;
-	}
-}
 
 export const calloutRule = new RuleBuilder('callout转换')
     .describe('将callout块转换为对应的hugo简码')
