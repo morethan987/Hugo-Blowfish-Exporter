@@ -1,5 +1,5 @@
 import { parseMarkdown, MarkdownNode } from './parser';
-import { Rule, RuleBuilder, RuleFactory, CommonRules } from './rule';
+import { Rule, RuleBuilder } from './rule';
 import { RuleExecutor, createExecutor, transformAST, ChainExecutor } from './executor';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -31,27 +31,6 @@ export class ASTProcessor {
   addRules(rules: Rule[]): ASTProcessor {
     this.customRules.push(...rules);
     this.executor.addRules(rules);
-    return this;
-  }
-
-  /**
-   * 使用预定义规则
-   */
-  useCommonRule(ruleName: keyof typeof CommonRules): ASTProcessor {
-    const rule = CommonRules[ruleName];
-    if (rule) {
-      this.addRule(rule);
-    }
-    return this;
-  }
-
-  /**
-   * 使用多个预定义规则
-   */
-  useCommonRules(ruleNames: (keyof typeof CommonRules)[]): ASTProcessor {
-    for (const name of ruleNames) {
-      this.useCommonRule(name);
-    }
     return this;
   }
 
@@ -315,9 +294,7 @@ export type {
 } from './parser';
 
 export { 
-  RuleBuilder, 
-  RuleFactory, 
-  CommonRules
+  RuleBuilder
 } from './rule';
 
 export type { 
