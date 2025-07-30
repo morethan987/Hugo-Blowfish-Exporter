@@ -1,6 +1,5 @@
 import { calloutRule } from '../rules/callout';
-import { ASTProcessor } from './main';
-import { NodeType } from './parser';
+import { parseMarkdown, nodeToString, ASTProcessor } from './main';
 import { wikiLinkRule } from 'src/components/rules/wikiLink';
 import { mathRule } from 'src/components/rules/math';
 
@@ -190,8 +189,16 @@ function testWikiLink() {
   ]);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');
+
   console.log(result);
 }
+function testStringify() {
+  console.log("=== stringify 功能测试 ===");
+  const ast = parseMarkdown("# Hello");
+  const result = nodeToString(ast);
+  console.log("stringify result:", result.trim());
+}
+
 
 /**
  * 运行所有测试
@@ -199,6 +206,7 @@ function testWikiLink() {
 function runTests() {
   // testBasicFunctionality();
   // testRuleSystem();
+  testStringify();
   testWikiLink();
   console.log('\n=== 测试完成 ===');
 }
