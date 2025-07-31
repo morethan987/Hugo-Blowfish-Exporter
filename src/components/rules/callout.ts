@@ -1,4 +1,4 @@
-import { NodeType, MarkdownNode } from "../ast/parser";
+import { NodeType, MarkdownNode } from "../ast/node";
 import { RuleBuilder } from "../ast/rule";
 
 

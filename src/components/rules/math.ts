@@ -1,6 +1,6 @@
 import { RuleBuilder } from "../ast/rule";
-import { NodeType } from "../ast/parser"; // 需要引入 NodeType
-import type { MarkdownNode } from "../ast/parser";
+import { NodeType } from "../ast/node"; // 需要引入 NodeType
+import type { MarkdownNode } from "../ast/node";
 
 
 function hasMathNode(node: MarkdownNode): boolean {

@@ -1,5 +1,5 @@
 import { RuleBuilder } from '../ast/main';
-import { NodeType } from '../ast/parser';
+import { NodeType } from '../ast/node';
 import { getSlugByName } from 'src/components/rules/utils';
 
 
