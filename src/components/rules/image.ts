@@ -2,7 +2,7 @@ import { App, TFile } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import { RuleBuilder } from '../ast/rule';
-import { NodeType } from '../ast/parser';
+import { NodeType } from '../ast/node';
 
 export const imageRule = new RuleBuilder('图片链接转换')
     .describe('将图片链接转换为对应的hugo简码')

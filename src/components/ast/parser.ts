@@ -7,73 +7,10 @@
  */
 
 /* ────────────────────────────────────────────────────────────────────────────
- * AST 类型定义
+ * 导入 AST 结点类型定义
  * ────────────────────────────────────────────────────────────────────────── */
 
-export enum NodeType {
-  // 文档根
-  Document = 'Document',
-  // Front‑matter / 注释
-  FrontMatter = 'FrontMatter',
-  HtmlComment = 'HtmlComment',
-
-  // 区块级元素
-  CodeBlock = 'CodeBlock',
-  MathBlock = 'MathBlock',
-  Callout = 'Callout',
-  BlockQuote = 'BlockQuote',
-  List = 'List',
-  ListItem = 'ListItem',
-  HorizontalRule = 'HorizontalRule',
-  Heading = 'Heading',
-  Table = 'Table',
-  FootnoteDef = 'FootnoteDef',
-  HtmlBlock = 'HtmlBlock',
-  Paragraph = 'Paragraph',
-
-  // 行内元素
-  Text = 'Text',
-  InlineCode = 'InlineCode',
-  MathSpan = 'MathSpan',
-  WikiLink = 'WikiLink',
-  Embed = 'Embed',
-  FootnoteRef = 'FootnoteRef',
-  Image = 'Image',
-  Link = 'Link',
-  Highlight = 'Highlight',
-  Strike = 'Strike',
-  StrongEmphasis = 'StrongEmphasis',
-  Strong = 'Strong',
-  Emphasis = 'Emphasis',
-  HtmlInline = 'HtmlInline',
-  AutoLink = 'AutoLink',
-  EscapedChar = 'EscapedChar',
-
-  // 特殊节点
-  Nop = 'Nop', // 空结点，没有value属性
-}
-
-export interface MarkdownNode {
-  type: NodeType;
-  children?: MarkdownNode[];
-  value?: string;
-  // 额外属性（例如 heading level / list ordered 等）
-  [key: string]: unknown;
-}
-
-// 表格相关类型
-export interface TableCell {
-  content: MarkdownNode[];
-}
-export interface TableRow {
-  cells: TableCell[];
-}
-export interface TableNode extends MarkdownNode {
-  type: NodeType.Table;
-  header: TableCell[];
-  align: string[];
-  rows: TableRow[];
-}
+import { NodeType, MarkdownNode, TableNode, TableHeaderNode, TableRowNode } from "./node";
 
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -326,16 +263,16 @@ export function parseMarkdown(src: string): MarkdownNode {
         return 'none';
       });
       // 解析表头单元格内容
-      const header: TableCell[] = headerCells.map(cell => ({ content: parseInline(cell) }));
+      const header: TableHeaderNode = { type: NodeType.TableHeader, children: headerCells.map(cell => ({ type: NodeType.TableCell, children: parseInline(cell) })) };
       // 解析数据行
-      const rows: TableRow[] = [];
+      const rows: TableRowNode[] = [];
       i += 2;
       while (i < lines.length && lines[i].includes('|')) {
         const rowCells = splitRow(lines[i].trim());
-        rows.push({ cells: rowCells.map(cell => ({ content: parseInline(cell) })) });
+        rows.push({ type: NodeType.TableRow, children: rowCells.map(cell => ({ type: NodeType.TableCell, children: parseInline(cell) })) });
         i++;
       }
-      const tableNode: TableNode = { type: NodeType.Table, header, align, rows };
+      const tableNode: TableNode = { type: NodeType.Table, align, children: [header, ...rows] };
       root.children!.push(tableNode);
       continue;
     }
@@ -687,5 +624,14 @@ function parseInline(text: string): MarkdownNode[] {
 // - 优化系统：
 // 	- 功能： 接受计算系统并将其作为可优化的目标函数，执行自身的优化逻辑，最后返回计算结果
 // 	- 性质：方法体系较为成熟，可以在**比赛前**就进行多种优化系统的准备
+// `;
+// console.dir(parseMarkdown(md4_1), {depth: null});
+
+// console.log('测试 5: 解析表格');
+// const md4_1 = `
+// | 符号             | 含义                  |
+// | -------------- | ------------------- |
+// | $x$            | 目标问题                |
+// | $M$            | 目标小模型               |
 // `;
 // console.dir(parseMarkdown(md4_1), {depth: null});

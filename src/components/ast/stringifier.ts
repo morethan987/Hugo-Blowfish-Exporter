@@ -1,4 +1,4 @@
-import { MarkdownNode, NodeType } from './parser';
+import { NodeType, MarkdownNode, TableNode, TableHeaderNode, TableRowNode, TableCellNode } from './node';
 
 /**
  * 将 AST 转换回 Markdown 文本
@@ -132,14 +132,14 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
       return '---\n';
 
     case NodeType.Table: {
-      const headerRow = (node.header as any[]).map((cell: any) => cell.content.map((n: any) => nodeToString(n)).join('')).join(' | ');
       const alignRow = (node.align as string[]).map(a => {
         if (a === 'left') return ':-----';
         if (a === 'center') return ':-----:';
         if (a === 'right') return '-----:';
         return '-----';
       }).join(' | ');
-      const bodyRows = (node.rows as any[]).map((row: any) => row.cells.map((cell: any) => cell.content.map((n: any) => nodeToString(n)).join('')).join(' | ')).join('\n');
+      const headerRow = node.children![0]!.children!.map((table_cell: TableCellNode) => table_cell.children.map((n: MarkdownNode) => nodeToString(n)).join('') || '').join(' | ') || '';
+      const bodyRows = node.children!.slice(1).map((row: TableRowNode) =>row.children.map((cell: TableCellNode) =>cell.children.map((n: MarkdownNode) => nodeToString(n)).join('')).join(' | ')).join('\n');
       return `${headerRow}\n${alignRow}\n${bodyRows}\n`;
     }
 

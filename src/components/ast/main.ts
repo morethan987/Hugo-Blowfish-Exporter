@@ -1,6 +1,7 @@
-import { parseMarkdown, MarkdownNode } from './parser';
-import { Rule, RuleBuilder } from './rule';
-import { RuleExecutor, createExecutor, transformAST, ChainExecutor } from './executor';
+import { MarkdownNode,  } from './node';
+import { parseMarkdown } from './parser';
+import { Rule } from './rule';
+import { RuleExecutor, createExecutor } from './executor';
 import { astToString } from './stringifier';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ export {
 export type { 
   MarkdownNode, 
   NodeType
-} from './parser';
+} from './node';
 
 export { 
   RuleBuilder

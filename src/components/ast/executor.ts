@@ -1,4 +1,4 @@
-import { MarkdownNode, NodeType, TableNode, TableRow, TableCell } from './parser';
+import { MarkdownNode, NodeType } from './node';
 import { Rule, RuleContext, RuleCondition, RuleTransform } from './rule';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -90,23 +90,7 @@ export class RuleExecutor {
     }
 
     // 递归处理子节点
-    if (transformedNode.type === NodeType.Table) {
-      // 处理表头
-      const tableNode = transformedNode as TableNode;
-      tableNode.header = tableNode.header.map(cell => ({
-        ...cell,
-        content: cell.content.map(child => this.applyRules(child, rules, path))
-      }));
-      // 处理每一行
-      tableNode.rows = tableNode.rows.map(row => ({
-        ...row,
-        cells: row.cells.map(cell => ({
-          ...cell,
-          content: cell.content.map(child => this.applyRules(child, rules, path))
-        }))
-      }));
-      return tableNode;
-    } else if (transformedNode.children) {
+    if (transformedNode.children) {
       transformedNode.children = transformedNode.children.map((child, index) => {
         const childPath = [...path, index];
         return this.applyRules(child, rules, childPath);

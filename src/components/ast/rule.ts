@@ -1,4 +1,4 @@
-import { NodeType, MarkdownNode, TableNode, TableRow, TableCell } from './parser';
+import { NodeType, MarkdownNode } from './node';
 
 /* ────────────────────────────────────────────────────────────────────────────
  * 规则系统核心类型定义

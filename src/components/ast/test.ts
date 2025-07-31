@@ -1,6 +1,6 @@
 import { calloutRule } from '../rules/callout';
 import { ASTProcessor } from './main';
-import { NodeType } from './parser';
+import { NodeType } from './node';
 import { wikiLinkRule } from 'src/components/rules/wikiLink';
 import { mathRule } from 'src/components/rules/math';
 
@@ -134,8 +134,10 @@ const miniTestMarkdown = `---
 title: 测试文档
 ---
 
-> [!warning] 警告
-> 这是一个警告 callout 并且嵌入了$ls -a$内联公式块
+| 符号             | 含义                  |
+| -------------- | ------------------- |
+| $x$            | 目标问题                |
+| $M$            | 目标小模型               |
 `
 
 function testWikiLink() {
@@ -145,7 +147,6 @@ function testWikiLink() {
   const processor = new ASTProcessor(context);
   context.processor = processor;
   processor.addRules([
-    calloutRule,
     ...mathRule,
   ]);
   const result = processor.processToString(testMarkdown);
