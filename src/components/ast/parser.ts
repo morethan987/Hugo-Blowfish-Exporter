@@ -48,6 +48,9 @@ export enum NodeType {
   HtmlInline = 'HtmlInline',
   AutoLink = 'AutoLink',
   EscapedChar = 'EscapedChar',
+
+  // 特殊节点
+  Nop = 'Nop', // 空结点，没有value属性
 }
 
 export interface MarkdownNode {
@@ -169,45 +172,53 @@ export function parseMarkdown(src: string): MarkdownNode {
     /* ---------- Callout (> [!note] ...) --------------------------------- */
     if (/^>\s*\[![^\]]+\]/.test(line)) {
       const calloutLines: string[] = [];
-      // 收集当前 callout 的所有行
+      // 收集callout行（保持现有逻辑）
       while (i < lines.length) {
         const currentLine = lines[i];
-        // 如果是空行，结束当前 callout
-        if (currentLine.trim() === '') {
-          i++;
-          break;
-        }
-        // 如果不是引用行，结束当前 callout
-        if (!/^>\s*/.test(currentLine)) {
-          break;
-        }
+        if (currentLine.trim() === '') { i++; break; }
+        if (!/^>\s*/.test(currentLine)) break;
         calloutLines.push(currentLine);
         i++;
       }
-      // 提取 callout 类型和内容
+      
+      // 提取类型和标题
       const firstLine = calloutLines[0].replace(/^>\s*/, '');
       const typeMatch = /^\[!([^\]]+)\](.*)$/.exec(firstLine);
       const calloutType = typeMatch ? typeMatch[1] : 'note';
-      const calloutTitleRaw = typeMatch ? typeMatch[2].trim() : '';
-      // 去掉第一行，并对剩余每一行去掉一层 > 引用标记
-      const inner = calloutLines
+      const titleText = typeMatch ? typeMatch[2].trim() : '';
+      
+      // 处理内容
+      const contentLines = calloutLines
         .slice(1)
         .map(l => l.replace(/^>\s?/, ''))
         .join('\n');
-      // 解析内部内容
-      const innerAst = parseMarkdown(inner);
-      // 行内解析 calloutTitle 和 calloutContent
-      const calloutTitle = parseInline(calloutTitleRaw);
-      const calloutContent = parseInline(inner);
+      
+      // 构建统一的children结构
+      const children: MarkdownNode[] = [];
+      
+      // 如果有标题，添加标题节点
+      if (titleText) {
+        children.push({
+          type: NodeType.Paragraph,
+          role: 'title', // 标记为标题
+          children: parseInline(titleText)
+        });
+      }
+      
+      // 添加内容节点
+      if (contentLines.trim()) {
+        const contentAst = parseMarkdown(contentLines);
+        children.push(...(contentAst.children || []));
+      }
+      
       root.children!.push({
         type: NodeType.Callout,
         calloutType,
-        calloutTitle,
-        calloutContent,
-        children: innerAst.children,
+        children
       });
       continue;
     }
+
 
     /* ---------- BlockQuote --------------------------------------------- */
     if (/^>\s?/.test(line)) {

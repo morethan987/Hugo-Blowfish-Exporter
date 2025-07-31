@@ -50,6 +50,7 @@ export class ASTProcessor {
   process(markdown: string, context?: any): MarkdownNode {
     // 1. 解析为 AST
     const ast = parseMarkdown(markdown);
+    // console.dir(ast, {depth: null});
     
     // 2. 应用规则转换
     return this.executor.execute(ast, context || this.context);

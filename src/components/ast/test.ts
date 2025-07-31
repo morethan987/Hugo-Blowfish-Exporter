@@ -130,6 +130,14 @@ $x = y + z$
 
 `;
 
+const miniTestMarkdown = `---
+title: 测试文档
+---
+
+> [!warning] 警告
+> 这是一个警告 callout 并且嵌入了$ls -a$内联公式块
+`
+
 function testWikiLink() {
   console.log('=== wikiLink功能测试 ===');
   // processor.addRules(wikiLinkRule);
@@ -137,8 +145,8 @@ function testWikiLink() {
   const processor = new ASTProcessor(context);
   context.processor = processor;
   processor.addRules([
+    calloutRule,
     ...mathRule,
-    calloutRule
   ]);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');

@@ -1,4 +1,4 @@
-import { MarkdownNode } from './parser';
+import { MarkdownNode, NodeType } from './parser';
 
 /**
  * 将 AST 转换回 Markdown 文本
@@ -14,52 +14,55 @@ export function astToString(ast: MarkdownNode): string {
  */
 function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?: number }): string {
   switch (node.type) {
-    case 'Document':
+    case NodeType.Document:
       return node.children?.map(child => nodeToString(child)).join('\n') || '';
-    
-    case 'Paragraph':
+
+    case NodeType.Nop:
+      return node.children?.map(child => nodeToString(child)).join('') || '';
+
+    case NodeType.Paragraph:
       const content = node.children?.map(child => nodeToString(child)).join('') || '';
       return content + '\n';
-    
-    case 'Heading':
+
+    case NodeType.Heading:
       const level = (node.level as number) || 1;
       const headingContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return '#'.repeat(level) + ' ' + headingContent + '\n';
-    
-    case 'Text':
+
+    case NodeType.Text:
       return node.value || '';
-    
-    case 'Strong':
+
+    case NodeType.Strong:
       const strongContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return `**${strongContent}**`;
-    
-    case 'Emphasis':
+
+    case NodeType.Emphasis:
       const emphasisContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return `*${emphasisContent}*`;
-    
-    case 'InlineCode':
+
+    case NodeType.InlineCode:
       return `\`${node.value || ''}\``;
-    
-    case 'CodeBlock':
+
+    case NodeType.CodeBlock:
       const lang = node.lang ? `\`\`\`${node.lang}\n` : '```\n';
       return lang + (node.value || '') + '\n```\n';
-    
-    case 'Link':
+
+    case NodeType.Link:
       return `[${node.label || ''}](${node.url || ''})`;
-    
-    case 'Image':
+
+    case NodeType.Image:
       if (node.title) {
         return node.embed ? `![${node.alt || node.url}](${node.url || ''} "${node.title || ''}" )` : `[${node.alt || ''}](${node.url || ''} "${node.title || ''}")`;
       } else {
         return node.embed ? `![${node.alt || node.url}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
       }
-    
-    case 'List': {
+
+    case NodeType.List: {
       const ordered = !!node.ordered;
       const children = node.children as MarkdownNode[];
       return children?.map((child, idx) => nodeToString(child, { ordered, index: idx + 1 })).join('') || '';
     }
-    case 'ListItem': {
+    case NodeType.ListItem: {
       const level = typeof node.level === 'number' ? node.level : 0;
       const indent = ' '.repeat(level * 4);
       let prefix = '- ';
@@ -91,27 +94,44 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
       }
       return result;
     }
-    case 'BlockQuote':
+    case NodeType.BlockQuote:
       const quoteContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';
-    
-    case 'Callout': {
+
+    case NodeType.Callout: {
       const calloutType = node.calloutType || 'note';
-      const calloutTitle = Array.isArray(node.calloutTitle) ? node.calloutTitle.map((n: any) => nodeToString(n)).join('') : (node.calloutTitle || '');
-      const calloutContent = Array.isArray(node.calloutContent) ? node.calloutContent.map((n: any) => nodeToString(n)).join('') : (node.calloutContent || '');
-      return `> [!${calloutType}] ${calloutTitle}\n> ${calloutContent}\n`;
+      let title = '';
+      let content = '';
+      
+      if (node.children && node.children.length > 0) {
+        // 查找标题节点（role为title的段落）
+        const titleNode = node.children.find((child: any) => child.role === 'title');
+        if (titleNode && titleNode.children) {
+          title = titleNode.children.map((n: any) => nodeToString(n)).join('');
+        }
+        
+        // 处理其他内容节点
+        const contentNodes = node.children.filter((child: any) => child.role !== 'title');
+        if (contentNodes.length > 0) {
+          content = contentNodes.map(child => nodeToString(child)).join('').replace(/\n$/, '');
+        }
+      }
+      const lines = content.split('\n').filter(line => line.trim());
+      const quotedContent = lines.map(line => `> ${line}`).join('\n');
+      
+      return `> [!${calloutType}] ${title}\n${quotedContent}\n`;
     }
-    
-    case 'MathBlock':
+
+    case NodeType.MathBlock:
       return `$$\n${node.value || ''}\n$$\n`;
-    
-    case 'MathSpan':
+
+    case NodeType.MathSpan:
       return `$${node.value || ''}$`;
-    
-    case 'HorizontalRule':
+
+    case NodeType.HorizontalRule:
       return '---\n';
-    
-    case 'Table': {
+
+    case NodeType.Table: {
       const headerRow = (node.header as any[]).map((cell: any) => cell.content.map((n: any) => nodeToString(n)).join('')).join(' | ');
       const alignRow = (node.align as string[]).map(a => {
         if (a === 'left') return ':-----';
@@ -122,43 +142,43 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
       const bodyRows = (node.rows as any[]).map((row: any) => row.cells.map((cell: any) => cell.content.map((n: any) => nodeToString(n)).join('')).join(' | ')).join('\n');
       return `${headerRow}\n${alignRow}\n${bodyRows}\n`;
     }
-    
-    case 'WikiLink':
+
+    case NodeType.WikiLink:
       return `[[${node.value || ''}]]`;
-    
-    case 'Embed':
+
+    case NodeType.Embed:
       return `![[${node.value || ''}]]`;
-    
-    case 'Highlight':
+
+    case NodeType.Highlight:
       const highlightContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return `==${highlightContent}==`;
-    
-    case 'Strike':
+
+    case NodeType.Strike:
       const strikeContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return `~~${strikeContent}~~`;
-    
-    case 'StrongEmphasis':
+
+    case NodeType.StrongEmphasis:
       const strongEmphasisContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return `***${strongEmphasisContent}***`;
-    
-    case 'AutoLink':
+
+    case NodeType.AutoLink:
       return (node.url as string) || '';
-    
-    case 'EscapedChar':
+
+    case NodeType.EscapedChar:
       return `\\${node.value || ''}`;
-    
-    case 'FootnoteRef':
+
+    case NodeType.FootnoteRef:
       return `[^${node.id || ''}]`;
-    
-    case 'FootnoteDef':
+
+    case NodeType.FootnoteDef:
       const footnoteContent = node.children?.map(child => nodeToString(child)).join('') || '';
       return `[^${node.id || ''}]: ${footnoteContent}\n`;
-    
-    case 'HtmlComment':
-    case 'FrontMatter':
+
+    case NodeType.HtmlComment:
+    case NodeType.FrontMatter:
       return `---\n${node.value || ''}\n---\n`;
-    case 'HtmlBlock':
-    case 'HtmlInline':
+    case NodeType.HtmlBlock:
+    case NodeType.HtmlInline:
       return node.value || '';
     
     default:

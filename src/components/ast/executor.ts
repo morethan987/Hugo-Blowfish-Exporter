@@ -106,21 +106,6 @@ export class RuleExecutor {
         }))
       }));
       return tableNode;
-    } else if (transformedNode.type === NodeType.Callout) {
-      // 处理 calloutTitle, calloutContent, children
-      if (Array.isArray((transformedNode as any).calloutTitle)) {
-        (transformedNode as any).calloutTitle = (transformedNode as any).calloutTitle.map((child: MarkdownNode, idx: number) => this.applyRules(child, rules, path.concat(idx)));
-      }
-      if (Array.isArray((transformedNode as any).calloutContent)) {
-        (transformedNode as any).calloutContent = (transformedNode as any).calloutContent.map((child: MarkdownNode, idx: number) => this.applyRules(child, rules, path.concat(idx)));
-      }
-      if (transformedNode.children) {
-        transformedNode.children = transformedNode.children.map((child, index) => {
-          const childPath = [...path, index];
-          return this.applyRules(child, rules, childPath);
-        });
-      }
-      return transformedNode;
     } else if (transformedNode.children) {
       transformedNode.children = transformedNode.children.map((child, index) => {
         const childPath = [...path, index];
@@ -177,25 +162,6 @@ export class RuleExecutor {
    */
   private applyTransform(node: MarkdownNode, transform: RuleTransform): MarkdownNode {
     let result = { ...node };
-
-    // 类型转换
-    if (transform.type) {
-      result.type = transform.type;
-    }
-
-    // 设置属性
-    if (transform.set) {
-      for (const [key, value] of Object.entries(transform.set)) {
-        result[key] = value;
-      }
-    }
-
-    // 删除属性
-    if (transform.remove) {
-      for (const key of transform.remove) {
-        delete result[key];
-      }
-    }
 
     // 自定义转换函数
     if (transform.transform) {
