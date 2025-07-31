@@ -130,53 +130,13 @@ $x = y + z$
 
 `;
 
-/**
- * 测试基本功能
- */
-function testBasicFunctionality() {
-  console.log('=== 测试基本功能 ===');
-  
-  const processor = new ASTProcessor();
-  
-  // 使用预定义规则
-  processor
-    .useCommonRule('removeComments')
-    .useCommonRule('removeFrontMatter')
-    .useCommonRule('convertWikiLinks')
-    .useCommonRule('convertEmbeds');
-  
-  const result = processor.processToString(testMarkdown);
-  
-  console.log('原始文档:');
-  console.log(testMarkdown);
-  console.log('\n处理后的文档:');
-  console.log(result);
-  console.log('\n规则统计:', processor.getStats());
-}
+const miniTestMarkdown = `---
+title: 测试文档
+---
 
-/**
- * 测试规则系统
- */
-function testRuleSystem() {
-  console.log('\n=== 测试规则系统 ===');
-  
-  const processor = new ASTProcessor();
-  
-  // 测试规则统计
-  console.log('初始规则数量:', processor.getStats());
-  
-  // 添加规则
-  processor.useCommonRule('removeComments');
-  console.log('添加规则后:', processor.getStats());
-  
-  // 禁用规则
-  processor.setRuleEnabled('删除注释', false);
-  console.log('禁用规则后:', processor.getStats());
-  
-  // 重新启用规则
-  processor.setRuleEnabled('删除注释', true);
-  console.log('重新启用规则后:', processor.getStats());
-}
+> [!warning] 警告
+> 这是一个警告 callout 并且嵌入了$ls -a$内联公式块
+`
 
 function testWikiLink() {
   console.log('=== wikiLink功能测试 ===');
@@ -185,8 +145,8 @@ function testWikiLink() {
   const processor = new ASTProcessor(context);
   context.processor = processor;
   processor.addRules([
+    calloutRule,
     ...mathRule,
-    calloutRule
   ]);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');

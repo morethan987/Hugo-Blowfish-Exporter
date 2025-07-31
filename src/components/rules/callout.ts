@@ -1,50 +1,42 @@
-import { NodeType } from "../ast/parser";
+import { NodeType, MarkdownNode } from "../ast/parser";
 import { RuleBuilder } from "../ast/rule";
 
 
 export const calloutRule = new RuleBuilder('callout转换')
-    .describe('将callout块转换为对应的hugo简码')
-    .matchType(NodeType.Callout)
-    .transform((node, context) => {
-      const type = (node.calloutType as string) || 'note';
-      let calloutContent = '';
-      const processor = (context as any).processor;
-      // 递归处理 calloutContent
-      if (Array.isArray(node.calloutContent)) {
-        if (processor && typeof processor.astToString === 'function' && processor.executor) {
-          calloutContent = node.calloutContent
-            .map((n: any) => {
-              // 递归应用所有规则
-              const transformed = processor.executor.execute(n, context);
-              return processor.astToString(transformed);
-            })
-            .join('');
-        } else {
-          calloutContent = node.calloutContent.map((n: any) => n.value || '').join('');
+  .describe('将callout块转换为对应的hugo简码')
+  .matchType(NodeType.Callout)
+  .transform((node, context) => {
+    const type = (node.calloutType as string) || 'note';
+    const processor = (context as any).processor;
+    
+    // 统一处理children
+    let callout_children: MarkdownNode[] = [];
+    if (node.children && processor) {
+      node.children.map(child => {
+        if (child.role === 'title') {
+          // 如果是标题节点，直接跳过
+          return '';
         }
-      } else if (node.children && node.children.length > 0) {
-        // 兼容旧结构
-        if (processor && typeof processor.astToString === 'function' && processor.executor) {
-          calloutContent = node.children
-            .map(child => {
-              const transformed = processor.executor.execute(child, context);
-              return processor.astToString(transformed);
-            })
-            .join('');
-        } else {
-          calloutContent = node.children.map(child => child.value || '').join('');
-        }
-      } else {
-        calloutContent = (node.calloutContent as string) || '';
-      }
-      const attributes = getCalloutAttributes(type);
-      const hugoShortcode = `\n{{< alert ${attributes} >}}\n${calloutContent}\n{{< /alert >}}\n`;
-      return {
-        type: NodeType.Text,
-        value: hugoShortcode
-      };
-    })
-    .build();
+        callout_children.push(processor.executor.execute(child, context)); // 递归解析
+      });
+    }
+    
+    const attributes = getCalloutAttributes(type);
+    const front_wrapper = {
+      type: NodeType.Text,
+      value: `\n{{< alert ${attributes} >}}\n`
+    };
+    const back_wrapper = {
+      type: NodeType.Text,
+      value: `{{< /alert >}}\n`
+    };
+
+    return {
+      type: NodeType.Nop,
+      children: [front_wrapper, ...callout_children, back_wrapper]
+    };
+  })
+  .build();
 
 export function getCalloutAttributes(type: string): string {
     switch (type.toLowerCase()) {
