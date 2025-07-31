@@ -122,11 +122,10 @@ export class Exporter {
             ]);
             // 4. 处理 AST，传递 context
             const ast = processor.process(content, context);
-            const result = processor.astToString(ast);
             // AST处理后统一复制图片
             const { copyImagesAfterAst } = await import('src/components/rules/image');
             await copyImagesAfterAst(this.app, context.data.imageFiles, this.plugin.settings, slug);
-            return result;
+            return processor.astToString(ast);
         } catch (error) {
             console.error('Error modifying content:', error);
             return content;

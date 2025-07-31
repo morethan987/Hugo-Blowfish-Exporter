@@ -1,6 +1,7 @@
 import { parseMarkdown, MarkdownNode } from './parser';
 import { Rule, RuleBuilder } from './rule';
 import { RuleExecutor, createExecutor, transformAST, ChainExecutor } from './executor';
+import { astToString } from './stringifier';
 
 /* ────────────────────────────────────────────────────────────────────────────
  * AST 处理主控制器
@@ -66,164 +67,7 @@ export class ASTProcessor {
    * 将 AST 转换回 Markdown 文本
    */
   astToString(ast: MarkdownNode): string {
-    return this.nodeToString(ast);
-  }
-
-  /**
-   * 递归转换节点为字符串
-   */
-  private nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?: number }): string {
-    switch (node.type) {
-      case 'Document':
-        return node.children?.map(child => this.nodeToString(child)).join('\n') || '';
-      
-      case 'Paragraph':
-        const content = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return content + '\n';
-      
-      case 'Heading':
-        const level = (node.level as number) || 1;
-        const headingContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return '#'.repeat(level) + ' ' + headingContent + '\n';
-      
-      case 'Text':
-        return node.value || '';
-      
-      case 'Strong':
-        const strongContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `**${strongContent}**`;
-      
-      case 'Emphasis':
-        const emphasisContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `*${emphasisContent}*`;
-      
-      case 'InlineCode':
-        return `\`${node.value || ''}\``;
-      
-      case 'CodeBlock':
-        const lang = node.lang ? `\`\`\`${node.lang}\n` : '```\n';
-        return lang + (node.value || '') + '\n```\n';
-      
-      case 'Link':
-        return `[${node.label || ''}](${node.url || ''})`;
-      
-      case 'Image':
-        if (node.title) {
-          return node.embed ? `![${node.alt || node.url}](${node.url || ''} "${node.title || ''}" )` : `[${node.alt || ''}](${node.url || ''} "${node.title || ''}")`;
-        } else {
-          return node.embed ? `![${node.alt || node.url}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
-        }
-      
-      case 'List': {
-        const ordered = !!node.ordered;
-        const children = node.children as MarkdownNode[];
-        return children?.map((child, idx) => this.nodeToString(child, { ordered, index: idx + 1 })).join('') || '';
-      }
-      case 'ListItem': {
-        const level = typeof node.level === 'number' ? node.level : 0;
-        const indent = ' '.repeat(level * 4);
-        let prefix = '- ';
-        if (node.task !== undefined) {
-          prefix = node.task ? '- [x] ' : '- [ ] ';
-        } else if (options?.ordered) {
-          // 优先使用用户编号
-          if (typeof node.number === 'number') {
-            prefix = `${node.number}. `;
-          } else {
-            prefix = `${options.index || 1}. `;
-          }
-        }
-        // 区分行内内容和嵌套列表
-        let inlineContent = '';
-        let nestedListContent = '';
-        if (node.children && node.children.length > 0) {
-          for (const child of node.children) {
-            if (child.type === 'List') {
-              nestedListContent += this.nodeToString(child);
-            } else {
-              inlineContent += this.nodeToString(child);
-            }
-          }
-        }
-        let result = indent + prefix + inlineContent + '\n';
-        if (nestedListContent) {
-          result += nestedListContent;
-        }
-        return result;
-      }
-      case 'BlockQuote':
-        const quoteContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';
-      
-      case 'Callout': {
-        const calloutType = node.calloutType || 'note';
-        const calloutTitle = Array.isArray(node.calloutTitle) ? node.calloutTitle.map((n: any) => this.nodeToString(n)).join('') : (node.calloutTitle || '');
-        const calloutContent = Array.isArray(node.calloutContent) ? node.calloutContent.map((n: any) => this.nodeToString(n)).join('') : (node.calloutContent || '');
-        return `> [!${calloutType}] ${calloutTitle}\n> ${calloutContent}\n`;
-      }
-      
-      case 'MathBlock':
-        return `$$\n${node.value || ''}\n$$\n`;
-      
-      case 'MathSpan':
-        return `$${node.value || ''}$`;
-      
-      case 'HorizontalRule':
-        return '---\n';
-      
-      case 'Table': {
-        const headerRow = (node.header as any[]).map((cell: any) => cell.content.map((n: any) => this.nodeToString(n)).join('')).join(' | ');
-        const alignRow = (node.align as string[]).map(a => {
-          if (a === 'left') return ':-----';
-          if (a === 'center') return ':-----:';
-          if (a === 'right') return '-----:';
-          return '-----';
-        }).join(' | ');
-        const bodyRows = (node.rows as any[]).map((row: any) => row.cells.map((cell: any) => cell.content.map((n: any) => this.nodeToString(n)).join('')).join(' | ')).join('\n');
-        return `${headerRow}\n${alignRow}\n${bodyRows}\n`;
-      }
-      
-      case 'WikiLink':
-        return `[[${node.value || ''}]]`;
-      
-      case 'Embed':
-        return `![[${node.value || ''}]]`;
-      
-      case 'Highlight':
-        const highlightContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `==${highlightContent}==`;
-      
-      case 'Strike':
-        const strikeContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `~~${strikeContent}~~`;
-      
-      case 'StrongEmphasis':
-        const strongEmphasisContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `***${strongEmphasisContent}***`;
-      
-      case 'AutoLink':
-        return (node.url as string) || '';
-      
-      case 'EscapedChar':
-        return `\\${node.value || ''}`;
-      
-      case 'FootnoteRef':
-        return `[^${node.id || ''}]`;
-      
-      case 'FootnoteDef':
-        const footnoteContent = node.children?.map(child => this.nodeToString(child)).join('') || '';
-        return `[^${node.id || ''}]: ${footnoteContent}\n`;
-      
-      case 'HtmlComment':
-      case 'FrontMatter':
-        return `---\n${node.value || ''}\n---\n`;
-      case 'HtmlBlock':
-      case 'HtmlInline':
-        return node.value || '';
-      
-      default:
-        return node.children?.map(child => this.nodeToString(child)).join('') || '';
-    }
+    return astToString(ast);
   }
 
   /**
@@ -272,13 +116,6 @@ export function processMarkdownToString(markdown: string, rules: Rule[] = []): s
     processor.addRules(rules);
   }
   return processor.processToString(markdown);
-}
-
-/**
- * 创建链式处理器
- */
-export function createProcessor(): ASTProcessor {
-  return new ASTProcessor();
 }
 
 /**
