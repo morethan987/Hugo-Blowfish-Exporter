@@ -2,8 +2,8 @@ import { App, Notice } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import HugoBlowfishExporter from './plugin';
-import { GitDiffModal } from 'src/utils/gitDiffModal';
-import { GitCommitModal } from 'src/utils/gitCommitModal';
+import { GitDiffModal, GitCommitModal } from 'src/modals';
+
 
 export class GitHandler {
     constructor(

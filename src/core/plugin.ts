@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import { HugoBlowfishExporterSettings } from 'src/types/settings';
 import { DEFAULT_SETTINGS } from 'src/config/default-settings';
 import { CoverChooser } from 'src/components/rules/hugo_blowfish/coverChooser';
-import { HugoBlowfishExporterSettingTab } from 'src/utils/settingsTab';
+import { HugoBlowfishExporterSettingTab } from 'src/modals/settingsTab';
 import { Exporter } from './exporter';
 import { Translator } from './translator';
 import { GitHandler } from './git-handler';

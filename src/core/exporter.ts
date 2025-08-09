@@ -3,9 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as juice from 'juice';
 import HugoBlowfishExporter from './plugin';
-import { ConfirmationModal } from 'src/utils/confirmationModal';
-import { BatchExportModal } from 'src/utils/batchExportModal';
-import { ExportNameModal } from 'src/utils/exportNameModal';
+import { ConfirmationModal, BatchExportModal, ExportNameModal, WechatStyleModal } from 'src/modals';
 import { ASTProcessor } from 'src/components/ast/main';
 import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
 
@@ -152,24 +150,43 @@ export class Exporter {
                 return;
             }
 
-            // 读取文件内容并修改
-            const content = await this.app.vault.read(currentFile);
-            const modifiedContent = await this.convertToWechatHtml(content, metadata.frontmatter);
+            // 读取文件内容并转换为HTML
+            // const content = await this.app.vault.read(currentFile);
+            // const htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
+            const htmlContent = `<section class="card">
+  <h1 class="title">Hello, Obsidian</h1>
+  <p class="desc">
+    这是一个 <span class="highlight">带外部样式</span> 的 HTML 片段。666
+  </p>
+</section>
+`;
 
-            // 读取CSS文件
-            const cssPath = '/home/morethan/Program/GitHub/Hugo-Blowfish-Exporter/wechat_post.css'; // 暂时硬编码
-            const css = fs.readFileSync(cssPath, 'utf8');
+            // 打开样式选择模态框
+            const styleModal = new WechatStyleModal(
+                this.app,
+                this.plugin.plugin, // 传递插件实例
+                htmlContent,
+                async (selectedCss: string) => {
+                    try {
+                        // 使用juice处理HTML和CSS
+                        const result = juice.inlineContent(htmlContent, selectedCss);
 
-            // 使用juice处理HTML和CSS
-            const result = juice.inlineContent(modifiedContent, css);
+                        // 复制到剪贴板
+                        const clipData = new ClipboardItem({
+                            'text/html': new Blob([result], { type: 'text/html' })
+                        });
 
-            const clipData = new ClipboardItem({
-                'text/html': new Blob([result], { type: 'text/html' })
-            });
+                        await navigator.clipboard.write([clipData]);
+                        new Notice(`✅ 导出成功！已复制到剪贴板`, 5000);
 
-            await navigator.clipboard.write([clipData]);
-            // 显示成功提示
-            new Notice(`✅ 导出成功!\已复制到剪贴板\n`, 5000);
+                    } catch (clipboardError) {
+                        console.error('Clipboard error:', clipboardError);
+                        new Notice(`❌ 复制到剪贴板失败: ${clipboardError.message}`, 5000);
+                    }
+                }
+            );
+            
+            styleModal.open();
 
         } catch (error) {
             new Notice(`❌ 导出失败: ${error.message}`, 5000);
