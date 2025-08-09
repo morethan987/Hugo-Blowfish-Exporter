@@ -1,9 +1,9 @@
-import { RuleBuilder } from '../ast/main';
-import { NodeType } from '../ast/node';
+import { RuleBuilder } from 'src/components/ast/main';
+import { NodeType } from 'src/components/ast/node';
 import { getSlugByName } from 'src/components/rules/utils';
 
 
-export const wikiLinkRule = [
+export const wikiLinkRuleHugo = [
     new RuleBuilder('非展示型wiki链接转换')
         .describe('将非展示型wiki链接转换为对应的hugo简码')
         .matchType(NodeType.WikiLink)

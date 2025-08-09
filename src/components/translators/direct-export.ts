@@ -37,7 +37,7 @@ export class DirectExportHelper {
 
             // 处理内容
             notice.setMessage('正在处理内容...');
-            const modifiedContent = await this.plugin.exporter.modifyContent(translatedContent, metadata.frontmatter);
+            const modifiedContent = await this.plugin.exporter.convertToHugoMd(translatedContent, metadata.frontmatter);
 
             // 获取文件名并保存
             const directExportFileName = this.fileOps.getDirectExportFileName();

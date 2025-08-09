@@ -2,7 +2,7 @@ import { App, Notice, TFile } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import { HugoBlowfishExporterSettings } from 'src/types/settings';
-import { CoverChooser } from 'src/components/rules/coverChooser';
+import { CoverChooser } from 'src/components/rules/hugo_blowfish/coverChooser';
 
 // 批量导出的模态框
 export class BatchExportModal {

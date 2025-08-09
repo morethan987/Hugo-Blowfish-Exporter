@@ -1,9 +1,9 @@
-import { NodeType, MarkdownNode } from "../ast/node";
-import { RuleBuilder } from "../ast/rule";
+import { NodeType, MarkdownNode } from "src/components/ast/node";
+import { RuleBuilder } from "src/components/ast/rule";
 
 
-export const calloutRule = new RuleBuilder('callout转换')
-  .describe('将callout块转换为对应的hugo简码')
+export const calloutRuleWechat = new RuleBuilder('callout转换')
+  .describe('将callout块转换为对应的Wechat简码')
   .matchType(NodeType.Callout)
   .transform((node, context) => {
     const type = (node.calloutType as string) || 'note';

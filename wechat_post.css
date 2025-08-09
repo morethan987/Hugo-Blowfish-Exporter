@@ -1,0 +1,21 @@
+.card {
+  border: 2px solid #4cafef;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.title {
+  font-size: 20px;
+  color: #4cafef;
+  margin-bottom: 6px;
+}
+
+.desc {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.highlight {
+  color: #d32f2f;
+  font-weight: bold;
+}

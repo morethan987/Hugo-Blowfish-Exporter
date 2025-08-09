@@ -1,9 +1,9 @@
-import { NodeType } from "../ast/node";
-import { RuleBuilder } from "../ast/rule";
+import { NodeType } from "src/components/ast/node";
+import { RuleBuilder } from "src/components/ast/rule";
 
 
-export const mermaidRule = new RuleBuilder('mermaid转换')
-    .describe('将mermaid块转换为对应的hugo简码')
+export const mermaidRuleWechat = new RuleBuilder('mermaid转换')
+    .describe('将mermaid块转换为对应的Wechat简码')
     .matchType(NodeType.CodeBlock)
     .transform((node, context) => {
       // 获取 callout 类型和标题
