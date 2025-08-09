@@ -1,0 +1,67 @@
+{
+  "templates": [
+    {
+      "id": "default",
+      "name": "默认样式",
+      "description": "适合大多数场景的经典微信公众号样式",
+      "file": "default.css",
+      "category": "通用",
+      "deletable": false,
+      "default": true
+    },
+    {
+      "id": "minimal",
+      "name": "简约风格",
+      "description": "简洁清爽的现代化样式，注重内容可读性",
+      "file": "minimal.css",
+      "category": "简约",
+      "deletable": true,
+      "default": false
+    },
+    {
+      "id": "tech",
+      "name": "科技风格",
+      "description": "深色主题的科技感样式，适合技术类文章",
+      "file": "tech.css",
+      "category": "主题",
+      "deletable": false,
+      "default": false
+    },
+    {
+      "id": "blank",
+      "name": "空白模板",
+      "description": "基础空白模板，用于创建自定义样式",
+      "file": "blank.css",
+      "category": "模板",
+      "deletable": false,
+      "default": false
+    }
+  ],
+  "devicePresets": [
+    {
+      "name": "手机竖屏",
+      "width": "375px",
+      "description": "iPhone 标准竖屏尺寸"
+    },
+    {
+      "name": "手机横屏",
+      "width": "667px",
+      "description": "iPhone 横屏尺寸"
+    },
+    {
+      "name": "平板竖屏",
+      "width": "768px",
+      "description": "iPad 竖屏尺寸"
+    },
+    {
+      "name": "平板横屏",
+      "width": "1024px",
+      "description": "iPad 横屏尺寸"
+    },
+    {
+      "name": "桌面显示",
+      "width": "1200px",
+      "description": "桌面浏览器标准宽度"
+    }
+  ]
+}

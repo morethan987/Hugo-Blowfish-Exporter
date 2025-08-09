@@ -1,8 +1,7 @@
-import { calloutRule } from '../rules/callout';
 import { ASTProcessor } from './main';
 import { NodeType } from './node';
-import { wikiLinkRule } from 'src/components/rules/wikiLink';
-import { mathRule } from 'src/components/rules/math';
+import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
+
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---
@@ -147,7 +146,7 @@ function testWikiLink() {
   const processor = new ASTProcessor(context);
   context.processor = processor;
   processor.addRules([
-    ...mathRule,
+    ...mathRuleHugo,
   ]);
   const result = processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');

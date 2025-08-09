@@ -1,0 +1,155 @@
+/* 科技风格微信公众号模板 */
+body {
+  font-family: "JetBrains Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace;
+  line-height: 1.6;
+  color: #00ff88;
+  background-color: #0a0a0a;
+  margin: 0;
+  padding: 20px;
+  font-size: 14px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 2em 0 1em 0;
+  font-weight: bold;
+  color: #00ffff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+h1 {
+  font-size: 1.8em;
+  text-align: center;
+  border: 2px solid #00ffff;
+  padding: 15px;
+  background: linear-gradient(90deg, #001122, #003344);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+h2 {
+  font-size: 1.4em;
+  border-left: 4px solid #ff6b35;
+  padding-left: 15px;
+  background: linear-gradient(90deg, #111, #222);
+  padding: 10px 15px;
+}
+
+h3 {
+  font-size: 1.2em;
+  color: #ff6b35;
+}
+
+p {
+  margin: 1.2em 0;
+  text-align: justify;
+}
+
+blockquote {
+  border: 1px solid #00ff88;
+  margin: 2em 0;
+  padding: 15px;
+  background: linear-gradient(135deg, #001a1a, #002020);
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+}
+
+blockquote::before {
+  content: ">";
+  position: absolute;
+  left: -10px;
+  top: 10px;
+  color: #00ff88;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+code {
+  background: linear-gradient(45deg, #1a1a2e, #16213e);
+  color: #ffd700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  font-family: inherit;
+}
+
+pre {
+  background: linear-gradient(135deg, #0f0f23, #1a1a2e);
+  color: #00ff88;
+  padding: 20px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 2em 0;
+  border: 2px solid #00ffff;
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+  position: relative;
+}
+
+pre::before {
+  content: "◉ ◉ ◉";
+  position: absolute;
+  top: 8px;
+  left: 15px;
+  color: #ff6b35;
+  font-size: 0.8em;
+}
+
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  margin-top: 20px;
+  display: block;
+}
+
+strong {
+  color: #ffd700;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+em {
+  color: #ff6b35;
+}
+
+a {
+  color: #00ffff;
+  text-decoration: none;
+  border-bottom: 1px dotted #00ffff;
+}
+
+a:hover {
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.8);
+}
+
+.card {
+  border: 2px solid #00ff88;
+  padding: 15px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #001122, #003344);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.title {
+  font-size: 18px;
+  color: #00ffff;
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #00ff88;
+}
+
+.highlight {
+  background: linear-gradient(45deg, #ff6b35, #ffd700);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}

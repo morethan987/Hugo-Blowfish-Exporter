@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import { ApiKeyModal } from 'src/utils/apiKeyModal';
+import { ApiKeyModal } from 'src/modals';
 import HugoBlowfishExporter from 'src/core/plugin';
 
 export class HugoBlowfishExporterSettingTab extends PluginSettingTab {

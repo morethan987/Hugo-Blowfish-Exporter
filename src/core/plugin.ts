@@ -2,8 +2,8 @@ import { App } from 'obsidian';
 import OpenAI from 'openai';
 import { HugoBlowfishExporterSettings } from 'src/types/settings';
 import { DEFAULT_SETTINGS } from 'src/config/default-settings';
-import { CoverChooser } from 'src/components/rules/coverChooser';
-import { HugoBlowfishExporterSettingTab } from 'src/utils/settingsTab';
+import { CoverChooser } from 'src/components/rules/hugo_blowfish/coverChooser';
+import { HugoBlowfishExporterSettingTab } from 'src/modals/settingsTab';
 import { Exporter } from './exporter';
 import { Translator } from './translator';
 import { GitHandler } from './git-handler';
@@ -46,7 +46,7 @@ export default class HugoBlowfishExporter {
 
         // 添加导出按钮到ribbon
         const ribbonIconEl = this.plugin.addRibbonIcon('arrow-right-from-line', 'Export all the file in vault', (evt: MouseEvent) => {
-            this.exporter.exportAllNotes();
+            this.exporter.exportAllNotesToHugo();
         });
         ribbonIconEl.addClass('hugo-blowfish-exporter-ribbon-class');
 
@@ -54,7 +54,12 @@ export default class HugoBlowfishExporter {
         this.plugin.addCommand({
             id: 'export-to-hugo-blowfish',
             name: 'Export to Hugo Blowfish',
-            editorCallback: this.exporter.exportCurrentNote.bind(this.exporter)
+            editorCallback: this.exporter.exportCurrentNote2Hugo.bind(this.exporter)
+        });
+        this.plugin.addCommand({
+            id: 'export-to-wechat-post',
+            name: 'Export to WeChat Post',
+            editorCallback: this.exporter.exportCurrentNote2Wechat.bind(this.exporter)
         });
 
         // 添加全文翻译命令

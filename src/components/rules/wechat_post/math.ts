@@ -1,6 +1,6 @@
-import { RuleBuilder } from "../ast/rule";
-import { NodeType } from "../ast/node"; // 需要引入 NodeType
-import type { MarkdownNode } from "../ast/node";
+import { RuleBuilder } from "src/components/ast/rule";
+import { NodeType } from "src/components/ast/node"; // 需要引入 NodeType
+import type { MarkdownNode } from "src/components/ast/node";
 
 
 function hasMathNode(node: MarkdownNode): boolean {
@@ -28,11 +28,11 @@ export const insertKatexRule = new RuleBuilder('插入katex标签')
   .build();
 
 // 导出所有math相关规则
-export const mathRule = [
+export const mathRuleWechat = [
     // 先去插入katex标签，否则转换后就没有MathSpan和MathBlock了
     insertKatexRule,
     new RuleBuilder('math块转换')
-        .describe('将块级数学公式（MathBlock）转换为 hugo 支持的格式')
+        .describe('将块级数学公式（MathBlock）转换为 Wechat 支持的格式')
         .matchType(NodeType.MathBlock)
         .transform((node) => {
         // 处理块级公式，去除多余空格，包裹 $$，并加上 {{< katex >}}
@@ -44,7 +44,7 @@ export const mathRule = [
         })
         .build(),
     new RuleBuilder('math行内转换')
-        .describe('将行内数学公式（MathSpan）转换为 hugo 支持的格式')
+        .describe('将行内数学公式（MathSpan）转换为 Wechat 支持的格式')
         .matchType(NodeType.MathSpan)
         .transform((node) => {
         // 处理行内公式，去除多余空格，包裹 \( ... \)
