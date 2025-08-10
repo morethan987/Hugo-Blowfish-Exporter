@@ -114,22 +114,48 @@
   white-space:pre-wrap;
 }
 
-/* ==================== Callout（无 data-*，纯类名） ==================== */
-/* 基础外观 */
-.md-doc .callout{
-  margin:16px 0;
-  padding:14px 16px;
-  border:1px solid #e5e5e5;
-  border-left-width:8px;
-  border-radius: var(--md-radius);
-  background:#fff;
-  box-shadow: var(--md-shadow);
+/* callout基础外观 */
+/* 基础：尽量贴近你给的内联样式 */
+.c-callout {
+  box-sizing: border-box;
+  margin: 0 0 1em;
+  padding: 1em 1em 1em 2em;
+  border-left: 4px solid #0F4C81;
+  border-radius: 6px;
+  background: #f7f7f7;
+  color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  text-align: left;
+  line-height: 1.75;
+  font-family: Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, "PingFang SC",
+               Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+  font-size: 14px;
+  font-style: normal; /* 正文正常 */
 }
-.md-doc .callout .callout-title{margin:0 0 8px 0; font-weight:700;}
 
-/* 变体（用额外类名控制颜色） */
-.md-doc .callout.info    { border-left-color:#06b6d4; }
-.md-doc .callout.tip     { border-left-color:#22c55e; }
-.md-doc .callout.warning { border-left-color:#f59e0b; }
-.md-doc .callout.danger  { border-left-color:#ef4444; }
-.md-doc .callout.note    { border-left-color:#8b5cf6; }
+/* 标题行：保持正常字形，蓝色，与图标并排 */
+.c-callout .c-title {
+  margin: 0 0 .5em;
+  display: flex;
+  align-items: center;
+  gap: .5em;
+  color: #478be6;
+  font-weight: 500;
+}
+
+/* 图标填充色与大小 */
+.c-callout .c-icon {
+  fill: #478be6;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* 正文 */
+.c-callout .c-text {
+  margin: 0;
+  letter-spacing: .1em;
+}
+
+/* 可选：细分不同语义（若后续需要多个类型） */
+.c-callout.c-note { border-left-color: #0F4C81; }

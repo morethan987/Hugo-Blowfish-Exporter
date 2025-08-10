@@ -19,15 +19,18 @@ tags: [obsidian, 导出, demo]
     脚注引用<sup class="footnote-ref" id="fnref-1"><a href="#fn-1">[1]</a></sup>。
   </p>
 
-  <!-- Callout（data-callout: info | tip | warning | danger | note） -->
-  <div class="callout info">
-    <p class="callout-title">💡 信息</p>
-    <p>这是一个信息提示 Callout，支持多段落与列表。</p>
-    <ul>
-      <li>要点 A</li>
-      <li>要点 B</li>
-    </ul>
-  </div>
+  <!-- Callout 的外层元素必须是 blockquote -->
+  <blockquote class="c-callout c-note">
+    <p class="c-title">
+      <svg class="c-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+        <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path>
+      </svg>
+      <span>Note</span>
+    </p>
+    <p class="c-text">
+      Transformer 本身是“无序”的：每一个时间步注意力机制都会并行处理原来所有的 token；或许这也是其强大所在 🤔 真正和输入数据顺序相关的步骤在于“位置嵌入”。
+    </p>
+  </blockquote>
 
   <!-- Blockquote -->
   <blockquote>
