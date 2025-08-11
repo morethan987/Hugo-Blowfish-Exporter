@@ -1,6 +1,11 @@
 import { App, Notice, TFile } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
+import { mathjax } from 'mathjax-full/js/mathjax.js';
+import { TeX } from 'mathjax-full/js/input/tex.js';
+import { SVG } from 'mathjax-full/js/output/svg.js';
+import { liteAdaptor } from 'mathjax-full/js/adaptors/liteAdaptor.js';
+import { RegisterHTMLHandler } from 'mathjax-full/js/handlers/html.js';
 
 
 export function getSlugByName(app: App, file_name: string): string {
@@ -91,4 +96,15 @@ export async function copyImageFile(app: App, attachmentFile: TFile, settings: a
         console.error(`Failed to copy image file ${attachmentFile.name}:`, error);
         return false;
     }
+}
+
+
+export function texToSvg(texSrc: string, block = false): string {
+    const adaptor = liteAdaptor();
+    RegisterHTMLHandler(adaptor);
+    const tex = new TeX();
+    const svg = new SVG({ fontCache: 'none' });
+    const html = mathjax.document('', { InputJax: tex, OutputJax: svg });
+    const node = html.convert(texSrc, { block });
+    return adaptor.outerHTML(node);
 }

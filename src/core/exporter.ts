@@ -7,6 +7,7 @@ import { ConfirmationModal, BatchExportModal, ExportNameModal, WechatStyleModal 
 import { ASTProcessor } from 'src/components/ast/main';
 import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
 import { calloutRuleWechat, imageRuleWechat, mathRuleWechat, wikiLinkRuleWechat, mermaidRuleWechat } from 'src/components/rules/wechat_post';
+import { texToSvg } from 'src/components/rules/utils';
 
 
 export class Exporter {
@@ -155,18 +156,20 @@ export class Exporter {
             // const content = await this.app.vault.read(currentFile);
             // const htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
 
+            const inlineSvg = texToSvg('a+b=c', false);   // 行内
+            const blockSvg  = texToSvg('E=mc^2', true); // 块级
+
             const htmlContent = `
-<blockquote class="c-callout c-note">
-  <p class="c-title">
-    <svg class="c-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-      <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path>
-    </svg>
-    <span>Note</span>
-  </p>
-  <p class="c-text">
-    Transformer 本身是“无序”的：每一个时间步注意力机制都会并行处理原来所有的 token；或许这也是其强大所在 🤔 真正和输入数据顺序相关的步骤在于“位置嵌入”。
-  </p>
-</blockquote>
+<article class="md-doc">
+<section class="math-block">
+${blockSvg}
+</section>
+
+<span>这是一个内联公式</span>
+<span class="math-inline">
+${inlineSvg}
+</span>
+</article>
 `;
 
             // 打开样式选择模态框

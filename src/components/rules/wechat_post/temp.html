@@ -64,10 +64,14 @@ tags: [obsidian, 导出, demo]
 <span>}</span>
   </code></pre>
 
-  <!-- 数学块（交给 KaTeX/MathJax 渲染） -->
-  <div class="math-block">$$
-\int_{-\infty}^{+\infty} e^{-x^2} dx = \sqrt{\pi}
-$$</div>
+  <!-- 数学块需要用mathjax处理为svg -->
+<section class="math-block">
+  <svg><!-- … --></svg>
+</section>
+
+<span class="math-inline">
+  <svg><!-- … --></svg>
+</span>
 
   <!-- 图片 + 标题 -->
   <figure>

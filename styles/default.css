@@ -81,8 +81,51 @@
 .md-doc pre code{background:transparent; padding:0; display:block;}
 
 /* 数学 */
-.md-doc .math-block{margin:1.2rem 0; text-align:center;}
-.md-doc .math-inline{font-family:var(--md-font-mono);}
+/* Inline math: 与文本同行、可横向滚动保护、对齐基线 */
+.md-doc .math-inline{
+  display:inline-flex;
+  vertical-align:middle;     /* 让公式与文字中线对齐 */
+  line-height:1;             /* 避免额外空隙 */
+  max-width:100%;
+  overflow-x:auto;           /* 长公式不挤爆布局 */
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:2px;        /* 与文本下缘留一点点呼吸 */
+  color:inherit;             /* 继承文字颜色，实现主题一致 */
+}
+.md-doc .math-inline > svg{
+  display:inline;            /* 保持内联表现 */
+  height:1.1em;              /* 尺度接近文字大小，可按需微调 */
+  width:auto;
+  flex-shrink:0;
+}
+
+/* Block math: 居中展示、上下留白、可横向滚动 */
+.md-doc .math-block{
+  display:block;
+  text-align:center;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:0.5em 0;
+  margin:0.5em 0;
+  color:inherit;
+}
+.md-doc .math-block > svg{
+  display:inline-block;
+  height:2.2ex;              /* 与常见渲染保持相近视觉高度 */
+  width:auto;
+  max-width:300vw;           /* 允许在容器内横向滚动 */
+  flex-shrink:0;
+}
+
+/* 让 SVG 走当前文本色（与深浅色主题兼容） */
+.md-doc .math-inline svg, .md-doc .math-block svg{
+  fill:currentColor;
+  stroke:currentColor;
+}
+
 
 /* 表格（去 sticky / 高级特性） */
 .md-doc .table-wrap{overflow-x:auto; border:1px solid var(--md-border); border-radius: var(--md-radius); box-shadow: var(--md-shadow);}
@@ -116,7 +159,7 @@
 
 /* callout基础外观 */
 /* 基础：尽量贴近你给的内联样式 */
-.c-callout {
+.md-doc .c-callout {
   box-sizing: border-box;
   margin: 0 0 1em;
   padding: 1em 1em 1em 2em;
@@ -134,7 +177,7 @@
 }
 
 /* 标题行：保持正常字形，蓝色，与图标并排 */
-.c-callout .c-title {
+.md-doc .c-callout, .md-doc .c-title {
   margin: 0 0 .5em;
   display: flex;
   align-items: center;
@@ -144,7 +187,7 @@
 }
 
 /* 图标填充色与大小 */
-.c-callout .c-icon {
+.md-doc .c-callout, .md-doc .c-icon {
   fill: #478be6;
   width: 16px;
   height: 16px;
@@ -152,10 +195,10 @@
 }
 
 /* 正文 */
-.c-callout .c-text {
+.md-doc .c-callout, .md-doc .c-text {
   margin: 0;
   letter-spacing: .1em;
 }
 
 /* 可选：细分不同语义（若后续需要多个类型） */
-.c-callout.c-note { border-left-color: #0F4C81; }
+.md-doc .c-callout.c-note { border-left-color: #0F4C81; }
