@@ -7,7 +7,7 @@ import { ConfirmationModal, BatchExportModal, ExportNameModal, WechatStyleModal 
 import { ASTProcessor } from 'src/components/ast/main';
 import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
 import { calloutRuleWechat, imageRuleWechat, mathRuleWechat, wikiLinkRuleWechat, mermaidRuleWechat } from 'src/components/rules/wechat_post';
-import { texToSvg } from 'src/components/rules/utils';
+import { texToSvg, imageToBase64 } from 'src/components/rules/utils';
 
 
 export class Exporter {
@@ -159,6 +159,8 @@ export class Exporter {
             const inlineSvg = texToSvg('a+b=c', false);   // 行内
             const blockSvg  = texToSvg('E=mc^2', true); // 块级
 
+            const base64Tag = await imageToBase64(this.app, "GRU.png");
+
             const htmlContent = `
 <article class="md-doc">
 <section class="math-block">
@@ -169,6 +171,8 @@ ${blockSvg}
 <span class="math-inline">
 ${inlineSvg}
 </span>
+
+${base64Tag}
 </article>
 `;
 

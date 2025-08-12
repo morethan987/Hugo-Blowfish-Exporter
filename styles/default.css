@@ -138,7 +138,14 @@
 
 /* 图片/嵌入 */
 .md-doc figure{margin:1.2rem 0;}
-.md-doc img{max-width:100%; height:auto; border-radius:10px; box-shadow: var(--md-shadow);}
+.md-doc img{
+  max-width:85%;
+  height:auto;
+  border-radius:10px;
+  box-shadow: var(--md-shadow);
+  display: block;         /* 确保图片是块级元素 */
+  margin: 0 auto;         /* 水平居中 */
+}
 .md-doc figure>figcaption{color:var(--md-fg-muted); font-size:.9em; text-align:center; margin-top:.5rem;}
 .md-doc .embed{border:1px dashed var(--md-border); padding:.8rem 1rem; border-radius: var(--md-radius);}
 

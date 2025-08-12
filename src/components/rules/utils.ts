@@ -98,6 +98,31 @@ export async function copyImageFile(app: App, attachmentFile: TFile, settings: a
     }
 }
 
+export async function imageToBase64(app: App, imageFile: string) {
+    // 用 app.metadataCache.getFirstLinkpathDest 定位 TFile
+    const tfile = app.metadataCache.getFirstLinkpathDest(imageFile, '');
+    if (!tfile) {
+        new Notice(`❌ 未找到文件: ${imageFile}`);
+        return "";
+    }
+
+    const imageData = await app.vault.readBinary(tfile);
+    const base64 = Buffer.from(imageData).toString('base64');
+    return `<img src="data:${mimeFromExt(tfile.extension)};base64,${base64}">`;
+}
+
+/** 常见扩展名到 MIME 的简单映射 */
+function mimeFromExt(ext: string): string {
+  const e = ext.toLowerCase();
+  if (e === 'png') return 'image/png';
+  if (e === 'jpg' || e === 'jpeg') return 'image/jpeg';
+  if (e === 'gif') return 'image/gif';
+  if (e === 'webp') return 'image/webp';
+  if (e === 'svg') return 'image/svg+xml';
+  if (e === 'bmp') return 'image/bmp';
+  return 'application/octet-stream';
+}
+
 
 export function texToSvg(texSrc: string, block = false): string {
     const adaptor = liteAdaptor();
@@ -105,6 +130,6 @@ export function texToSvg(texSrc: string, block = false): string {
     const tex = new TeX();
     const svg = new SVG({ fontCache: 'none' });
     const html = mathjax.document('', { InputJax: tex, OutputJax: svg });
-    const node = html.convert(texSrc, { block });
+    const node = html.convert(texSrc);
     return adaptor.outerHTML(node);
 }
