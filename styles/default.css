@@ -67,18 +67,77 @@
   box-shadow: var(--md-shadow);
 }
 
-/* 代码块（无伪元素行号） */
-.md-doc pre.code-block, .md-doc pre[class*="language-"]{
-  background: var(--md-code-bg);
-  color: var(--md-code-fg);
-  padding: 1rem 1.1rem;
-  border-radius: var(--md-radius);
-  border: 1px solid var(--md-border);
-  overflow: auto;
-  box-shadow: var(--md-shadow);
-  margin:1.25rem 0;
+/* 代码块 */
+/* 代码块容器 */
+.md-doc pre.codebox {
+  background: #0d1117;
+  color: #c9d1d9;
+  border-radius: 8px;
+  overflow-x: auto;
+  box-shadow: inset 0 0 10px rgba(0,0,0,.05);
+  padding: 0 !important;
+  line-height: 0.3;
 }
-.md-doc pre code{background:transparent; padding:0; display:block;}
+
+/* 顶部装饰栏 */
+.md-doc pre.codebox > .mac {
+  display: flex;
+  padding: 10px 14px 0;
+}
+.md-doc pre.codebox > .mac svg {
+  width: 45px;
+  height: 13px;
+}
+
+/* Prism 基础样式 */
+.md-doc pre.codebox > code {
+  display: block;
+  padding: .5em 1em 1em;
+  white-space: pre;
+  background: transparent;
+  color: #c9d1d9;
+  font-family: "Fira Code", Menlo, Consolas, Monaco, monospace;
+  font-size: 11.5px;
+  line-height: 1.75;
+  text-align: left;
+}
+
+/* Prism token 配色 */
+.md-doc .token.comment,
+.md-doc .token.prolog,
+.md-doc .token.doctype,
+.md-doc .token.cdata { color: #8b949e; font-style: italic; }
+
+.md-doc .token.keyword,
+.md-doc .token.boolean,
+.md-doc .token.constant,
+.md-doc .token.atrule { color: #ff7b72; }
+
+.md-doc .token.function,
+.md-doc .token.class-name,
+.md-doc .token.selector,
+.md-doc .token.property { color: #d2a8ff; }
+
+.md-doc .token.attr-name,
+.md-doc .token.attr-value,
+.md-doc .token.tag,
+.md-doc .token.namespace,
+.md-doc .token.punctuation,
+.md-doc .token.operator { color: #79c0ff; }
+
+.md-doc .token.string,
+.md-doc .token.char,
+.md-doc .token.builtin { color: #a5d6ff; }
+
+.md-doc .token.number,
+.md-doc .token.symbol,
+.md-doc .token.regex,
+.md-doc .token.variable { color: #ffa657; }
+
+.md-doc .token.inserted { color: #3fb950; }
+.md-doc .token.deleted  { color: #f85149; }
+
+
 
 /* 数学 */
 /* Inline math: 与文本同行、可横向滚动保护、对齐基线 */

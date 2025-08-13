@@ -56,13 +56,17 @@ tags: [obsidian, 导出, demo]
 
   <hr>
 
-  <!-- 代码块（可选 language-xxx；若要 CSS 行号，请将每一行包 <span>） -->
-  <pre class="code-block"><code class="language-ts">
-<span>interface User {</span>
-<span>  id: string;</span>
-<span>  name: string;</span>
-<span>}</span>
-  </code></pre>
+  <!-- 代码块 -->
+<pre class="codebox">
+  <span class="mac">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 130">
+      <ellipse cx="50" cy="65" rx="50" ry="52" stroke="#dc3c36" stroke-width="2" fill="#ed6c60"/>
+      <ellipse cx="225" cy="65" rx="50" ry="52" stroke="#da9721" stroke-width="2" fill="#f7c151"/>
+      <ellipse cx="400" cy="65" rx="50" ry="52" stroke="#1ba125" stroke-width="2" fill="#64c856"/>
+    </svg>
+  </span>
+  <code class="language-${lang}">${highlighted}</code>
+</pre>
 
   <!-- 数学块需要用mathjax处理为svg -->
 <section class="math-block">

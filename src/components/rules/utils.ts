@@ -98,6 +98,7 @@ export async function copyImageFile(app: App, attachmentFile: TFile, settings: a
     }
 }
 
+// 图片转base64
 export async function imageToBase64(app: App, imageFile: string) {
     // 用 app.metadataCache.getFirstLinkpathDest 定位 TFile
     const tfile = app.metadataCache.getFirstLinkpathDest(imageFile, '');
@@ -123,7 +124,7 @@ function mimeFromExt(ext: string): string {
   return 'application/octet-stream';
 }
 
-
+// 数学公式转svg
 export function texToSvg(texSrc: string, block = false): string {
     const adaptor = liteAdaptor();
     RegisterHTMLHandler(adaptor);
@@ -132,4 +133,44 @@ export function texToSvg(texSrc: string, block = false): string {
     const html = mathjax.document('', { InputJax: tex, OutputJax: svg });
     const node = html.convert(texSrc);
     return adaptor.outerHTML(node);
+}
+
+/**
+ * 返回只有代码块标签的 HTML 字符串(不含任何 CSS)
+ * 使用 Obsidian 内置 Prism
+ */
+export function getCodeBlock(code: string, lang: string): string {
+  const w = globalThis as any;
+
+  // 使用 Prism
+  let highlighted = '';
+  if (w?.Prism?.highlight) {
+    const Prism = w.Prism;
+    const grammar = Prism.languages[lang];
+    highlighted = grammar
+    ? Prism.highlight(code, grammar, lang)
+    : escapeHTML(code); // 未知语言时不做语法染色
+    // 只返回代码块相关标签
+  }
+
+  return `
+<pre class="codebox">
+  <span class="mac">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 130">
+      <ellipse cx="50" cy="65" rx="50" ry="52" stroke="#dc3c36" stroke-width="2" fill="#ed6c60"/>
+      <ellipse cx="225" cy="65" rx="50" ry="52" stroke="#da9721" stroke-width="2" fill="#f7c151"/>
+      <ellipse cx="400" cy="65" rx="50" ry="52" stroke="#1ba125" stroke-width="2" fill="#64c856"/>
+    </svg>
+  </span>
+  <code class="language-${lang}">${highlighted}</code>
+</pre>
+`;
+}
+
+// 简单 HTML 转义
+function escapeHTML(s: string) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
