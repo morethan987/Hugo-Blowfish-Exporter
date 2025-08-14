@@ -30,6 +30,16 @@
   padding: 2rem 1rem;
 }
 
+.md-doc {
+  --co-accent: hsl(209 60% 48%);  /* 类型主色（标题/图标/边条） */
+  --co-bg: hsl(209 25% 96%);
+  --co-text: rgba(0,0,0,.78);
+  --co-left: 4px;
+  --co-radius: 10px;
+  --co-gap: .6em;
+  --co-font: Optima-Regular, Optima, "PingFang SC", Cambria, Georgia, Times, "Times New Roman", serif;
+}
+
 /* 标题 */
 .md-doc h1,.md-doc h2,.md-doc h3,.md-doc h4,.md-doc h5,.md-doc h6{
   line-height:1.25; font-weight:800; margin:2rem 0 .75rem;
@@ -224,47 +234,96 @@
 }
 
 /* callout基础外观 */
-/* 基础：尽量贴近你给的内联样式 */
-.md-doc .c-callout {
-  box-sizing: border-box;
-  margin: 0 0 1em;
-  padding: 1em 1em 1em 2em;
-  border-left: 4px solid #0F4C81;
-  border-radius: 6px;
-  background: #f7f7f7;
-  color: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  text-align: left;
-  line-height: 1.75;
-  font-family: Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, "PingFang SC",
-               Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
-  font-size: 14px;
-  font-style: normal; /* 正文正常 */
+/* 容器 */
+.md-doc blockquote.callout{
+  margin:0 0 1em;
+  padding:1em;
+  background:#f7f7f7;
+  color:rgba(0,0,0,.82);
+  border:0;
+  border-left:4px solid #0F4C81;
+  border-radius:10px;
+  line-height:1.75;
+  font-size:14px;
+  text-align:left;
+  font-family:Optima-Regular,Optima,'PingFang SC',Cambria,Georgia,Times,'Times New Roman',serif;
 }
 
-/* 标题行：保持正常字形，蓝色，与图标并排 */
-.md-doc .c-callout, .md-doc .c-title {
-  margin: 0 0 .5em;
-  display: flex;
-  align-items: center;
-  gap: .5em;
-  color: #478be6;
-  font-weight: 500;
+/* 标题行（用 p，不用 div） */
+.md-doc blockquote.callout .callout-title{
+  display:flex;
+  align-items:center;
+  gap:.6em;
+  margin:0 0 .5em;
+  font-weight:600;
+  color:#0F4C81; /* 默认标题色（note） */
 }
 
-/* 图标填充色与大小 */
-.md-doc .c-callout, .md-doc .c-icon {
-  fill: #478be6;
-  width: 16px;
-  height: 16px;
-  flex: 0 0 auto;
+/* 图标尺寸锁定；svg 继承标题色 */
+.md-doc blockquote.callout .callout-icon{
+  width:1.1em;
+  height:1.1em;
+  display:inline-block;
+  line-height:1;
+  color:inherit;
+  flex:0 0 auto;
 }
+.md-doc blockquote.callout .callout-icon svg {
+  display: block;
+  width: 1.1em;
+  height: 1.1em;
+  stroke: currentColor;   /* 线框图标用 */
+}
+
 
 /* 正文 */
-.md-doc .c-callout, .md-doc .c-text {
-  margin: 0;
-  letter-spacing: .1em;
-}
+.md-doc blockquote.callout .callout-body{ margin:0; }
+.md-doc blockquote.callout .callout-body > :first-child{ margin-top:0; }
+.md-doc blockquote.callout .callout-body > :last-child{ margin-bottom:0; }
+.md-doc blockquote.callout ul{ margin:.4em 0; padding-left:1.3em; }
 
-/* 可选：细分不同语义（若后续需要多个类型） */
-.md-doc .c-callout.c-note { border-left-color: #0F4C81; }
+/* —— 类型配色（直接写颜色，juice 会内联到元素上） —— */
+.md-doc blockquote.callout.is-note{
+  background:#eaf6ff; border-left-color:#2a7bd1;
+}
+.md-doc blockquote.callout.is-note .callout-title{ color:#2a7bd1; }
+
+.md-doc blockquote.callout.is-info{
+  background:#eaf6ff; border-left-color:#2a7bd1;
+}
+.md-doc blockquote.callout.is-info .callout-title{ color:#2a7bd1; }
+
+.md-doc blockquote.callout.is-todo{
+  background:#eaf6ff; border-left-color:#2a7bd1;
+}
+.md-doc blockquote.callout.is-todo .callout-title{ color:#2a7bd1; }
+
+.md-doc blockquote.callout.is-tip{
+  background:#ebf8f2; border-left-color:#2d8a5f;
+}
+.md-doc blockquote.callout.is-tip .callout-title{ color:#2d8a5f; }
+
+.md-doc blockquote.callout.is-success{
+  background:#ebf8f2; border-left-color:#2d8a5f;
+}
+.md-doc blockquote.callout.is-success .callout-title{ color:#2d8a5f; }
+
+.md-doc blockquote.callout.is-warning{
+  background:#fff8e6; border-left-color:#d48806;
+}
+.md-doc blockquote.callout.is-warning .callout-title{ color:#d48806; }
+
+.md-doc blockquote.callout.is-question{
+  background:#fff8e6; border-left-color:#d48806;
+}
+.md-doc blockquote.callout.is-question .callout-title{ color:#d48806; }
+
+.md-doc blockquote.callout.is-danger{
+  background:#fff1f0; border-left-color:#cf1322;
+}
+.md-doc blockquote.callout.is-danger .callout-title{ color:#cf1322; }
+
+.md-doc blockquote.callout.is-example{
+  background:#ffe7ff; border-left-color:#b25eb2;
+}
+.md-doc blockquote.callout.is-example .callout-title{ color:#b25eb2; }

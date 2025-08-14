@@ -69,6 +69,5 @@ export function getCalloutAttributes(type: string): string {
             return 'icon="list" cardColor="#d8bfd8" iconColor="#8B008B" textColor="#333333"';
         default:
             return '';
-
     }
 }

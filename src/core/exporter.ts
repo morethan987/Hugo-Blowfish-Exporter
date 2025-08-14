@@ -164,8 +164,71 @@ export class Exporter {
 
             const htmlContent = `
 <article class="md-doc">
-${codeBlock}
+
+  <blockquote class="callout is-note">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line-icon lucide-pencil-line"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+      </span>Note
+    </p>
+    <p class="callout-body">这是一个信息提示 Callout，支持多段落与列表。</p>
+    <ul>
+      <li>要点 A</li>
+      <li>要点 B</li>
+    </ul>
+  </blockquote>
+
+  <blockquote class="callout is-info">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      </span>信息
+    </p>
+    <p class="callout-body">这是一个信息提示 Callout，支持多段落与列表。</p>
+    <ul>
+      <li>要点 A</li>
+      <li>要点 B</li>
+    </ul>
+  </blockquote>
+
+  <blockquote class="callout is-success">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-line-icon lucide-check-line"><path d="M20 4L9 15"/><path d="M21 19L3 19"/><path d="M9 15L4 10"/></svg>
+      </span>成功
+    </p>
+    <p class="callout-body">操作已成功完成。</p>
+  </blockquote>
+
+  <blockquote class="callout is-warning">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </span>警告
+    </p>
+    <p class="callout-body">请注意配置文件中的敏感字段。</p>
+  </blockquote>
+
+  <blockquote class="callout is-danger">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+      </span>错误
+    </p>
+    <p class="callout-body">系统发生严重错误。</p>
+  </blockquote>
+
+  <blockquote class="callout is-example">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+      </span>example
+    </p>
+    <p class="callout-body">This is an example.</p>
+  </blockquote>
+
 </article>
+
 `;
 
             // 打开样式选择模态框
