@@ -15,7 +15,7 @@ function hasMathNode(node: MarkdownNode): boolean {
 export const insertKatexRule = new RuleBuilder('插入katex标签')
   .describe('如果AST中存在数学公式，则在FrontMatter后插入{{< katex >}}标签')
   .matchType(NodeType.FrontMatter)
-  .transform((node, context) => {
+  .transform(async (node, context) => {
     if (hasMathNode(context.root)) {
       // 返回一个特殊标记节点，后续处理时插入 katex 标签
       return {
@@ -34,7 +34,7 @@ export const mathRuleHugo = [
     new RuleBuilder('math块转换')
         .describe('将块级数学公式（MathBlock）转换为 hugo 支持的格式')
         .matchType(NodeType.MathBlock)
-        .transform((node) => {
+        .transform(async (node) => {
         // 处理块级公式，去除多余空格，包裹 $$，并加上 {{< katex >}}
         const formula = (node.value || '').trim().replace(/\s+/g, ' ');
         return {
@@ -46,7 +46,7 @@ export const mathRuleHugo = [
     new RuleBuilder('math行内转换')
         .describe('将行内数学公式（MathSpan）转换为 hugo 支持的格式')
         .matchType(NodeType.MathSpan)
-        .transform((node) => {
+        .transform(async(node) => {
         // 处理行内公式，去除多余空格，包裹 \( ... \)
         const formula = (node.value || '').trim().replace(/\s+/g, ' ');
         return {

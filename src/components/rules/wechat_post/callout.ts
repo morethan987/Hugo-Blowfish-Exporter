@@ -5,7 +5,7 @@ import { RuleBuilder } from "src/components/ast/rule";
 export const calloutRuleWechat = new RuleBuilder('callout转换')
   .describe('将callout块转换为对应的Wechat Html Tag')
   .matchType(NodeType.Callout)
-  .transform((node, context) => {
+  .transform(async (node, context) => {
     const type = (node.calloutType as string) || 'note';
     const processor = (context as any).processor;
     

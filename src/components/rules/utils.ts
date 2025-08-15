@@ -1,4 +1,4 @@
-import { App, Notice, TFile } from 'obsidian';
+import { App, Notice, TFile, Component, MarkdownRenderer, renderMath, finishRenderMath } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import { mathjax } from 'mathjax-full/js/mathjax.js';
@@ -125,32 +125,34 @@ function mimeFromExt(ext: string): string {
 }
 
 // 数学公式转svg
-export function texToSvg(texSrc: string, block = false): string {
-    const adaptor = liteAdaptor();
-    RegisterHTMLHandler(adaptor);
-    const tex = new TeX();
-    const svg = new SVG({ fontCache: 'none' });
-    const html = mathjax.document('', { InputJax: tex, OutputJax: svg });
-    const node = html.convert(texSrc);
-    return adaptor.outerHTML(node);
+export async function texToSvg(texSrc: string, block = false): Promise<string> {
+    const node = renderMath(texSrc, block);
+    await finishRenderMath();
+    return node.outerHTML;
 }
 
 /**
  * 返回只有代码块标签的 HTML 字符串(不含任何 CSS)
- * 使用 Obsidian 内置 Prism
+ * 使用 Obsidian 内置 MarkdownRenderer 来渲染代码高亮，确保 Prism 被加载
  */
-export function getCodeBlock(code: string, lang: string): string {
-  const w = globalThis as any;
+export async function getCodeBlock(app: App, code: string, lang: string): Promise<string> {
+  // 创建临时元素用于渲染
+  const tempEl = document.createElement('div');
 
-  // 使用 Prism
+  // 构建 Markdown 代码块字符串
+  const mdCodeBlock = `\`\`\`${lang}\n${code}\n\`\`\``;
+
+  // 使用 MarkdownRenderer 渲染代码块（这会触发 Prism 加载如果需要）
+  await MarkdownRenderer.render(app, mdCodeBlock, tempEl, '', new Component());
+
+  // 提取高亮的 code 元素 innerHTML
+  const codeEl = tempEl.querySelector('pre > code');
   let highlighted = '';
-  if (w?.Prism?.highlight) {
-    const Prism = w.Prism;
-    const grammar = Prism.languages[lang];
-    highlighted = grammar
-    ? Prism.highlight(code, grammar, lang)
-    : escapeHTML(code); // 未知语言时不做语法染色
-    // 只返回代码块相关标签
+  if (codeEl) {
+    highlighted = codeEl.innerHTML;
+  } else {
+    // Fallback: 如果渲染失败，使用简单转义
+    highlighted = escapeHTML(code);
   }
 
   return `

@@ -6,7 +6,7 @@ export const wikiLinkRuleWechat = [
     new RuleBuilder('wiki链接转换为HTML')
         .describe('将wiki链接转换为HTML链接')
         .matchType(NodeType.WikiLink)
-        .transform((node, context) => {
+        .transform(async (node, context) => {
             const heading = (node.heading as string) || '';
             const alias = (node.alias as string) || '';
             const linkType = node.linkType as string;
@@ -24,7 +24,7 @@ export const wikiLinkRuleWechat = [
     new RuleBuilder('嵌入内容转换为HTML')
         .describe('将嵌入内容转换为HTML占位符')
         .matchType(NodeType.Embed)
-        .transform((node, context) => {
+        .transform(async (node, context) => {
             const embedValue = node.value as string || '';
             
             return {

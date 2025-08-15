@@ -539,34 +539,34 @@ function parseInline(text: string): MarkdownNode[] {
  * 测试用例
  * ------------------------------------------------------------------------- */
 
-console.log('测试 1: 解析 Front-matter');
-const md1 = `---
-title: 测试文档
----
+// console.log('测试 1: 解析 Front-matter');
+// const md1 = `---
+// title: 测试文档
+// ---
 
-# 标题
+// # 标题
 
-这是一个测试文档。
+// 这是一个测试文档。
 
-<!-- 这是一个注释 -->
+// <!-- 这是一个注释 -->
 
-%% 这是另一个注释 %%
+// %% 这是另一个注释 %%
 
-这是一个 [[WikiLink]] 和一个 ![[图片.png]] 嵌入。
+// 这是一个 [[WikiLink]] 和一个 ![[图片.png]] 嵌入。
 
-这是 ==高亮== 和 ~~删除线~~ 文本。
+// 这是 ==高亮== 和 ~~删除线~~ 文本。
 
-> [!note] 注意
-> 这是一个 callout
+// > [!note] 注意
+// > 这是一个 callout
 
-> [!warning] 警告
-> 这是一个警告 callout
+// > [!warning] 警告
+// > 这是一个警告 callout
 
-\`\`\`python
-print("Hello, World!")
-\`\`\`
-`;
-console.dir(parseMarkdown(md1), {depth: null});
+// \`\`\`python
+// print("Hello, World!")
+// \`\`\`
+// `;
+// console.dir(parseMarkdown(md1), {depth: null});
 
 
 

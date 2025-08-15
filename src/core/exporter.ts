@@ -120,7 +120,7 @@ export class Exporter {
                 mermaidRuleHugo,
             ]);
             // 4. 处理 AST，传递 context
-            const ast = processor.process(content, context);
+            const ast = await processor.process(content, context);
             // AST处理后统一复制图片
             const { copyImagesAfterAst } = await import('src/components/rules/utils');
             await copyImagesAfterAst(this.app, context.data.imageFiles, this.plugin.settings, slug);
@@ -154,18 +154,12 @@ export class Exporter {
 
             // 读取文件内容并转换为HTML
             const content = await this.app.vault.read(currentFile);
-            // let htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
+            let htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
             // console.log("htmlContent:\n", htmlContent);
 
             // 后处理：将图片占位符替换为base64
-            // htmlContent = await this.processImagePlaceholders(htmlContent);
+            htmlContent = await this.processImagePlaceholders(htmlContent);
 
-            const code_block = getCodeBlock('print("Hello, World!")\nprint("Hello, World!")', 'python')
-            let htmlContent = `
-<article class="md-doc">
-${code_block}
-</article>
-`
             // 打开样式选择模态框
             const styleModal = new WechatStyleModal(
                 this.app,
@@ -221,10 +215,9 @@ ${code_block}
                 ...codeRuleWechat
             ]);
             // 5. 处理 AST，传递 context
-            const ast = processor.process(content, context);
+            const ast = await processor.process(content, context);
             // 6. 转换为HTML而不是Markdown
-            const { astToHtml } = await import('src/components/ast/stringifier');
-            return astToHtml(ast);
+            return processor.astToHtml(ast);
         } catch (error) {
             console.error('Error converting to HTML:', error);
             return `<p>转换错误: ${error.message}</p>`;
