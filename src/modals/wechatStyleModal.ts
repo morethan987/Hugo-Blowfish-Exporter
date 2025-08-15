@@ -72,7 +72,7 @@ export class WechatStyleModal extends Modal {
         
         // 设置模态框样式
         this.modalEl.style.width = '90vw';
-        this.modalEl.style.height = '90vh';
+        this.modalEl.style.height = '95vh';
         this.modalEl.style.maxWidth = '1400px';
         this.modalEl.style.maxHeight = '900px';
 
@@ -81,11 +81,6 @@ export class WechatStyleModal extends Modal {
 
         // 创建主要布局容器
         const mainContainer = contentEl.createDiv();
-        // mainContainer.style.cssText = `
-        //     display: flex;
-        //     height: calc(100% - 100px);
-        //     gap: 20px;
-        // `;
         mainContainer.style.cssText = `
             display: flex;
             height: calc(100% - 120px);

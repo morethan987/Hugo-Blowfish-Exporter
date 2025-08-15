@@ -24,7 +24,7 @@ export const codeRuleWechat = [
             const code = (node.value || '').trim();
             return {
                 type: NodeType.HtmlInline,
-                value: `<span class="code-inline">${code}</span>`
+                value: `<span class="inline-code">${code}</span>`
             };
         })
         .build()
