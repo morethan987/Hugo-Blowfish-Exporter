@@ -9,39 +9,43 @@ export const calloutRuleWechat = new RuleBuilder('callout转换')
     const type = (node.calloutType as string) || 'note';
     const processor = (context as any).processor;
     
-    // 统一处理children
-    let callout_children: MarkdownNode[] = [];
+    // 提取标题和内容
+    let title = '';
+    let contentHtml = '';
+    
     if (node.children && processor) {
-      node.children.map(child => {
-        if (child.role === 'title') {
-          const title_tag = {
-            type: NodeType.Text,
-            value: getTitleTag(type, child.value || '')
-          }
-          callout_children.push(title_tag);
-        } else {
-          callout_children.push(processor.executor.execute(child, context)); // 递归解析
-        }
-      });
+      // 查找标题节点
+      const titleNode = node.children.find((child: any) => child.role === 'title');
+      if (titleNode && titleNode.children && titleNode.children.length > 0) {
+        title = titleNode.children[0].value || '';
+      }
+      
+      // 处理内容节点
+      const contentNodes = node.children.filter((child: any) => child.role !== 'title');
+      if (contentNodes.length > 0) {
+        // 递归处理内容节点，生成HTML
+        const processedContent = contentNodes.map(child => {
+          const processed = processor.executor.execute(child, context);
+          return processor.astToHtml ? processor.astToHtml(processed) : processor.astToString(processed);
+        }).join('');
+        contentHtml = `<p class="callout-body">${processedContent}</p>`;
+      }
     }
     
-    const front_wrapper = {
-      type: NodeType.Text,
-      value: getFrontWrapper(type)
-    };
-    const back_wrapper = {
-      type: NodeType.Text,
-      value: `</blockquote>`
-    };
+    // 生成完整的HTML字符串
+    const fullHtml = `${getBlockquote(type)}
+    ${getTitleTag(type, title)}
+    ${contentHtml}
+</blockquote>`;
 
     return {
-      type: NodeType.Nop,
-      children: [front_wrapper, ...callout_children, back_wrapper]
+      type: NodeType.HtmlBlock,
+      value: fullHtml
     };
   })
   .build();
 
-function getFrontWrapper(type: string): string {
+function getBlockquote(type: string): string {
     switch (type.toLocaleLowerCase()) {
       case 'note':
             return `<blockquote class="callout is-note">`;
@@ -76,19 +80,19 @@ function getFrontWrapper(type: string): string {
 }
 
 function getTitleTag(type: string, title: string): string {
-    switch (type.toLocaleLowerCase()) {
+    switch (type.toLowerCase()) {
       case 'note':
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line-icon lucide-pencil-line"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
-            </span>${title}
-            </p>`;
+      <span class="callout-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line-icon lucide-pencil-line"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+      </span>${title}
+    </p>`;
         case 'info':
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            </span>${title}
-            </p>`;
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      </span>${title}
+    </p>`;
         case 'todo':
             return `<p class="callout-title">
             <span class="callout-icon" aria-hidden="true">
@@ -105,18 +109,18 @@ function getTitleTag(type: string, title: string): string {
         case 'check':
         case 'done':
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
+      <span class="callout-icon" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            </span>${title}
-            </p>`;
+      </span>${title}
+    </p>`;
         case 'warning':
         case 'caution':
         case 'attention':
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
+      <span class="callout-icon" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            </span>${title}
-            </p>`;
+      </span>${title}
+    </p>`;
         case 'question':
         case 'help':
         case 'faq':
@@ -127,21 +131,21 @@ function getTitleTag(type: string, title: string): string {
         case 'danger':
         case 'error':
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
+      <span class="callout-icon" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            </span>${title}
-            </p>`;
+      </span>${title}
+    </p>`;
         case 'example':
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
+      <span class="callout-icon" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-icon lucide-list"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>            </span>${title}
-            </p>`;
+    </p>`;
         default:
             return `<p class="callout-title">
-            <span class="callout-icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line-icon lucide-pencil-line"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
-            </span>${title}
-            </p>`;
+      <span class="callout-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line-icon lucide-pencil-line"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+      </span>${title}
+    </p>`;
     }
 }
 

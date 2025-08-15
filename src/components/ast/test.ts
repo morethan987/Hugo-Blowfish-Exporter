@@ -1,6 +1,7 @@
 import { ASTProcessor } from './main';
 import { NodeType } from './node';
 import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
+import { calloutRuleWechat, imageRuleWechat, mathRuleWechat, wikiLinkRuleWechat, mermaidRuleWechat } from 'src/components/rules/wechat_post';
 
 
 // 测试用的 Markdown 文本

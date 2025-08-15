@@ -109,7 +109,7 @@ export async function imageToBase64(app: App, imageFile: string) {
 
     const imageData = await app.vault.readBinary(tfile);
     const base64 = Buffer.from(imageData).toString('base64');
-    return `<img src="data:${mimeFromExt(tfile.extension)};base64,${base64}">`;
+    return `data:${mimeFromExt(tfile.extension)};base64,${base64}`;
 }
 
 /** 常见扩展名到 MIME 的简单映射 */

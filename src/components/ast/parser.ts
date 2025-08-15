@@ -539,30 +539,36 @@ function parseInline(text: string): MarkdownNode[] {
  * 测试用例
  * ------------------------------------------------------------------------- */
 
-// console.log('测试 1: 解析 Front-matter');
-// const md1 = `---
-// title: 测试文档
-// ---
+console.log('测试 1: 解析 Front-matter');
+const md1 = `---
+title: 测试文档
+---
 
-// # 标题
+# 标题
 
-// 这是一个测试文档。
+这是一个测试文档。
 
-// <!-- 这是一个注释 -->
+<!-- 这是一个注释 -->
 
-// %% 这是另一个注释 %%
+%% 这是另一个注释 %%
 
-// 这是一个 [[WikiLink]] 和一个 ![[图片.png]] 嵌入。
+这是一个 [[WikiLink]] 和一个 ![[图片.png]] 嵌入。
 
-// 这是 ==高亮== 和 ~~删除线~~ 文本。
+这是 ==高亮== 和 ~~删除线~~ 文本。
 
-// > [!note] 注意
-// > 这是一个 callout
+> [!note] 注意
+> 这是一个 callout
 
-// > [!warning] 警告
-// > 这是一个警告 callout
-// `;
-// console.dir(parseMarkdown(md1), {depth: null});
+> [!warning] 警告
+> 这是一个警告 callout
+
+\`\`\`python
+print("Hello, World!")
+\`\`\`
+`;
+console.dir(parseMarkdown(md1), {depth: null});
+
+
 
 // console.log('测试 2: 解析 Callout 嵌套');
 // const md2 = `
@@ -579,6 +585,8 @@ function parseInline(text: string): MarkdownNode[] {
 // > 这是一个警告 callout并且嵌入了$ls -a$内联公式块
 // `;
 // console.dir(parseMarkdown(md2), {depth: null});
+
+
 
 // console.log('测试 3: 解析各种链接');
 // const md3 = `
@@ -609,6 +617,8 @@ function parseInline(text: string): MarkdownNode[] {
 // `;
 // console.dir(parseMarkdown(md3), {depth: null});
 
+
+
 // console.log('测试 4: 解析列表');
 // const md4_1 = `
 // - 我：建模 + 代码 + 部分论文撰写
@@ -635,3 +645,6 @@ function parseInline(text: string): MarkdownNode[] {
 // | $M$            | 目标小模型               |
 // `;
 // console.dir(parseMarkdown(md4_1), {depth: null});
+
+
+
