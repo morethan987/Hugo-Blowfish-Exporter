@@ -215,20 +215,17 @@ function nodeToHtml(node: MarkdownNode, options?: { ordered?: boolean, index?: n
     case NodeType.Document:
       return '<article class="md-doc">\n' + node.children?.map(child => nodeToHtml(child)).join('') || '' + '\n</article>';
 
+    case NodeType.Paragraph:
     case NodeType.Nop:
       return node.children?.map(child => nodeToHtml(child)).join('') || '';
 
-    case NodeType.Paragraph:
-      const content = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<p>${content}</p>`;
+    case NodeType.Text:
+      return escapeHtml(node.value || '');
 
     case NodeType.Heading:
       const level = Math.min(Math.max((node.level as number) || 1, 1), 6);
       const headingContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
       return `<h${level}>${headingContent}</h${level}>`;
-
-    case NodeType.Text:
-      return escapeHtml(node.value || '');
 
     case NodeType.HtmlBlock:
     case NodeType.HtmlInline:

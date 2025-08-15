@@ -66,6 +66,14 @@ export class ASTProcessor {
   }
 
   /**
+   * 获取处理后的 Html 文本
+   */
+  async processToHtml(markdown: string, context?: any): Promise<string> {
+    const ast = await this.process(markdown, context);
+    return this.astToHtml(ast);
+  }
+
+  /**
    * 将 AST 转换回 Markdown 文本
    */
   astToString(ast: MarkdownNode): string {

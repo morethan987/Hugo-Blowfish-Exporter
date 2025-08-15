@@ -153,9 +153,6 @@ export class Exporter {
             let htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
             // console.log("htmlContent:\n", htmlContent);
 
-            // 后处理：将图片占位符替换为base64
-            htmlContent = await this.processImagePlaceholders(htmlContent);
-
             // 打开样式选择模态框
             const styleModal = new WechatStyleModal(
                 this.app,
@@ -211,33 +208,11 @@ export class Exporter {
                 ...codeRuleWechat
             ]);
             // 5. 处理 AST，传递 context
-            const ast = await processor.process(content, context);
-            // 6. 转换为HTML而不是Markdown
-            return processor.astToHtml(ast);
+            return processor.processToHtml(content, context);
         } catch (error) {
             console.error('Error converting to HTML:', error);
             return `<p>转换错误: ${error.message}</p>`;
         }
-    }
-
-    async processImagePlaceholders(htmlContent: string): Promise<string> {
-        // 查找所有图片占位符 {{IMAGE:filename}}
-        const imageRegex = /\{\{IMAGE:([^}]+)\}\}/g;
-        let processedContent = htmlContent;
-        
-        const matches = [...htmlContent.matchAll(imageRegex)];
-        for (const match of matches) {
-            const [placeholder, filename] = match;
-            try {
-                const base64Html = await imageToBase64(this.app, filename);
-                processedContent = processedContent.replace(placeholder, base64Html);
-            } catch (error) {
-                console.error(`Failed to process image ${filename}:`, error);
-                processedContent = processedContent.replace(placeholder, `<span class="image-error">图片加载失败: ${filename}</span>`);
-            }
-        }
-        
-        return processedContent;
     }
     /////////////////// Wechat End ///////////////////
 }

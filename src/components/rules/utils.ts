@@ -121,10 +121,14 @@ function mimeFromExt(ext: string): string {
 }
 
 // 数学公式转svg
-export async function texToSvg(texSrc: string, block = false): Promise<string> {
-    const node = renderMath(texSrc, block);
-    await finishRenderMath();
-    return node.outerHTML;
+export function texToSvg(texSrc: string, block = false): string {
+    const adaptor = liteAdaptor();
+    RegisterHTMLHandler(adaptor);
+    const tex = new TeX();
+    const svg = new SVG({ fontCache: 'none' });
+    const html = mathjax.document('', { InputJax: tex, OutputJax: svg });
+    const node = html.convert(texSrc, { block });
+    return adaptor.outerHTML(node);
 }
 
 /**
