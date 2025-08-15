@@ -2,7 +2,7 @@ import { MarkdownNode,  } from './node';
 import { parseMarkdown } from './parser';
 import { Rule } from './rule';
 import { RuleExecutor, createExecutor } from './executor';
-import { astToString } from './stringifier';
+import { astToString, astToHtml } from './stringifier';
 
 /* ────────────────────────────────────────────────────────────────────────────
  * AST 处理主控制器
@@ -48,7 +48,7 @@ export class ASTProcessor {
   /**
    * 处理 Markdown 文本
    */
-  process(markdown: string, context?: any): MarkdownNode {
+  async process(markdown: string, context?: any): Promise<MarkdownNode> {
     // 1. 解析为 AST
     const ast = parseMarkdown(markdown);
     // console.dir(ast, {depth: null});
@@ -60,9 +60,17 @@ export class ASTProcessor {
   /**
    * 获取处理后的 Markdown 文本
    */
-  processToString(markdown: string, context?: any): string {
-    const ast = this.process(markdown, context);
+  async processToString(markdown: string, context?: any): Promise<string> {
+    const ast = await this.process(markdown, context);
     return this.astToString(ast);
+  }
+
+  /**
+   * 获取处理后的 Html 文本
+   */
+  async processToHtml(markdown: string, context?: any): Promise<string> {
+    const ast = await this.process(markdown, context);
+    return this.astToHtml(ast);
   }
 
   /**
@@ -70,6 +78,13 @@ export class ASTProcessor {
    */
   astToString(ast: MarkdownNode): string {
     return astToString(ast);
+  }
+
+  /**
+   * 将 AST 转换回 Html 文本
+   */
+  astToHtml(ast: MarkdownNode): string {
+    return astToHtml(ast);
   }
 
   /**
@@ -101,7 +116,7 @@ export class ASTProcessor {
 /**
  * 快速处理 Markdown
  */
-export function processMarkdown(markdown: string, rules: Rule[] = []): MarkdownNode {
+export async function processMarkdown(markdown: string, rules: Rule[] = []): Promise<MarkdownNode> {
   const processor = new ASTProcessor();
   if (rules.length > 0) {
     processor.addRules(rules);
@@ -112,7 +127,7 @@ export function processMarkdown(markdown: string, rules: Rule[] = []): MarkdownN
 /**
  * 快速处理 Markdown 并返回字符串
  */
-export function processMarkdownToString(markdown: string, rules: Rule[] = []): string {
+export async function processMarkdownToString(markdown: string, rules: Rule[] = []): Promise<string> {
   const processor = new ASTProcessor();
   if (rules.length > 0) {
     processor.addRules(rules);

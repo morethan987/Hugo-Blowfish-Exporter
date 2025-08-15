@@ -48,7 +48,7 @@ export class RuleExecutor {
   /**
    * 执行规则转换
    */
-  execute(ast: MarkdownNode, context?: RuleContext): MarkdownNode {
+  async execute(ast: MarkdownNode, context?: RuleContext): Promise<MarkdownNode> {
     // 按优先级排序规则
     const sortedRules = [...this.rules].sort((a, b) => {
       const priorityA = a.priority ?? 100;
@@ -70,11 +70,11 @@ export class RuleExecutor {
   /**
    * 递归应用规则
    */
-  private applyRules(
+  private async applyRules(
     node: MarkdownNode,
     rules: Rule[],
     path: number[]
-  ): MarkdownNode {
+  ): Promise<MarkdownNode> {
     // 更新上下文
     this.context.path = path;
 
@@ -85,16 +85,16 @@ export class RuleExecutor {
       if (!rule.enabled && rule.enabled !== undefined) continue;
       
       if (this.matchesRule(transformedNode, rule.condition)) {
-        transformedNode = this.applyTransform(transformedNode, rule.transform);
+        transformedNode = await this.applyTransform(transformedNode, rule.transform);
       }
     }
 
     // 递归处理子节点
     if (transformedNode.children) {
-      transformedNode.children = transformedNode.children.map((child, index) => {
+      transformedNode.children = await Promise.all(transformedNode.children.map((child, index) => {
         const childPath = [...path, index];
         return this.applyRules(child, rules, childPath);
-      });
+      }));
     }
 
     return transformedNode;
@@ -144,22 +144,22 @@ export class RuleExecutor {
   /**
    * 应用转换操作
    */
-  private applyTransform(node: MarkdownNode, transform: RuleTransform): MarkdownNode {
+  private async applyTransform(node: MarkdownNode, transform: RuleTransform): Promise<MarkdownNode> {
     let result = { ...node };
 
     // 自定义转换函数
     if (transform.transform) {
-      result = transform.transform(result, this.context);
+      result = await transform.transform(result, this.context);
     }
 
     // 递归处理子节点
     if (transform.recursive && result.children) {
-      result.children = result.children.map(child => this.applyTransform(child, transform));
+      result.children = await Promise.all(result.children.map(child => this.applyTransform(child, transform)));
     }
 
     // 子节点转换
     if (transform.children && result.children) {
-      result.children = result.children.map(child => this.applyTransform(child, transform.children!));
+      result.children = await Promise.all(result.children.map(child => this.applyTransform(child, transform.children!)));
     }
 
     return result;
@@ -226,7 +226,7 @@ export function createExecutor(): RuleExecutor {
 /**
  * 快速执行规则转换
  */
-export function transformAST(ast: MarkdownNode, rules: Rule[]): MarkdownNode {
+export async function transformAST(ast: MarkdownNode, rules: Rule[]): Promise<MarkdownNode> {
   const executor = createExecutor();
   executor.addRules(rules);
   return executor.execute(ast);
@@ -253,7 +253,7 @@ export class ChainExecutor {
   /**
    * 执行转换
    */
-  execute(ast: MarkdownNode): MarkdownNode {
+  async execute(ast: MarkdownNode): Promise<MarkdownNode> {
     return this.executor.execute(ast);
   }
 

@@ -5,22 +5,22 @@ import { RuleBuilder } from "src/components/ast/rule";
 export const calloutRuleHugo = new RuleBuilder('callout转换')
   .describe('将callout块转换为对应的hugo简码')
   .matchType(NodeType.Callout)
-  .transform((node, context) => {
+  .transform(async (node, context) => {
     const type = (node.calloutType as string) || 'note';
     const processor = (context as any).processor;
     
     // 统一处理children
     let callout_children: MarkdownNode[] = [];
     if (node.children && processor) {
-      node.children.map(child => {
+      await Promise.all(node.children.map(async (child) => {
         if (child.role === 'title') {
           // 如果是标题节点，直接跳过
           return '';
         }
-        callout_children.push(processor.executor.execute(child, context)); // 递归解析
-      });
+        callout_children.push(await processor.executor.execute(child, context)); // 递归解析
+      }));
     }
-    
+
     const attributes = getCalloutAttributes(type);
     const front_wrapper = {
       type: NodeType.Text,
@@ -38,7 +38,7 @@ export const calloutRuleHugo = new RuleBuilder('callout转换')
   })
   .build();
 
-export function getCalloutAttributes(type: string): string {
+function getCalloutAttributes(type: string): string {
     switch (type.toLowerCase()) {
         case 'note':
             return 'icon="pencil" cardColor="#1E3A8A" textColor="#E0E7FF"';
@@ -69,6 +69,5 @@ export function getCalloutAttributes(type: string): string {
             return 'icon="list" cardColor="#d8bfd8" iconColor="#8B008B" textColor="#333333"';
         default:
             return '';
-
     }
 }

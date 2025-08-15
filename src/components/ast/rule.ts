@@ -31,7 +31,7 @@ export interface RuleTransform {
   // 属性删除
   remove?: string[];
   // 自定义转换函数
-  transform?: (node: MarkdownNode, context: RuleContext) => MarkdownNode;
+  transform?: (node: MarkdownNode, context: RuleContext) => Promise<MarkdownNode>;
   // 子节点处理
   children?: RuleTransform;
   // 是否递归处理子节点
@@ -167,7 +167,7 @@ export class RuleBuilder {
   /**
    * 自定义转换函数
    */
-  transform(transform: (node: MarkdownNode, context: RuleContext) => MarkdownNode): RuleBuilder {
+  transform(transform: (node: MarkdownNode, context: RuleContext) => Promise<MarkdownNode>): RuleBuilder {
     this.rule.transform = { ...this.rule.transform, transform };
     return this;
   }

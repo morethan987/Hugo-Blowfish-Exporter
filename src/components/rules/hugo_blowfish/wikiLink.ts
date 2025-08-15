@@ -7,7 +7,7 @@ export const wikiLinkRuleHugo = [
     new RuleBuilder('非展示型wiki链接转换')
         .describe('将非展示型wiki链接转换为对应的hugo简码')
         .matchType(NodeType.WikiLink)
-        .transform((node, context) => {
+        .transform(async (node, context) => {
             const heading = (node.heading as string) || '';
             const formated_heading = heading.replace(/[A-Z]/g, (char) => char.toLowerCase()).replace(/\s+/g, "-").replace(/[^\w\-\u4e00-\u9fa5]/g, ""); // 保留中文汉字，但移除特殊标点符号
             const alias = (node.alias as string) || '';
@@ -30,7 +30,7 @@ export const wikiLinkRuleHugo = [
     new RuleBuilder('展示型wiki链接转换')
         .describe('将展示型wiki链接转换为对应的hugo简码')
         .matchType(NodeType.Embed)
-        .transform((node, context) => {
+        .transform(async (node, context) => {
             let fileName = context.data.settings.defaultDispName_zh_cn;
             if (context.data.lang === 'en') {
                 fileName = context.data.settings.defaultDispName_en;

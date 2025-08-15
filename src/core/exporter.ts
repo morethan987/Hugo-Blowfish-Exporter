@@ -6,6 +6,8 @@ import HugoBlowfishExporter from './plugin';
 import { ConfirmationModal, BatchExportModal, ExportNameModal, WechatStyleModal } from 'src/modals';
 import { ASTProcessor } from 'src/components/ast/main';
 import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
+import { calloutRuleWechat, imageRuleWechat, mathRuleWechat, wikiLinkRuleWechat, mermaidRuleWechat, codeRuleWechat } from 'src/components/rules/wechat_post';
+import { imageToBase64, getCodeBlock } from 'src/components/rules/utils';
 
 
 export class Exporter {
@@ -104,7 +106,7 @@ export class Exporter {
             const lang = frontmatter.language as string;
             // 1. 先创建 context（不带 processor）
             const context: any = {
-                data: { app: this.app, settings: this.plugin.settings, slug, lang, imageFiles: [] }
+                data: { app: this.app, settings: this.plugin.settings, slug, lang }
             };
             // 2. 创建 processor 实例
             const processor = new ASTProcessor(context);
@@ -118,11 +120,7 @@ export class Exporter {
                 mermaidRuleHugo,
             ]);
             // 4. 处理 AST，传递 context
-            const ast = processor.process(content, context);
-            // AST处理后统一复制图片
-            const { copyImagesAfterAst } = await import('src/components/rules/utils');
-            await copyImagesAfterAst(this.app, context.data.imageFiles, this.plugin.settings, slug);
-            return processor.astToString(ast);
+            return processor.processToString(content, context)
         } catch (error) {
             console.error('Error modifying content:', error);
             return content;
@@ -151,15 +149,9 @@ export class Exporter {
             }
 
             // 读取文件内容并转换为HTML
-            // const content = await this.app.vault.read(currentFile);
-            // const htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
-            const htmlContent = `<section class="card">
-  <h1 class="title">Hello, Obsidian</h1>
-  <p class="desc">
-    这是一个 <span class="highlight">带外部样式</span> 的 HTML 片段。666
-  </p>
-</section>
-`;
+            const content = await this.app.vault.read(currentFile);
+            let htmlContent = await this.convertToWechatHtml(content, metadata.frontmatter);
+            // console.log("htmlContent:\n", htmlContent);
 
             // 打开样式选择模态框
             const styleModal = new WechatStyleModal(
@@ -207,22 +199,19 @@ export class Exporter {
             const processor = new ASTProcessor(context);
             // 3. 将 processor 挂载到 context.processor
             context.processor = processor;
+            // 4. 使用微信规则
             processor.addRules([
-                calloutRuleHugo,
-                ...mathRuleHugo,
-                imageRuleHugo,
-                ...wikiLinkRuleHugo,
-                mermaidRuleHugo,
+                calloutRuleWechat,
+                ...mathRuleWechat,
+                imageRuleWechat,
+                ...wikiLinkRuleWechat,
+                ...codeRuleWechat
             ]);
-            // 4. 处理 AST，传递 context
-            const ast = processor.process(content, context);
-            // AST处理后统一复制图片
-            const { copyImagesAfterAst } = await import('src/components/rules/utils');
-            await copyImagesAfterAst(this.app, context.data.imageFiles, this.plugin.settings, slug);
-            return processor.astToString(ast);
+            // 5. 处理 AST，传递 context
+            return processor.processToHtml(content, context);
         } catch (error) {
-            console.error('Error modifying content:', error);
-            return content;
+            console.error('Error converting to HTML:', error);
+            return `<p>转换错误: ${error.message}</p>`;
         }
     }
     /////////////////// Wechat End ///////////////////

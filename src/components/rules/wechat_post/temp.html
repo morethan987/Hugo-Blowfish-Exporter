@@ -1,0 +1,165 @@
+<article class="md-doc">
+  <!-- Front-matter：可选渲染成信息卡，或直接隐藏 -->
+  <section class="frontmatter">
+title: 我的笔记标题
+date: 2025-08-10
+tags: [obsidian, 导出, demo]
+  </section>
+
+  <!-- Heading（建议保留 id 以支持锚点） -->
+  <h1 id="intro">Obsidian → HTML 导出演示</h1>
+
+  <!-- 段落 / 内联元素 -->
+  <p>
+    这是一段普通文本，包含 <em>强调</em>、<strong>加粗</strong>、
+    <code>inline code</code>、<mark>高亮</mark>、
+    <a href="https://example.com">外链</a> 与
+    <a class="wikilink" data-target="本地词条">WikiLink</a>。
+    内联公式 <span class="math-inline">\\( E=mc^2 \\)</span>。
+    脚注引用<sup class="footnote-ref" id="fnref-1"><a href="#fn-1">[1]</a></sup>。
+  </p>
+
+  <!-- Callout 的外层元素必须是 blockquote -->
+  <blockquote class="callout is-note">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-line-icon lucide-pencil-line"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+      </span>Note
+    </p>
+    <p class="callout-body">这是一个信息提示 Callout，支持多段落与列表。</p>
+    <ul>
+      <li>要点 A</li>
+      <li>要点 B</li>
+    </ul>
+  </blockquote>
+
+  <blockquote class="callout is-info">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      </span>信息
+    </p>
+    <p class="callout-body">这是一个信息提示 Callout，支持多段落与列表。</p>
+    <ul>
+      <li>要点 A</li>
+      <li>要点 B</li>
+    </ul>
+  </blockquote>
+
+  <blockquote class="callout is-success">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-line-icon lucide-check-line"><path d="M20 4L9 15"/><path d="M21 19L3 19"/><path d="M9 15L4 10"/></svg>
+      </span>成功
+    </p>
+    <p class="callout-body">操作已成功完成。</p>
+  </blockquote>
+
+  <blockquote class="callout is-warning">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert-icon lucide-triangle-alert"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      </span>警告
+    </p>
+    <p class="callout-body">请注意配置文件中的敏感字段。</p>
+  </blockquote>
+
+  <blockquote class="callout is-danger">
+    <p class="callout-title">
+      <span class="callout-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x-icon lucide-circle-x"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+      </span>错误
+    </p>
+    <p class="callout-body">系统发生严重错误。</p>
+  </blockquote>
+
+  <!-- Blockquote -->
+  <blockquote>
+    <p>这是一段引用文本。可以包含多段落与内联元素。</p>
+  </blockquote>
+
+  <!-- 列表（普通） -->
+  <h2 id="lists">列表</h2>
+  <ul>
+    <li>无序 1</li>
+    <li>无序 2</li>
+  </ul>
+  <ol>
+    <li>有序 1</li>
+    <li>有序 2</li>
+  </ol>
+
+  <!-- 任务清单（checkbox 在部分平台可能被过滤，见“公众号安全版”的替代） -->
+  <ul>
+    <li class="task"><input type="checkbox" checked> 已完成项</li>
+    <li class="task"><input type="checkbox"> 待办项</li>
+  </ul>
+
+  <hr>
+
+  <!-- 代码块 -->
+<pre class="codebox">
+  <span class="mac">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 130">
+      <ellipse cx="50" cy="65" rx="50" ry="52" stroke="#dc3c36" stroke-width="2" fill="#ed6c60"/>
+      <ellipse cx="225" cy="65" rx="50" ry="52" stroke="#da9721" stroke-width="2" fill="#f7c151"/>
+      <ellipse cx="400" cy="65" rx="50" ry="52" stroke="#1ba125" stroke-width="2" fill="#64c856"/>
+    </svg>
+  </span>
+  <code class="language-${lang}">${highlighted}</code>
+</pre>
+
+  <!-- 数学块需要用mathjax处理为svg -->
+<section class="math-block">
+  <svg><!-- … --></svg>
+</section>
+
+<span class="math-inline">
+  <svg><!-- … --></svg>
+</span>
+
+  <!-- 图片 + 标题 -->
+  <figure>
+    <img src="https://picsum.photos/1200/600" alt="示例图片">
+    <figcaption>图 1：示例图片标题</figcaption>
+  </figure>
+
+  <!-- 表格（外层包 .table-wrap 以启用横向滚动与圆角） -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th align="left">列 A</th>
+          <th align="center">列 B</th>
+          <th align="right">列 C</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>左对齐</td>
+          <td style="text-align:center">中</td>
+          <td style="text-align:right">123</td>
+        </tr>
+        <tr>
+          <td>foo</td>
+          <td style="text-align:center">bar</td>
+          <td style="text-align:right">456</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 内嵌（Embed） -->
+  <figure class="embed" data-src="assets/video.mp4">
+    <figcaption>内嵌资源占位（实际渲染由导出器决定）</figcaption>
+  </figure>
+
+  <!-- 脚注区（与正文中的 footnote-ref 对应） -->
+  <section class="footnotes">
+    <ol>
+      <li id="fn-1">
+        这是脚注内容。<a href="#fnref-1">↩︎</a>
+      </li>
+    </ol>
+  </section>
+</article>

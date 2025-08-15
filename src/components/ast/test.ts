@@ -1,6 +1,7 @@
 import { ASTProcessor } from './main';
 import { NodeType } from './node';
 import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
+import { calloutRuleWechat, imageRuleWechat, mathRuleWechat, wikiLinkRuleWechat, mermaidRuleWechat } from 'src/components/rules/wechat_post';
 
 
 // 测试用的 Markdown 文本
@@ -139,7 +140,7 @@ title: 测试文档
 | $M$            | 目标小模型               |
 `
 
-function testWikiLink() {
+async function testWikiLink() {
   console.log('=== wikiLink功能测试 ===');
   // processor.addRules(wikiLinkRule);
   const context: any = {};
@@ -148,7 +149,7 @@ function testWikiLink() {
   processor.addRules([
     ...mathRuleHugo,
   ]);
-  const result = processor.processToString(testMarkdown);
+  const result = await processor.processToString(testMarkdown);
   console.log('\n处理后的文档:');
   console.log(result);
 }
@@ -156,10 +157,10 @@ function testWikiLink() {
 /**
  * 运行所有测试
  */
-function runTests() {
+async function runTests() {
   // testBasicFunctionality();
   // testRuleSystem();
-  testWikiLink();
+  await testWikiLink();
   console.log('\n=== 测试完成 ===');
 }
 
