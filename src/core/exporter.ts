@@ -106,7 +106,7 @@ export class Exporter {
             const lang = frontmatter.language as string;
             // 1. 先创建 context（不带 processor）
             const context: any = {
-                data: { app: this.app, settings: this.plugin.settings, slug, lang, imageFiles: [] }
+                data: { app: this.app, settings: this.plugin.settings, slug, lang }
             };
             // 2. 创建 processor 实例
             const processor = new ASTProcessor(context);
@@ -120,11 +120,7 @@ export class Exporter {
                 mermaidRuleHugo,
             ]);
             // 4. 处理 AST，传递 context
-            const ast = await processor.process(content, context);
-            // AST处理后统一复制图片
-            const { copyImagesAfterAst } = await import('src/components/rules/utils');
-            await copyImagesAfterAst(this.app, context.data.imageFiles, this.plugin.settings, slug);
-            return processor.astToString(ast);
+            return processor.processToString(content, context)
         } catch (error) {
             console.error('Error modifying content:', error);
             return content;

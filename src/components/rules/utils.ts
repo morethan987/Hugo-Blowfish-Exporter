@@ -56,19 +56,15 @@ export function getFrontmatterByName(app: App, file_name: string): Record<string
     return metadata.frontmatter;
 }
 
-// 批量复制图片辅助函数
-export async function copyImagesAfterAst(app: App, imageFiles: string[], settings: any, slug: string) {
-    for (const fileName of imageFiles) {
-        // 用 app.metadataCache.getFirstLinkpathDest 定位 TFile
-        const tfile = app.metadataCache.getFirstLinkpathDest(fileName, '');
-        if (tfile) {
-            await copyImageFile(app, tfile, settings, slug);
-        }
-    }
-}
-
-export async function copyImageFile(app: App, attachmentFile: TFile, settings: any, slug: string): Promise<boolean> {
+// 复制图片辅助函数
+export async function copyImageFile(app: App, imageFile: string, settings: any, slug: string): Promise<boolean> {
     try {
+        const attachmentFile = app.metadataCache.getFirstLinkpathDest(imageFile, '');
+        if (!attachmentFile) {
+            new Notice(`❌ 未找到文件: ${imageFile}`);
+            return false;
+        }
+
         // 获取相对于vault根目录的路径
         const relativePath = attachmentFile.path.replace(/\\/g, '/');
         
@@ -93,7 +89,7 @@ export async function copyImageFile(app: App, attachmentFile: TFile, settings: a
         
         return true;
     } catch (error) {
-        console.error(`Failed to copy image file ${attachmentFile.name}:`, error);
+        console.error(`Failed to copy image file ${imageFile}:`, error);
         return false;
     }
 }
