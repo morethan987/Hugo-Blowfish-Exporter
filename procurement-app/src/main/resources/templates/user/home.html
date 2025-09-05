@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Home</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+<h2>Welcome, <span th:text="${#authentication.name}"></span></h2>
+<p>Total value submitted: <span th:text="${totalValue}">0</span></p>
+
+<form th:action="@{/user/purchase}" method="post" enctype="multipart/form-data">
+    <input type="text" name="itemName" placeholder="Item name" required />
+    <input type="number" name="price" placeholder="Price" step="0.01" required />
+    <input type="text" name="link" placeholder="Link" />
+    <input type="date" name="purchaseDate" required />
+    <input type="file" name="file" accept="application/pdf" required />
+    <button type="submit">Submit</button>
+</form>
+
+<h3>Recent records</h3>
+<table>
+    <tr><th>Item</th><th>Price</th><th>Date</th></tr>
+    <tr th:each="r : ${records}">
+        <td th:text="${r.itemName}"></td>
+        <td th:text="${r.price}"></td>
+        <td th:text="${r.purchaseDate}"></td>
+    </tr>
+</table>
+
+<a th:href="@{/logout}">Logout</a>
+</body>
+</html>
