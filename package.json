@@ -3,31 +3,33 @@
 	"version": "2.0.0",
 	"description": "This is a plugin for Obsidian that allows you to export or translate your notes to a Hugo-compatible format.",
 	"main": "main.js",
+	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"test_parser": "tsx src/components/ast/parser.ts",
-		"test": "tsx src/components/ast/test.ts",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"test_parser": "bunx src/components/ast/parser.ts",
+		"test": "bunx src/components/ast/test.ts",
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"lint": "eslint ."
 	},
 	"keywords": [],
 	"author": "",
-	"license": "MIT",
+	"license": "0-BSD",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
-		"@typescript-eslint/eslint-plugin": "5.29.0",
-		"@typescript-eslint/parser": "5.29.0",
-		"builtin-modules": "3.3.0",
-		"esbuild": "0.17.3",
-		"obsidian": "latest",
+		"esbuild": "0.25.5",
+		"eslint-plugin-obsidianmd": "0.1.9",
+		"globals": "14.0.0",
 		"tslib": "2.4.0",
-		"tsx": "^4.20.3",
-		"typescript": "4.7.4"
+		"typescript": "^5.8.3",
+		"typescript-eslint": "8.35.1",
+		"@eslint/js": "9.30.1",
+		"jiti": "2.6.1"
 	},
 	"dependencies": {
 		"juice": "^11.0.1",
 		"mathjax-full": "^3.2.2",
-		"openai": "^4.87.3"
-	},
-	"packageManager": "pnpm@10.12.1+sha512.f0dda8580f0ee9481c5c79a1d927b9164f2c478e90992ad268bbb2465a736984391d6333d2c327913578b2804af33474ca554ba29c04a8b13060a717675ae3ac"
+		"obsidian": "latest",
+		"openai": "^4.104.0"
+	}
 }

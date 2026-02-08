@@ -1,8 +1,19 @@
-import { ASTProcessor } from './main';
-import { NodeType } from './node';
-import { calloutRuleHugo, imageRuleHugo, mathRuleHugo, wikiLinkRuleHugo, mermaidRuleHugo } from 'src/components/rules/hugo_blowfish';
-import { calloutRuleWechat, imageRuleWechat, mathRuleWechat, wikiLinkRuleWechat, mermaidRuleWechat } from 'src/components/rules/wechat_post';
-
+import { ASTProcessor } from "./main";
+import { NodeType } from "./node";
+import {
+	calloutRuleHugo,
+	imageRuleHugo,
+	mathRuleHugo,
+	wikiLinkRuleHugo,
+	mermaidRuleHugo,
+} from "components/rules/hugo_blowfish";
+import {
+	calloutRuleWechat,
+	imageRuleWechat,
+	mathRuleWechat,
+	wikiLinkRuleWechat,
+	mermaidRuleWechat,
+} from "components/rules/wechat_post";
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---
@@ -138,35 +149,33 @@ title: 测试文档
 | -------------- | ------------------- |
 | $x$            | 目标问题                |
 | $M$            | 目标小模型               |
-`
+`;
 
 async function testWikiLink() {
-  console.log('=== wikiLink功能测试 ===');
-  // processor.addRules(wikiLinkRule);
-  const context: any = {};
-  const processor = new ASTProcessor(context);
-  context.processor = processor;
-  processor.addRules([
-    ...mathRuleHugo,
-  ]);
-  const result = await processor.processToString(testMarkdown);
-  console.log('\n处理后的文档:');
-  console.log(result);
+	console.log("=== wikiLink功能测试 ===");
+	// processor.addRules(wikiLinkRule);
+	const context: any = {};
+	const processor = new ASTProcessor(context);
+	context.processor = processor;
+	processor.addRules([...mathRuleHugo]);
+	const result = await processor.processToString(testMarkdown);
+	console.log("\n处理后的文档:");
+	console.log(result);
 }
 
 /**
  * 运行所有测试
  */
 async function runTests() {
-  // testBasicFunctionality();
-  // testRuleSystem();
-  await testWikiLink();
-  console.log('\n=== 测试完成 ===');
+	// testBasicFunctionality();
+	// testRuleSystem();
+	await testWikiLink();
+	console.log("\n=== 测试完成 ===");
 }
 
 // 如果直接运行此文件，执行测试
 if (require.main === module) {
-  runTests();
+	runTests();
 }
 
 export { runTests };
