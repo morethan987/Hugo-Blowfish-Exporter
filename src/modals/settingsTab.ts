@@ -1,36 +1,15 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { ApiKeyModal } from "modals";
 import HugoBlowfishExporter from "core/plugin";
 
 export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 	plugin: HugoBlowfishExporter;
-	mainPlugin: any;
+	mainPlugin: Plugin;
 
 	constructor(app: App, plugin: HugoBlowfishExporter) {
 		super(app, plugin.plugin);
 		this.plugin = plugin;
 		this.mainPlugin = plugin.plugin;
-
-		// 自动检测操作系统
-		const platform = process.platform;
-		const detectedOS = platform === "win32" ? "Windows" : "Linux";
-
-		// 如果检测到的操作系统与当前设置不同，则更新设置
-		if (this.plugin.settings.currentOS !== detectedOS) {
-			this.plugin.settings.currentOS = detectedOS;
-			if (detectedOS === "Windows") {
-				this.plugin.settings.translatedExportPath =
-					this.plugin.settings.translatedExportPathWindows;
-				this.plugin.settings.exportPath =
-					this.plugin.settings.exportPathWindows;
-			} else {
-				this.plugin.settings.translatedExportPath =
-					this.plugin.settings.translatedExportPathLinux;
-				this.plugin.settings.exportPath =
-					this.plugin.settings.exportPathLinux;
-			}
-			this.plugin.saveSettings();
-		}
 	}
 
 	display(): void {
@@ -43,7 +22,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setName("当前操作系统")
 			.setDesc("系统自动检测到的操作系统类型")
 			.addText((text) =>
-				text.setValue(this.plugin.settings.currentOS).setDisabled(true),
+				text.setValue(this.plugin.currentOS).setDisabled(true),
 			);
 
 		containerEl.createEl("h1", { text: "翻译设置" });
@@ -54,7 +33,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder(
-						this.plugin.settings.currentOS === "Windows"
+						this.plugin.currentOS === "Windows"
 							? "E:/Translations"
 							: "/home/user/translations",
 					)
@@ -62,7 +41,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						// 同时更新当前路径和对应操作系统的路径
 						this.plugin.settings.translatedExportPath = value;
-						if (this.plugin.settings.currentOS === "Windows") {
+						if (this.plugin.currentOS === "Windows") {
 							this.plugin.settings.translatedExportPathWindows =
 								value;
 						} else {
@@ -75,13 +54,11 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.settingEl.addClass("translated-export-path-setting");
 
 		new Setting(containerEl)
-			.setName("BaseURL")
-			.setDesc(
-				"设置用于翻译功能的大模型BaseURL，OpenAI兼容的都可以，默认指向DeepSeek",
-			)
+			.setName("Base URL")
+			.setDesc("设置用于翻译功能的大模型 base URL")
 			.addText((text) =>
 				text
-					.setPlaceholder("your base url")
+					.setPlaceholder("Your base URL")
 					.setValue(this.plugin.settings.BaseURL)
 					.onChange(async (value) => {
 						this.plugin.settings.BaseURL = value;
@@ -118,7 +95,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setDesc("设置用于翻译功能的模型名称")
 			.addText((text) =>
 				text
-					.setPlaceholder("your model name")
+					.setPlaceholder("Your model name")
 					.setValue(this.plugin.settings.ModelName)
 					.onChange(async (value) => {
 						this.plugin.settings.ModelName = value;
@@ -161,12 +138,12 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setDesc("设置content文件夹在磁盘中的绝对路径")
 			.addText((text) =>
 				text
-					.setPlaceholder("E:/Hugo/morethan987/content")
+					.setPlaceholder("Your content directory absolute path")
 					.setValue(this.plugin.settings.exportPath)
 					.onChange(async (value) => {
 						// 同时更新当前路径和对应操作系统的路径
 						this.plugin.settings.exportPath = value;
-						if (this.plugin.settings.currentOS === "Windows") {
+						if (this.plugin.currentOS === "Windows") {
 							this.plugin.settings.exportPathWindows = value;
 						} else {
 							this.plugin.settings.exportPathLinux = value;
@@ -181,7 +158,9 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setDesc("设置导出图片所在文件夹名称")
 			.addText((text) =>
 				text
-					.setPlaceholder("img")
+					.setPlaceholder(
+						"Default is 'img' folder in content directory",
+					)
 					.setValue(this.plugin.settings.imageExportPath)
 					.onChange(async (value) => {
 						this.plugin.settings.imageExportPath = value;
@@ -195,7 +174,9 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			.setDesc("设置博客存放文件夹（相对于content文件夹）")
 			.addText((text) =>
 				text
-					.setPlaceholder("posts")
+					.setPlaceholder(
+						"Default is 'posts' folder in content directory",
+					)
 					.setValue(this.plugin.settings.blogPath)
 					.onChange(async (value) => {
 						this.plugin.settings.blogPath = value;
@@ -238,7 +219,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("index.zh-cn")
+					.setPlaceholder("Default chinese file name is index.zh-cn")
 					.setValue(this.plugin.settings.defaultExportName_zh_cn)
 					.onChange(async (value) => {
 						this.plugin.settings.defaultExportName_zh_cn = value;
@@ -254,7 +235,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("index.en")
+					.setPlaceholder("Default english file name is index.en")
 					.setValue(this.plugin.settings.defaultExportName_en)
 					.onChange(async (value) => {
 						this.plugin.settings.defaultExportName_en = value;
@@ -283,7 +264,9 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("index.zh-cn.md")
+					.setPlaceholder(
+						"Default chinese link file name is index.zh-cn.md",
+					)
 					.setValue(this.plugin.settings.defaultDispName_zh_cn)
 					.onChange(async (value) => {
 						this.plugin.settings.defaultDispName_zh_cn = value;
@@ -299,7 +282,9 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("index.en.md")
+					.setPlaceholder(
+						"Default english link file name is index.en.md",
+					)
 					.setValue(this.plugin.settings.defaultDispName_en)
 					.onChange(async (value) => {
 						this.plugin.settings.defaultDispName_en = value;

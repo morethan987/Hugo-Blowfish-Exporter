@@ -1,4 +1,6 @@
 import HugoBlowfishExporter from "core/plugin";
+import * as path from "path";
+import * as fs from "fs";
 
 /**
  * 确定目标文件路径
@@ -10,9 +12,6 @@ export async function determineTargetFilePath(
 	thisFilePath: string,
 	plugin: HugoBlowfishExporter,
 ): Promise<string | null> {
-	const path = require("path");
-	const fs = require("fs");
-
 	// 获取本文件的文件名（不包含路径）
 	const thisFileName = path.basename(thisFilePath);
 

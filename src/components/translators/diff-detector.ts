@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import HugoBlowfishExporter from "core/plugin";
+import { get_error_message } from "utils";
 
 /**
  * 文件差异检测器
@@ -53,7 +54,10 @@ export class DiffDetector {
 
 			return result;
 		} catch (error) {
-			console.error("❌ [DiffDetector] Git命令执行失败:", error.message);
+			console.error(
+				"❌ [DiffDetector] Git命令执行失败:",
+				get_error_message(error),
+			);
 			const fallbackResult = this.detectByTimestamp(filePath);
 			console.debug(
 				"🔄 [DiffDetector] 使用fallback方法，结果:",
@@ -105,6 +109,9 @@ export class DiffDetector {
 		// 逐行解析diff输出
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
+			if (line === undefined) {
+				continue;
+			}
 
 			// 检测差异块头部标记：@@ -oldStart,oldCount +newStart,newCount @@
 			if (line.startsWith("@@")) {

@@ -1,4 +1,4 @@
-import { App, Notice, TFile } from "obsidian";
+import { App, Notice, TFile, CachedMetadata } from "obsidian";
 import * as path from "path";
 import * as fs from "fs";
 import { HugoBlowfishExporterSettings } from "types/settings";
@@ -11,7 +11,7 @@ export class BatchExportModal {
 		private settings: HugoBlowfishExporterSettings,
 		private modifyContent: (
 			content: string,
-			frontmatter: Record<string, any>,
+			frontmatter: CachedMetadata["frontmatter"],
 		) => Promise<string>,
 	) {}
 
@@ -72,8 +72,9 @@ export class BatchExportModal {
 				console.warn(`文件 ${file.basename} 缺少 slug 属性，已跳过`);
 				return { missingSlug: true };
 			}
+			const slug = metadata.frontmatter.slug as string;
 
-			const slugDir = path.join(contentDir, metadata.frontmatter.slug);
+			const slugDir = path.join(contentDir, slug);
 			if (!fs.existsSync(slugDir)) {
 				fs.mkdirSync(slugDir, { recursive: true });
 			}

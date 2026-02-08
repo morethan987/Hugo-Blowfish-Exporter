@@ -1,7 +1,8 @@
 import { App, Editor, MarkdownView, Notice } from "obsidian";
 import * as path from "path";
 import * as fs from "fs";
-import * as juice from "juice";
+import juice from "juice";
+import { get_error_message, get_error_stack } from "utils";
 import HugoBlowfishExporter from "./plugin";
 import {
 	ConfirmationModal,
@@ -11,7 +12,6 @@ import {
 } from "modals";
 import { ASTProcessor } from "components/ast/main";
 import {
-	calloutRuleHugo,
 	imageRuleHugo,
 	mathRuleHugo,
 	wikiLinkRuleHugo,
@@ -22,10 +22,8 @@ import {
 	imageRuleWechat,
 	mathRuleWechat,
 	wikiLinkRuleWechat,
-	mermaidRuleWechat,
 	codeRuleWechat,
 } from "components/rules/wechat_post";
-import { imageToBase64, getCodeBlock } from "components/rules/utils";
 
 export class Exporter {
 	constructor(
@@ -50,6 +48,7 @@ export class Exporter {
 				);
 				return;
 			}
+			const slug = metadata.frontmatter.slug as string;
 			if (!metadata?.frontmatter?.language) {
 				new Notice(
 					"⚠️ 当前文件缺少 language 属性，请在 frontmatter 中添加 language 字段",
@@ -67,7 +66,7 @@ export class Exporter {
 			// 根据slug创建目标目录
 			let exportDir = path.resolve(this.plugin.settings.exportPath);
 			exportDir = path.join(exportDir, this.plugin.settings.blogPath);
-			const slugDir = path.join(exportDir, metadata.frontmatter.slug);
+			const slugDir = path.join(exportDir, slug);
 			if (!fs.existsSync(slugDir)) {
 				fs.mkdirSync(slugDir, { recursive: true });
 			}
@@ -108,7 +107,7 @@ export class Exporter {
 			// 显示成功提示
 			new Notice(`✅ 导出成功!\n文件已保存至:\n${outputPath}`, 5000);
 		} catch (error) {
-			new Notice(`❌ 导出失败: ${error.message}`, 5000);
+			new Notice(`❌ 导出失败: ${get_error_message(error)}`, 5000);
 			console.error("Export error:", error);
 		}
 	}
@@ -123,7 +122,7 @@ export class Exporter {
 				);
 				await batchExporter.export();
 			} catch (error) {
-				new Notice(`导出失败: ${error.message}`);
+				new Notice(`导出失败: ${get_error_message(error)}`);
 				console.error("Export error:", error);
 			}
 		}).open();
@@ -151,7 +150,6 @@ export class Exporter {
 			// 3. 将 processor 挂载到 context.processor
 			context.processor = processor;
 			processor.addRules([
-				calloutRuleHugo,
 				...mathRuleHugo,
 				imageRuleHugo,
 				...wikiLinkRuleHugo,
@@ -221,9 +219,12 @@ export class Exporter {
 						await navigator.clipboard.write([clipData]);
 						new Notice(`✅ 导出成功！已复制到剪贴板`, 5000);
 					} catch (clipboardError) {
-						console.error("Clipboard error:", clipboardError);
+						console.error(
+							"Clipboard error:",
+							get_error_stack(clipboardError),
+						);
 						new Notice(
-							`❌ 复制到剪贴板失败: ${clipboardError.message}`,
+							`❌ 复制到剪贴板失败: ${get_error_message(clipboardError)}`,
 							5000,
 						);
 					}
@@ -232,7 +233,7 @@ export class Exporter {
 
 			styleModal.open();
 		} catch (error) {
-			new Notice(`❌ 导出失败: ${error.message}`, 5000);
+			new Notice(`❌ 导出失败: ${get_error_message(error)}`, 5000);
 			console.error("Export error:", error);
 		}
 	}
@@ -271,7 +272,7 @@ export class Exporter {
 			return processor.processToHtml(content, context);
 		} catch (error) {
 			console.error("Error converting to HTML:", error);
-			return `<p>转换错误: ${error.message}</p>`;
+			return `<p>转换错误: ${get_error_message(error)}</p>`;
 		}
 	}
 	/////////////////// Wechat End ///////////////////

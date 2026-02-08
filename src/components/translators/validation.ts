@@ -18,7 +18,7 @@ export class TranslationValidator {
 		}
 
 		if (!this.plugin.settings.BaseURL) {
-			new Notice("请先在设置中配置BaseURL");
+			new Notice("请先在设置中配置 base URL");
 			return false;
 		}
 

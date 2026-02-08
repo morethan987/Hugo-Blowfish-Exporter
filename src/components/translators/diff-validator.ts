@@ -3,6 +3,9 @@ import HugoBlowfishExporter from "core/plugin";
 import { DiffDetector } from "./diff-detector";
 import { FileUpdater } from "./file-updater";
 import { determineTargetFilePath } from "./determine-target-file";
+import { DiffChange } from "./diff-detector";
+import { get_error_message } from "utils";
+import { readFile } from "fs/promises";
 
 /**
  * 差异翻译验证器
@@ -131,11 +134,7 @@ export class DiffValidator {
 			const currentContent = await this.app.vault.read(currentFile);
 
 			// 读取英文文件内容
-			const fs = require("fs");
-			const targetContent = await fs.promises.readFile(
-				targetFilePath,
-				"utf8",
-			);
+			const targetContent = await readFile(targetFilePath, "utf8");
 
 			// 分割成行
 			const currentLines = currentContent.split("\n");
@@ -152,8 +151,15 @@ export class DiffValidator {
 
 			// 检查空行和非空行是否严格对应
 			for (let i = 0; i < currentLines.length; i++) {
-				const currentIsEmpty = currentLines[i].trim() === "";
-				const targetIsEmpty = targetLines[i].trim() === "";
+				const currentLine = currentLines[i];
+				const targetLine = targetLines[i];
+
+				if (currentLine === undefined || targetLine === undefined) {
+					continue;
+				}
+
+				const currentIsEmpty = currentLine.trim() === "";
+				const targetIsEmpty = targetLine.trim() === "";
 
 				if (currentIsEmpty !== targetIsEmpty) {
 					console.debug(
@@ -173,7 +179,7 @@ export class DiffValidator {
 		} catch (error) {
 			console.warn(
 				"⚠️ [DiffValidator] 行对齐检测失败，默认需要对齐:",
-				error.message,
+				get_error_message(error),
 			);
 			return true; // 检测失败时默认需要对齐
 		}
@@ -183,7 +189,7 @@ export class DiffValidator {
 export interface DiffValidationResult {
 	diffResult: {
 		hasChanges: boolean;
-		changes: any[];
+		changes: DiffChange[];
 	};
 	targetFilePath: string;
 }

@@ -23,7 +23,7 @@ export class ApiKeyModal extends Modal {
 			.setDesc("输入您的API密钥，它将被安全地保存在插件设置中")
 			.addText((text) =>
 				text
-					.setPlaceholder("sk-...")
+					.setPlaceholder("Your API key")
 					.setValue(this.apiKey)
 					.onChange((value) => {
 						this.apiKey = value;

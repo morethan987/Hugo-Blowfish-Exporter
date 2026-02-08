@@ -1,6 +1,8 @@
-import { App, Notice, MarkdownView } from "obsidian";
+import { App, Notice, MarkdownView, CachedMetadata } from "obsidian";
 import HugoBlowfishExporter from "core/plugin";
 import { TranslationFileOperations } from "./file-operations";
+import { get_error_message } from "utils";
+import { readFile } from "fs/promises";
 
 /**
  * 直接导出助手
@@ -23,7 +25,7 @@ export class DirectExportHelper {
 	 */
 	async executeDirectExport(
 		translatedContent: string,
-		metadata: any,
+		metadata: CachedMetadata,
 		translatedTitle: string,
 	): Promise<void> {
 		const notice = new Notice("正在执行直接导出...", 0);
@@ -71,7 +73,7 @@ export class DirectExportHelper {
 			new Notice(`✅ 直接导出成功!\n文件已保存至:\n${outputPath}`, 5000);
 		} catch (error) {
 			notice.hide();
-			new Notice(`❌ 直接导出失败: ${error.message}`, 4000);
+			new Notice(`❌ 直接导出失败: ${get_error_message(error)}`, 4000);
 			console.error("Direct export error:", error);
 		}
 	}
@@ -115,6 +117,9 @@ export class DirectExportHelper {
 				"📋 [DirectExportHelper] 获取元数据:",
 				metadata?.frontmatter,
 			);
+			if (!metadata) {
+				throw new Error("无法获取文件元数据");
+			}
 
 			// 从文件路径提取标题（去掉路径和扩展名）
 			const fileName = targetFilePath.split(/[\\/]/).pop() || "";
@@ -137,7 +142,9 @@ export class DirectExportHelper {
 				"❌ [DirectExportHelper] 差异翻译后的直接导出失败:",
 				error,
 			);
-			throw new Error(`差异翻译后的直接导出失败: ${error.message}`);
+			throw new Error(
+				`差异翻译后的直接导出失败: ${get_error_message(error)}`,
+			);
 		}
 	}
 
@@ -147,11 +154,12 @@ export class DirectExportHelper {
 	 * @returns 文件内容
 	 */
 	private async readFileContent(filePath: string): Promise<string> {
-		const fs = require("fs").promises;
 		try {
-			return await fs.readFile(filePath, "utf8");
+			return await readFile(filePath, "utf8");
 		} catch (error) {
-			throw new Error(`无法读取文件: ${filePath} - ${error.message}`);
+			throw new Error(
+				`无法读取文件: ${filePath} - ${get_error_message(error)}`,
+			);
 		}
 	}
 
@@ -160,7 +168,27 @@ export class DirectExportHelper {
 	 * @param metadata 文件元数据
 	 * @returns 是否有效的slug
 	 */
-	private validateSlug(metadata: any): boolean {
-		return metadata?.frontmatter?.slug;
+	private validateSlug(metadata: CachedMetadata): boolean {
+		if (!metadata) {
+			console.warn(
+				"⚠️ [DirectExportHelper] 无法获取文件元数据，无法执行直接导出",
+			);
+			return false;
+		}
+		if (!metadata.frontmatter) {
+			console.warn(
+				"⚠️ [DirectExportHelper] 文件缺少 frontmatter，无法执行直接导出",
+				metadata,
+			);
+			return false;
+		}
+		if (!metadata.frontmatter.slug) {
+			console.warn(
+				"⚠️ [DirectExportHelper] 文件缺少 slug 属性，无法执行直接导出",
+				metadata,
+			);
+			return false;
+		}
+		return true;
 	}
 }

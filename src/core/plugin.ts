@@ -1,4 +1,4 @@
-import { App, Plugin } from "obsidian";
+import { App, Plugin, Platform } from "obsidian";
 import OpenAI from "openai";
 import { HugoBlowfishExporterSettings } from "types/settings";
 import { DEFAULT_SETTINGS } from "config/default-settings";
@@ -9,6 +9,7 @@ import { Translator } from "./translator";
 import { GitHandler } from "./git-handler";
 
 export default class HugoBlowfishExporter {
+	currentOS: string;
 	settings: HugoBlowfishExporterSettings;
 	coverChooser: CoverChooser;
 	client: OpenAI;
@@ -25,6 +26,22 @@ export default class HugoBlowfishExporter {
 
 	async initialize() {
 		await this.loadSettings();
+
+		// 检测操作系统变化
+		if (Platform.isWin) {
+			this.settings.translatedExportPath =
+				this.settings.translatedExportPathWindows;
+			this.settings.exportPath = this.settings.exportPathWindows;
+			this.currentOS = "Windows";
+		} else {
+			this.settings.translatedExportPath =
+				this.settings.translatedExportPathLinux;
+			this.settings.exportPath = this.settings.exportPathLinux;
+			this.currentOS = "Linux";
+		}
+
+		// 这里可以安全地使用 await
+		await this.saveSettings();
 
 		// 初始化封面导出器
 		this.coverChooser = new CoverChooser();

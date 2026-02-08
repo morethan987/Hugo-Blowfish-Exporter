@@ -1,8 +1,14 @@
-import { App, Notice } from "obsidian";
+import { App, Notice, FileSystemAdapter } from "obsidian";
 import * as path from "path";
 import * as fs from "fs";
 import HugoBlowfishExporter from "./plugin";
-import { GitDiffModal, GitCommitModal } from "modals";
+import { GitDiffModal } from "modals/gitDiffModal";
+import { GitCommitModal } from "modals/gitCommitModal";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+// 将 exec 包装为 Promise 版本
+const execAsync = promisify(exec);
 
 export class GitHandler {
 	constructor(
@@ -10,13 +16,37 @@ export class GitHandler {
 		private plugin: HugoBlowfishExporter,
 	) {}
 
-	async showAllDiff() {
-		// 获取目标仓库的父级目录路径
+	/**
+	 * 获取路径信息（严格类型检查，不使用 any）
+	 */
+	private getPaths(): { repoPath: string; vaultPath: string | null } {
 		const repoPath = path.dirname(
 			path.resolve(this.plugin.settings.exportPath),
 		);
 
-		// 检查目录是否存在
+		let vaultPath: string | null = null;
+		// 只有当 adapter 是 FileSystemAdapter 时才获取路径
+		if (this.app.vault.adapter instanceof FileSystemAdapter) {
+			vaultPath = this.app.vault.adapter.getBasePath();
+		}
+
+		return { repoPath, vaultPath };
+	}
+
+	/**
+	 * 统一处理错误消息转换
+	 */
+	private formatError(error: unknown): string {
+		if (error instanceof Error) return error.message;
+		return String(error);
+	}
+
+	/**
+	 * 显示文件差异
+	 */
+	async showAllDiff(): Promise<void> {
+		const { repoPath } = this.getPaths();
+
 		if (!fs.existsSync(repoPath)) {
 			new Notice("仓库目录不存在！");
 			return;
@@ -24,191 +54,126 @@ export class GitHandler {
 
 		new Notice("正在获取文件差异...");
 
-		// 异步执行获取差异
-		setTimeout(async () => {
+		try {
+			let diffContent = "";
+
+			// 1. 获取已跟踪的 .md 文件差异
 			try {
-				const { exec } = require("child_process");
-				const util = require("util");
-				const execPromise = util.promisify(exec);
-				const fsPromises = fs.promises;
-
-				let diffContent = "";
-
-				// 获取已跟踪的 .md 文件的差异
-				try {
-					const { stdout: trackedDiff } = await execPromise(
-						'git diff -- "*.md"',
-						{ cwd: repoPath },
-					);
-					if (trackedDiff) {
-						diffContent += trackedDiff;
-					}
-				} catch (err) {
-					console.error("获取已跟踪文件差异失败:", err);
-				}
-
-				// 获取未跟踪的 .md 文件
-				try {
-					const { stdout: untrackedFilesOutput } = await execPromise(
-						"git ls-files --others --exclude-standard",
-						{ cwd: repoPath },
-					);
-
-					const untrackedFilesList = untrackedFilesOutput
-						.split("\n")
-						.filter(
-							(file: string) =>
-								file.trim() && file.endsWith(".md"),
-						);
-
-					// 并行处理未跟踪文件
-					const untrackedDiffs = await Promise.all(
-						untrackedFilesList.map(async (file: string) => {
-							try {
-								// 异步读取新文件的内容
-								const content = await fsPromises.readFile(
-									path.join(repoPath, file),
-									"utf-8",
-								);
-								const lines = content.split("\n");
-								return (
-									`\ndiff --git a/${file} b/${file}\n` +
-									`new file mode 100644\n` +
-									`--- /dev/null\n` +
-									`+++ b/${file}\n` +
-									`@@ -0,0 +1,${lines.length} @@\n` +
-									lines.map((line) => `+${line}`).join("\n")
-								);
-							} catch (err) {
-								console.error(`读取文件 ${file} 失败:`, err);
-								return "";
-							}
-						}),
-					);
-
-					const untrackedFilesContent = untrackedDiffs
-						.filter((diff) => diff)
-						.join("\n");
-					if (untrackedFilesContent) {
-						if (diffContent) {
-							diffContent += "\n";
-						}
-						diffContent += untrackedFilesContent;
-					}
-				} catch (err) {
-					console.error("获取未跟踪文件失败:", err);
-				}
-
-				// 使用独立的模态框组件显示差异
-				new GitDiffModal(this.app, diffContent).open();
-			} catch (error) {
-				new Notice("执行 git 命令时发生错误：" + error);
+				const { stdout: trackedDiff } = await execAsync(
+					'git diff -- "*.md"',
+					{
+						cwd: repoPath,
+					},
+				);
+				if (trackedDiff) diffContent += trackedDiff;
+			} catch (err) {
+				console.error("获取已跟踪文件差异失败:", err);
 			}
-		}, 50);
+
+			// 2. 获取未跟踪的 .md 文件并生成 diff 格式
+			try {
+				const { stdout: untrackedFilesOutput } = await execAsync(
+					"git ls-files --others --exclude-standard -- *.md",
+					{ cwd: repoPath },
+				);
+
+				const files = untrackedFilesOutput
+					.split("\n")
+					.filter((f) => f.trim());
+
+				for (const file of files) {
+					const fullPath = path.join(repoPath, file);
+					const content = await fs.promises.readFile(
+						fullPath,
+						"utf-8",
+					);
+					const lines = content.split("\n");
+
+					diffContent += `\ndiff --git a/${file} b/${file}\n`;
+					diffContent += `new file mode 100644\n--- /dev/null\n+++ b/${file}\n`;
+					diffContent += `@@ -0,0 +1,${lines.length} @@\n`;
+					diffContent +=
+						lines.map((line) => `+${line}`).join("\n") + "\n";
+				}
+			} catch (err) {
+				console.error("获取未跟踪文件失败:", err);
+			}
+
+			if (!diffContent.trim()) {
+				new Notice("暂无文件差异");
+				return;
+			}
+
+			new GitDiffModal(this.app, diffContent).open();
+		} catch (error: unknown) {
+			new Notice(`❌ 获取差异失败: ${this.formatError(error)}`);
+		}
 	}
 
-	async commitAndPush() {
-		// 获取目标仓库的父级目录路径
-		const repoPath = path.dirname(
-			path.resolve(this.plugin.settings.exportPath),
-		);
-		// 获取当前Obsidian库的根目录路径
-		const vaultPath =
-			(this.app.vault.adapter as any).basePath ||
-			(this.app.vault.adapter as any).path;
+	/**
+	 * 提交并推送逻辑
+	 */
+	async commitAndPush(): Promise<boolean> {
+		const { repoPath, vaultPath } = this.getPaths();
 
-		// 检查目录是否存在
 		if (!fs.existsSync(repoPath)) {
 			new Notice("仓库目录不存在！");
-			return;
+			return false;
 		}
 
-		// filepath: [git-handler.ts](http://_vscodecontentref_/1)
-		return new Promise((resolve, reject) => {
-			new GitCommitModal(this.app, (commitMessage) => {
-				// 先关闭模态框
-				// 然后异步执行Git操作
-				setTimeout(async () => {
-					const { exec } = require("child_process");
-					const util = require("util");
-					const execPromise = util.promisify(exec);
-
-					try {
-						new Notice("正在执行Git操作...");
-
-						// 在目标仓库中执行git操作
-						await execPromise("git add .", { cwd: repoPath });
-						try {
-							await execPromise(
-								`git commit -m "${commitMessage}"`,
-								{ cwd: repoPath },
-							);
-						} catch (commitError) {
-							if (
-								commitError &&
-								commitError.stderr &&
-								(commitError.stderr.includes(
-									"nothing to commit",
-								) ||
-									commitError.stderr.includes(
-										"no changes added to commit",
-									))
-							) {
-								new Notice("没有需要提交的更改。");
-							} else {
-								throw commitError;
-							}
-						}
-						await execPromise("git push", { cwd: repoPath });
-
-						// 在当前Obsidian库根目录中执行git操作
-						if (vaultPath && fs.existsSync(vaultPath)) {
-							try {
-								await execPromise("git add .", {
-									cwd: vaultPath,
-								});
-								try {
-									await execPromise(
-										`git commit -m "${commitMessage}"`,
-										{ cwd: vaultPath },
-									);
-								} catch (vaultCommitError) {
-									if (
-										vaultCommitError &&
-										vaultCommitError.stderr &&
-										(vaultCommitError.stderr.includes(
-											"nothing to commit",
-										) ||
-											vaultCommitError.stderr.includes(
-												"no changes added to commit",
-											))
-									) {
-										new Notice(
-											"Obsidian库没有需要提交的更改。",
-										);
-									} else {
-										throw vaultCommitError;
-									}
-								}
-							} catch (vaultError) {
-								console.warn(
-									"Obsidian库Git操作失败:",
-									vaultError,
-								);
-								new Notice(
-									"Obsidian库Git操作失败，请手动提交本仓库的git更新，避免影响下一次的差异翻译功能",
-								);
-							}
-						}
-
-						new Notice("Git操作完成");
-						resolve(true);
-					} catch (error) {
-						new Notice("Git操作失败: " + error);
-						reject(error);
-					}
-				}, 10); // 减少延迟，避免与编辑器状态冲突
-			}).open();
+		// 返回一个 Promise，直到整个流程（弹窗+执行）结束
+		return new Promise<boolean>((resolve) => {
+			const modal = new GitCommitModal(
+				this.app,
+				async (commitMessage) => {
+					// 因为 GitCommitModal 现在支持异步回调，这里可以直接使用 async
+					const success = await this.performGitOperations(
+						commitMessage,
+						repoPath,
+						vaultPath,
+					);
+					resolve(success);
+				},
+			);
+			modal.open();
 		});
+	}
+
+	/**
+	 * 执行具体的 Git 命令逻辑
+	 */
+	private async performGitOperations(
+		message: string,
+		repoPath: string,
+		vaultPath: string | null,
+	): Promise<boolean> {
+		try {
+			new Notice("正在执行 Git 操作...");
+
+			// 1. 目标仓库操作
+			await execAsync("git add .", { cwd: repoPath });
+			await execAsync(`git commit -m "${message}"`, { cwd: repoPath });
+			await execAsync("git push", { cwd: repoPath });
+
+			// 2. Obsidian 本地库同步操作
+			if (vaultPath && fs.existsSync(vaultPath)) {
+				try {
+					await execAsync("git add .", { cwd: vaultPath });
+					await execAsync(`git commit -m "${message}"`, {
+						cwd: vaultPath,
+					});
+				} catch (vaultError) {
+					console.warn("Obsidian 库提交失败 (跳过):", vaultError);
+					new Notice("提示：本地库 Git 提交失败（但不影响导出）");
+				}
+			}
+
+			new Notice("✅ Git 操作完成");
+			return true;
+		} catch (error: unknown) {
+			const msg = this.formatError(error);
+			new Notice(`❌ Git 操作失败: ${msg}`);
+			return false;
+		}
 	}
 }

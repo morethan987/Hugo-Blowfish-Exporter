@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { App } from "obsidian";
 import HugoBlowfishExporter from "core/plugin";
+import { get_error_message } from "utils";
 
 /**
  * 文件更新器
@@ -408,14 +409,14 @@ export class FileUpdater {
 			const file = this.app.vault.getAbstractFileByPath(filePath);
 			if (file && "path" in file) {
 				// 更可靠的类型检查：检查是否具有文件的基本属性
-				return await this.app.vault.read(file as any);
+				return await this.app.vault.read(file);
 			}
 
 			// 否则使用Node.js fs
 			return fs.readFileSync(filePath, "utf8");
 		} catch (error) {
 			throw new Error(
-				`Failed to read file ${filePath}: ${error.message}`,
+				`Failed to read file ${filePath}: ${get_error_message(error)}`,
 			);
 		}
 	}
@@ -431,7 +432,7 @@ export class FileUpdater {
 			const file = this.app.vault.getAbstractFileByPath(filePath);
 			if (file && "path" in file) {
 				// 更可靠的类型检查：检查是否具有文件的基本属性
-				await this.app.vault.modify(file as any, content);
+				await this.app.vault.modify(file, content);
 				return;
 			}
 
@@ -445,7 +446,7 @@ export class FileUpdater {
 			fs.writeFileSync(filePath, content, "utf8");
 		} catch (error) {
 			throw new Error(
-				`Failed to write file ${filePath}: ${error.message}`,
+				`Failed to write file ${filePath}: ${get_error_message(error)}`,
 			);
 		}
 	}

@@ -1,5 +1,6 @@
 import { App } from "obsidian";
 import * as fs from "fs";
+import { get_error_message } from "utils";
 import HugoBlowfishExporter from "core/plugin";
 
 /**
@@ -62,7 +63,7 @@ export class LineAlignment {
 			console.debug("✅ [LineAlignment] 行对齐处理完成");
 		} catch (error) {
 			console.error("❌ [LineAlignment] 行对齐处理失败:", error);
-			throw new Error(`行对齐处理失败: ${error.message}`);
+			throw new Error(`行对齐处理失败: ${get_error_message(error)}`);
 		}
 	}
 
@@ -80,8 +81,16 @@ export class LineAlignment {
 
 		// 检查空行和非空行是否严格对应
 		for (let i = 0; i < sourceLines.length; i++) {
-			const sourceIsEmpty = this.isEmptyLine(sourceLines[i]);
-			const targetIsEmpty = this.isEmptyLine(targetLines[i]);
+			const sourceLine = sourceLines[i];
+			const targetLine = targetLines[i];
+
+			// 如果任一行未定义，继续检查下一行
+			if (sourceLine === undefined || targetLine === undefined) {
+				continue;
+			}
+
+			const sourceIsEmpty = this.isEmptyLine(sourceLine);
+			const targetIsEmpty = this.isEmptyLine(targetLine);
 
 			if (sourceIsEmpty !== targetIsEmpty) {
 				return false;
@@ -117,6 +126,9 @@ export class LineAlignment {
 		// 根据源文件的结构重新组织目标文件
 		for (let i = 0; i < sourceLines.length; i++) {
 			const sourceLine = sourceLines[i];
+			if (sourceLine === undefined) {
+				continue;
+			}
 
 			if (this.isEmptyLine(sourceLine)) {
 				// 源文件是空行，目标文件也插入空行
@@ -172,7 +184,9 @@ export class LineAlignment {
 		try {
 			return await fs.promises.readFile(filePath, "utf8");
 		} catch (error) {
-			throw new Error(`无法读取文件 ${filePath}: ${error.message}`);
+			throw new Error(
+				`无法读取文件 ${filePath}: ${get_error_message(error)}`,
+			);
 		}
 	}
 
@@ -188,7 +202,9 @@ export class LineAlignment {
 		try {
 			await fs.promises.writeFile(filePath, content, "utf8");
 		} catch (error) {
-			throw new Error(`无法写入文件 ${filePath}: ${error.message}`);
+			throw new Error(
+				`无法写入文件 ${filePath}: ${get_error_message(error)}`,
+			);
 		}
 	}
 }
