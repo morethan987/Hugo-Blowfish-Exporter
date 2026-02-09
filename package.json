@@ -7,8 +7,10 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"test_parser": "bunx src/components/ast/parser.ts",
-		"test": "bunx src/components/ast/test.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"test:parser": "bun run src/components/ast/parser.ts",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ."
 	},
@@ -18,13 +20,16 @@
 	"devDependencies": {
 		"@eslint/js": "9.30.1",
 		"@types/node": "^16.11.6",
+		"@vitest/coverage-v8": "^4.0.18",
 		"esbuild": "0.25.5",
 		"eslint-plugin-obsidianmd": "0.1.9",
 		"globals": "14.0.0",
 		"jiti": "2.6.1",
 		"tslib": "2.4.0",
 		"typescript": "^5.8.3",
-		"typescript-eslint": "8.35.1"
+		"typescript-eslint": "8.35.1",
+		"vite-tsconfig-paths": "^6.1.0",
+		"vitest": "^4.0.18"
 	},
 	"dependencies": {
 		"juice": "^11.0.1",

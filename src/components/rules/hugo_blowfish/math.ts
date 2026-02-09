@@ -2,7 +2,7 @@ import { RuleBuilder } from "components/ast/rule";
 import { NodeType } from "components/ast/node"; // 需要引入 NodeType
 import type { MarkdownNode } from "components/ast/node";
 
-function hasMathNode(node: MarkdownNode): boolean {
+export function hasMathNode(node: MarkdownNode): boolean {
 	if (!node) return false;
 	if (node.type === NodeType.MathBlock || node.type === NodeType.MathSpan)
 		return true;

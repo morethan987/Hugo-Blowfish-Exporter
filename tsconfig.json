@@ -17,6 +17,7 @@
 		"strictBindCallApply": true,
 		"allowSyntheticDefaultImports": true,
 		"useUnknownInCatchVariables": true,
+		"types": ["vitest/globals"],
 		"lib": [
 			"DOM",
 			"ES5",
@@ -25,6 +26,8 @@
 		]
 	},
 	"include": [
-		"src/**/*.ts"
+		"src/**/*.ts",
+		"tests/**/*.ts",
+		"vitest.config.ts"
 	]
 }

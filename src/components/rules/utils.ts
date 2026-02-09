@@ -123,8 +123,7 @@ export async function imageToBase64(app: App, imageFile: string) {
 	return `data:${mimeFromExt(tfile.extension)};base64,${base64}`;
 }
 
-/** 常见扩展名到 MIME 的简单映射 */
-function mimeFromExt(ext: string): string {
+export function mimeFromExt(ext: string): string {
 	const e = ext.toLowerCase();
 	if (e === "png") return "image/png";
 	if (e === "jpg" || e === "jpeg") return "image/jpeg";
@@ -189,7 +188,6 @@ export async function getCodeBlock(
 `;
 }
 
-// 简单 HTML 转义
-function escapeHTML(s: string) {
+export function escapeHTML(s: string): string {
 	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

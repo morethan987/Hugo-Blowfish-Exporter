@@ -51,7 +51,7 @@ export const calloutRuleHugo = new RuleBuilder("callout转换")
 	})
 	.build();
 
-function getCalloutAttributes(type: string): string {
+export function getCalloutAttributes(type: string): string {
 	switch (type.toLowerCase()) {
 		case "note":
 			return 'icon="pencil" cardColor="#1E3A8A" textColor="#E0E7FF"';
