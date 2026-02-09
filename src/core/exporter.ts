@@ -213,17 +213,17 @@ export class Exporter {
 			);
 			// console.log("htmlContent:\n", htmlContent);
 
-		// 打开样式选择模态框
-		const styleModal = new WechatStyleModal(
-			this.app,
-			this.plugin.plugin, // 传递插件实例
-			htmlContent,
-			(selectedCss: string) => {
-				void this.handleWechatExport(htmlContent, selectedCss);
-			},
-		);
+			// 打开样式选择模态框
+			const styleModal = new WechatStyleModal(
+				this.app,
+				this.plugin.plugin, // 传递插件实例
+				htmlContent,
+				(selectedCss: string) => {
+					void this.handleWechatExport(htmlContent, selectedCss);
+				},
+			);
 
-		styleModal.open();
+			styleModal.open();
 		} catch (error) {
 			new Notice(`❌ 导出失败: ${get_error_message(error)}`, 5000);
 			console.error("Export error:", error);
@@ -236,10 +236,7 @@ export class Exporter {
 	): Promise<void> {
 		try {
 			// 使用juice处理HTML和CSS
-			const result = juice.inlineContent(
-				htmlContent,
-				selectedCss,
-			);
+			const result = juice.inlineContent(htmlContent, selectedCss);
 
 			// 复制到剪贴板
 			const clipData = new ClipboardItem({
@@ -251,10 +248,7 @@ export class Exporter {
 			await navigator.clipboard.write([clipData]);
 			new Notice(`✅ 导出成功！已复制到剪贴板`, 5000);
 		} catch (clipboardError) {
-			console.error(
-				"Clipboard error:",
-				get_error_stack(clipboardError),
-			);
+			console.error("Clipboard error:", get_error_stack(clipboardError));
 			new Notice(
 				`❌ 复制到剪贴板失败: ${get_error_message(clipboardError)}`,
 				5000,
