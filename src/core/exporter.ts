@@ -10,8 +10,7 @@ import {
 	ExportNameModal,
 	WechatStyleModal,
 } from "modals";
-import { ASTProcessor } from "components/ast/main";
-import { HugoBlowfishExporterSettings } from "types/settings";
+import { ASTProcessor, UserContext } from "components/ast/main";
 import {
 	imageRuleHugo,
 	mathRuleHugo,
@@ -25,18 +24,6 @@ import {
 	wikiLinkRuleWechat,
 	codeRuleWechat,
 } from "components/rules/wechat_post";
-
-interface ProcessorContext {
-	data: {
-		app: App;
-		settings: HugoBlowfishExporterSettings;
-		slug: string;
-		lang: string;
-		imageFiles?: unknown[];
-	};
-	processor?: ASTProcessor;
-	[key: string]: unknown;
-}
 
 export class Exporter {
 	constructor(
@@ -150,11 +137,10 @@ export class Exporter {
 		frontmatter: Record<string, unknown>,
 	): Promise<string> {
 		try {
-			// 构造 context
 			const slug = frontmatter.slug as string;
 			const lang = frontmatter.language as string;
-			// 1. 先创建 context（不带 processor）
-			const context: ProcessorContext = {
+			
+			const context: UserContext = {
 				data: {
 					app: this.app,
 					settings: this.plugin.settings,
@@ -162,17 +148,18 @@ export class Exporter {
 					lang,
 				},
 			};
-			// 2. 创建 processor 实例
+			
 			const processor = new ASTProcessor(context);
-			// 3. 将 processor 挂载到 context.processor
-			context.processor = processor;
+			// 将 processor 挂载到 data 中供规则使用
+			context.data.processor = processor;
+			
 			processor.addRules([
 				...mathRuleHugo,
 				imageRuleHugo,
 				...wikiLinkRuleHugo,
 				mermaidRuleHugo,
 			]);
-			// 4. 处理 AST，传递 context
+			
 			return processor.processToString(content, context);
 		} catch (error) {
 			console.error("Error modifying content:", error);
@@ -255,18 +242,16 @@ export class Exporter {
 			);
 		}
 	}
-	/////////////////// Wechat End ///////////////////
 
 	async convertToWechatHtml(
 		content: string,
 		frontmatter: Record<string, unknown>,
 	): Promise<string> {
 		try {
-			// 构造 context
 			const slug = frontmatter.slug as string;
 			const lang = frontmatter.language as string;
-			// 1. 先创建 context（不带 processor）
-			const context: ProcessorContext = {
+			
+			const context: UserContext = {
 				data: {
 					app: this.app,
 					settings: this.plugin.settings,
@@ -275,11 +260,11 @@ export class Exporter {
 					imageFiles: [],
 				},
 			};
-			// 2. 创建 processor 实例
+			
 			const processor = new ASTProcessor(context);
-			// 3. 将 processor 挂载到 context.processor
-			context.processor = processor;
-			// 4. 使用微信规则
+			// 将 processor 挂载到 data 中供规则使用
+			context.data.processor = processor;
+			
 			processor.addRules([
 				calloutRuleWechat,
 				...mathRuleWechat,
@@ -287,7 +272,7 @@ export class Exporter {
 				...wikiLinkRuleWechat,
 				...codeRuleWechat,
 			]);
-			// 5. 处理 AST，传递 context
+			
 			return processor.processToHtml(content, context);
 		} catch (error) {
 			console.error("Error converting to HTML:", error);

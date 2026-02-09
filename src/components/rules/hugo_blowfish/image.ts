@@ -10,17 +10,13 @@ export const imageRuleHugo = new RuleBuilder("图片链接转换")
 	.transform(async (node: MarkdownNode, context?: RuleContext) => {
 		const image = node as ImageNode;
 		const app = context?.data?.app as App | undefined;
-		const settings = context?.data?.settings as HugoBlowfishExporterSettings | undefined;
+		const settings = context?.data?.settings as
+			| HugoBlowfishExporterSettings
+			| undefined;
 		const slug = context?.data?.slug as string | undefined;
 
 		if (app && settings && slug && image.url) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			copyImageFile(
-				app,
-				image.url,
-				settings,
-				slug,
-			);
+			await copyImageFile(app, image.url, settings, slug);
 			image.url = settings.imageExportPath + "/" + image.url;
 		}
 		return image;
