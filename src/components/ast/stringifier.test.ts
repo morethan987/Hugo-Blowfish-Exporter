@@ -7,14 +7,14 @@ describe("astToString", () => {
 		it("converts empty document to empty string", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: []
+				children: [],
 			};
 			expect(astToString(node)).toBe("");
 		});
 
 		it("converts document with no children to empty string", () => {
 			const node: MarkdownNode = {
-				type: NodeType.Document
+				type: NodeType.Document,
 			};
 			expect(astToString(node)).toBe("");
 		});
@@ -24,11 +24,13 @@ describe("astToString", () => {
 		it("converts heading level 1 to markdown syntax", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 1,
-					children: [{ type: NodeType.Text, value: "Title" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 1,
+						children: [{ type: NodeType.Text, value: "Title" }],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("# Title\n");
 		});
@@ -36,11 +38,13 @@ describe("astToString", () => {
 		it("converts heading level 2 to markdown syntax", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 2,
-					children: [{ type: NodeType.Text, value: "Subtitle" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 2,
+						children: [{ type: NodeType.Text, value: "Subtitle" }],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("## Subtitle\n");
 		});
@@ -48,11 +52,13 @@ describe("astToString", () => {
 		it("converts heading level 6 to markdown syntax", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 6,
-					children: [{ type: NodeType.Text, value: "Deep" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 6,
+						children: [{ type: NodeType.Text, value: "Deep" }],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("###### Deep\n");
 		});
@@ -60,10 +66,12 @@ describe("astToString", () => {
 		it("defaults to level 1 when level not specified", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					children: [{ type: NodeType.Text, value: "Default" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						children: [{ type: NodeType.Text, value: "Default" }],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("# Default\n");
 		});
@@ -73,10 +81,14 @@ describe("astToString", () => {
 		it("converts paragraph to text with newline", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{ type: NodeType.Text, value: "Hello world" }]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{ type: NodeType.Text, value: "Hello world" },
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("Hello world\n");
 		});
@@ -84,10 +96,12 @@ describe("astToString", () => {
 		it("converts empty paragraph to single newline", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: []
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("\n");
 		});
@@ -97,13 +111,19 @@ describe("astToString", () => {
 		it("converts bold text to **wrapped**", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Strong,
-						children: [{ type: NodeType.Text, value: "bold" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Strong,
+								children: [
+									{ type: NodeType.Text, value: "bold" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("**bold**\n");
 		});
@@ -111,13 +131,19 @@ describe("astToString", () => {
 		it("converts italic text to *wrapped*", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Emphasis,
-						children: [{ type: NodeType.Text, value: "italic" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Emphasis,
+								children: [
+									{ type: NodeType.Text, value: "italic" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("*italic*\n");
 		});
@@ -125,13 +151,19 @@ describe("astToString", () => {
 		it("converts strong+emphasis to ***wrapped***", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.StrongEmphasis,
-						children: [{ type: NodeType.Text, value: "both" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.StrongEmphasis,
+								children: [
+									{ type: NodeType.Text, value: "both" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("***both***\n");
 		});
@@ -139,13 +171,17 @@ describe("astToString", () => {
 		it("converts inline code to `wrapped`", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.InlineCode,
-						value: "code"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.InlineCode,
+								value: "code",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("`code`\n");
 		});
@@ -153,13 +189,22 @@ describe("astToString", () => {
 		it("converts highlight text to ==wrapped==", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Highlight,
-						children: [{ type: NodeType.Text, value: "highlighted" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Highlight,
+								children: [
+									{
+										type: NodeType.Text,
+										value: "highlighted",
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("==highlighted==\n");
 		});
@@ -167,13 +212,19 @@ describe("astToString", () => {
 		it("converts strike text to ~~wrapped~~", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Strike,
-						children: [{ type: NodeType.Text, value: "struck" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Strike,
+								children: [
+									{ type: NodeType.Text, value: "struck" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("~~struck~~\n");
 		});
@@ -183,22 +234,28 @@ describe("astToString", () => {
 		it("converts code block with language", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.CodeBlock,
-					lang: "javascript",
-					value: "console.log('hello');"
-				}]
+				children: [
+					{
+						type: NodeType.CodeBlock,
+						lang: "javascript",
+						value: "console.log('hello');",
+					},
+				],
 			};
-			expect(astToString(node)).toBe("```javascript\nconsole.log('hello');\n```\n");
+			expect(astToString(node)).toBe(
+				"```javascript\nconsole.log('hello');\n```\n",
+			);
 		});
 
 		it("converts code block without language", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.CodeBlock,
-					value: "plain code"
-				}]
+				children: [
+					{
+						type: NodeType.CodeBlock,
+						value: "plain code",
+					},
+				],
 			};
 			expect(astToString(node)).toBe("```\nplain code\n```\n");
 		});
@@ -208,10 +265,12 @@ describe("astToString", () => {
 		it("converts math block to $$ wrapped", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.MathBlock,
-					value: "x^2 + y^2 = z^2"
-				}]
+				children: [
+					{
+						type: NodeType.MathBlock,
+						value: "x^2 + y^2 = z^2",
+					},
+				],
 			};
 			expect(astToString(node)).toBe("$$\nx^2 + y^2 = z^2\n$$\n");
 		});
@@ -219,13 +278,17 @@ describe("astToString", () => {
 		it("converts math span to $ wrapped", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.MathSpan,
-						value: "e=mc^2"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.MathSpan,
+								value: "e=mc^2",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("$e=mc^2$\n");
 		});
@@ -235,28 +298,38 @@ describe("astToString", () => {
 		it("converts link to [label](url)", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Link,
-						label: "Click here",
-						url: "https://example.com"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Link,
+								label: "Click here",
+								url: "https://example.com",
+							},
+						],
+					},
+				],
 			};
-			expect(astToString(node)).toBe("[Click here](https://example.com)\n");
+			expect(astToString(node)).toBe(
+				"[Click here](https://example.com)\n",
+			);
 		});
 
 		it("converts autolink to URL", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.AutoLink,
-						url: "https://example.com"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.AutoLink,
+								url: "https://example.com",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("https://example.com\n");
 		});
@@ -266,30 +339,40 @@ describe("astToString", () => {
 		it("converts image with title", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Image,
-						alt: "alt text",
-						url: "image.png",
-						title: "Image Title"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Image,
+								alt: "alt text",
+								url: "image.png",
+								title: "Image Title",
+							},
+						],
+					},
+				],
 			};
-			expect(astToString(node)).toBe("[alt text](image.png \"Image Title\")\n");
+			expect(astToString(node)).toBe(
+				'[alt text](image.png "Image Title")\n',
+			);
 		});
 
 		it("converts image without title", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Image,
-						alt: "alt text",
-						url: "image.png"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Image,
+								alt: "alt text",
+								url: "image.png",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("[alt text](image.png)\n");
 		});
@@ -297,32 +380,42 @@ describe("astToString", () => {
 		it("converts embedded image with title", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Image,
-						alt: "alt text",
-						url: "image.png",
-						title: "Image Title",
-						embed: true
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Image,
+								alt: "alt text",
+								url: "image.png",
+								title: "Image Title",
+								embed: true,
+							},
+						],
+					},
+				],
 			};
-			expect(astToString(node)).toBe("![alt text](image.png \"Image Title\" )\n");
+			expect(astToString(node)).toBe(
+				'![alt text](image.png "Image Title" )\n',
+			);
 		});
 
 		it("converts embedded image without title", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Image,
-						alt: "alt text",
-						url: "image.png",
-						embed: true
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Image,
+								alt: "alt text",
+								url: "image.png",
+								embed: true,
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("![alt text](image.png)\n");
 		});
@@ -332,13 +425,17 @@ describe("astToString", () => {
 		it("converts wikilink to [[value]]", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.WikiLink,
-						value: "Note Title"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.WikiLink,
+								value: "Note Title",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("[[Note Title]]\n");
 		});
@@ -348,13 +445,17 @@ describe("astToString", () => {
 		it("converts embed to ![[value]]", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Embed,
-						value: "EmbeddedNote"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Embed,
+								value: "EmbeddedNote",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("![[EmbeddedNote]]\n");
 		});
@@ -364,22 +465,28 @@ describe("astToString", () => {
 		it("converts unordered list items", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: false,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [{ type: NodeType.Text, value: "Item 1" }]
-						},
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [{ type: NodeType.Text, value: "Item 2" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: false,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Item 1" },
+								],
+							},
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Item 2" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("- Item 1\n- Item 2\n");
 		});
@@ -387,24 +494,30 @@ describe("astToString", () => {
 		it("converts ordered list items with numbers", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: true,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							number: 1,
-							children: [{ type: NodeType.Text, value: "First" }]
-						},
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							number: 2,
-							children: [{ type: NodeType.Text, value: "Second" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: true,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								number: 1,
+								children: [
+									{ type: NodeType.Text, value: "First" },
+								],
+							},
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								number: 2,
+								children: [
+									{ type: NodeType.Text, value: "Second" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("1. First\n2. Second\n");
 		});
@@ -412,53 +525,73 @@ describe("astToString", () => {
 		it("converts task list items", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: false,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							task: true,
-							children: [{ type: NodeType.Text, value: "Done task" }]
-						},
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							task: false,
-							children: [{ type: NodeType.Text, value: "Pending task" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: false,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								task: true,
+								children: [
+									{ type: NodeType.Text, value: "Done task" },
+								],
+							},
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								task: false,
+								children: [
+									{
+										type: NodeType.Text,
+										value: "Pending task",
+									},
+								],
+							},
+						],
+					},
+				],
 			};
-			expect(astToString(node)).toBe("- [x] Done task\n- [ ] Pending task\n");
+			expect(astToString(node)).toBe(
+				"- [x] Done task\n- [ ] Pending task\n",
+			);
 		});
 
 		it("converts nested lists", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: false,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [
-								{ type: NodeType.Text, value: "Item 1" },
-								{
-									type: NodeType.List,
-									ordered: false,
-									children: [{
-										type: NodeType.ListItem,
-										level: 1,
-										children: [{ type: NodeType.Text, value: "Nested" }]
-									}]
-								}
-							]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: false,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Item 1" },
+									{
+										type: NodeType.List,
+										ordered: false,
+										children: [
+											{
+												type: NodeType.ListItem,
+												level: 1,
+												children: [
+													{
+														type: NodeType.Text,
+														value: "Nested",
+													},
+												],
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("- Item 1\n    - Nested\n");
 		});
@@ -468,15 +601,22 @@ describe("astToString", () => {
 		it("converts blockquote", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.BlockQuote,
-					children: [
-						{
-							type: NodeType.Paragraph,
-							children: [{ type: NodeType.Text, value: "Quote text" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.BlockQuote,
+						children: [
+							{
+								type: NodeType.Paragraph,
+								children: [
+									{
+										type: NodeType.Text,
+										value: "Quote text",
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("> Quote text\n\n");
 		});
@@ -486,24 +626,95 @@ describe("astToString", () => {
 		it("converts callout with title and content", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Callout,
-					calloutType: "note",
-					children: [
-						{
-							type: NodeType.Paragraph,
-							role: "title",
-							children: [{ type: NodeType.Text, value: "Title" }]
-						},
-						{
-							type: NodeType.Paragraph,
-							children: [{ type: NodeType.Text, value: "Content" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.Callout,
+						calloutType: "note",
+						auto_fold: undefined,
+						children: [
+							{
+								type: NodeType.Paragraph,
+								role: "title",
+								children: [
+									{ type: NodeType.Text, value: "Title" },
+								],
+							},
+							{
+								type: NodeType.Paragraph,
+								children: [
+									{ type: NodeType.Text, value: "Content" },
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToString(node);
 			expect(result).toContain("> [!note]");
+		});
+	});
+
+	describe("callouts", () => {
+		it("converts callout with auto fold on", () => {
+			const node: MarkdownNode = {
+				type: NodeType.Document,
+				children: [
+					{
+						type: NodeType.Callout,
+						calloutType: "note",
+						auto_fold: true,
+						children: [
+							{
+								type: NodeType.Paragraph,
+								role: "title",
+								children: [
+									{ type: NodeType.Text, value: "Title" },
+								],
+							},
+							{
+								type: NodeType.Paragraph,
+								children: [
+									{ type: NodeType.Text, value: "Content" },
+								],
+							},
+						],
+					},
+				],
+			};
+			const result = astToString(node);
+			expect(result).toContain("> [!note]-");
+		});
+	});
+
+	describe("callouts", () => {
+		it("converts callout with auto fold off", () => {
+			const node: MarkdownNode = {
+				type: NodeType.Document,
+				children: [
+					{
+						type: NodeType.Callout,
+						calloutType: "note",
+						auto_fold: false,
+						children: [
+							{
+								type: NodeType.Paragraph,
+								role: "title",
+								children: [
+									{ type: NodeType.Text, value: "Title" },
+								],
+							},
+							{
+								type: NodeType.Paragraph,
+								children: [
+									{ type: NodeType.Text, value: "Content" },
+								],
+							},
+						],
+					},
+				],
+			};
+			const result = astToString(node);
+			expect(result).toContain("> [!note]+");
 		});
 	});
 
@@ -511,9 +722,11 @@ describe("astToString", () => {
 		it("converts horizontal rule to ---", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.HorizontalRule
-				}]
+				children: [
+					{
+						type: NodeType.HorizontalRule,
+					},
+				],
 			};
 			expect(astToString(node)).toBe("---\n");
 		});
@@ -523,46 +736,69 @@ describe("astToString", () => {
 		it("converts table with alignment", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Table,
-					align: ["left", "center", "right"],
-					children: [
-						{
-							type: NodeType.TableRow,
-							children: [
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Left" }]
-								},
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Center" }]
-								},
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Right" }]
-								}
-							]
-						},
-						{
-							type: NodeType.TableRow,
-							children: [
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "A" }]
-								},
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "B" }]
-								},
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "C" }]
-								}
-							]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.Table,
+						align: ["left", "center", "right"],
+						children: [
+							{
+								type: NodeType.TableRow,
+								children: [
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Left",
+											},
+										],
+									},
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Center",
+											},
+										],
+									},
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Right",
+											},
+										],
+									},
+								],
+							},
+							{
+								type: NodeType.TableRow,
+								children: [
+									{
+										type: NodeType.TableCell,
+										children: [
+											{ type: NodeType.Text, value: "A" },
+										],
+									},
+									{
+										type: NodeType.TableCell,
+										children: [
+											{ type: NodeType.Text, value: "B" },
+										],
+									},
+									{
+										type: NodeType.TableCell,
+										children: [
+											{ type: NodeType.Text, value: "C" },
+										],
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToString(node);
 			expect(result).toContain("Left | Center | Right");
@@ -575,13 +811,17 @@ describe("astToString", () => {
 		it("converts footnote reference", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.FootnoteRef,
-						id: "ref1"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.FootnoteRef,
+								id: "ref1",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("[^ref1]\n");
 		});
@@ -589,11 +829,15 @@ describe("astToString", () => {
 		it("converts footnote definition", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.FootnoteDef,
-					id: "def1",
-					children: [{ type: NodeType.Text, value: "Footnote content" }]
-				}]
+				children: [
+					{
+						type: NodeType.FootnoteDef,
+						id: "def1",
+						children: [
+							{ type: NodeType.Text, value: "Footnote content" },
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("[^def1]: Footnote content\n");
 		});
@@ -603,12 +847,16 @@ describe("astToString", () => {
 		it("converts front matter", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.FrontMatter,
-					value: "title: Test\ndate: 2024"
-				}]
+				children: [
+					{
+						type: NodeType.FrontMatter,
+						value: "title: Test\ndate: 2024",
+					},
+				],
 			};
-			expect(astToString(node)).toBe("---\ntitle: Test\ndate: 2024\n---\n");
+			expect(astToString(node)).toBe(
+				"---\ntitle: Test\ndate: 2024\n---\n",
+			);
 		});
 	});
 
@@ -616,13 +864,17 @@ describe("astToString", () => {
 		it("converts escaped character", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.EscapedChar,
-						value: "*"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.EscapedChar,
+								value: "*",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("\\*\n");
 		});
@@ -632,13 +884,17 @@ describe("astToString", () => {
 		it("converts html inline", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.HtmlInline,
-						value: "<span>HTML</span>"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.HtmlInline,
+								value: "<span>HTML</span>",
+							},
+						],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("<span>HTML</span>\n");
 		});
@@ -646,10 +902,12 @@ describe("astToString", () => {
 		it("converts html block", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.HtmlBlock,
-					value: "<div>HTML Block</div>"
-				}]
+				children: [
+					{
+						type: NodeType.HtmlBlock,
+						value: "<div>HTML Block</div>",
+					},
+				],
 			};
 			expect(astToString(node)).toBe("<div>HTML Block</div>");
 		});
@@ -659,10 +917,12 @@ describe("astToString", () => {
 		it("converts nop node", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Nop,
-					children: [{ type: NodeType.Text, value: "text" }]
-				}]
+				children: [
+					{
+						type: NodeType.Nop,
+						children: [{ type: NodeType.Text, value: "text" }],
+					},
+				],
 			};
 			expect(astToString(node)).toBe("text");
 		});
@@ -674,10 +934,12 @@ describe("astToHtml", () => {
 		it("wraps document in article tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{ type: NodeType.Text, value: "Content" }]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [{ type: NodeType.Text, value: "Content" }],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain('<article class="md-doc">');
@@ -688,11 +950,13 @@ describe("astToHtml", () => {
 		it("converts heading level 1 to h1 tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 1,
-					children: [{ type: NodeType.Text, value: "Title" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 1,
+						children: [{ type: NodeType.Text, value: "Title" }],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<h1>Title</h1>");
 		});
@@ -700,11 +964,13 @@ describe("astToHtml", () => {
 		it("converts heading level 2 to h2 tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 2,
-					children: [{ type: NodeType.Text, value: "Subtitle" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 2,
+						children: [{ type: NodeType.Text, value: "Subtitle" }],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<h2>Subtitle</h2>");
 		});
@@ -712,11 +978,13 @@ describe("astToHtml", () => {
 		it("converts heading level 6 to h6 tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 6,
-					children: [{ type: NodeType.Text, value: "Deep" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 6,
+						children: [{ type: NodeType.Text, value: "Deep" }],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<h6>Deep</h6>");
 		});
@@ -724,11 +992,13 @@ describe("astToHtml", () => {
 		it("clamps heading level to 1-6 range", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Heading,
-					level: 10,
-					children: [{ type: NodeType.Text, value: "Too deep" }]
-				}]
+				children: [
+					{
+						type: NodeType.Heading,
+						level: 10,
+						children: [{ type: NodeType.Text, value: "Too deep" }],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<h6>");
 		});
@@ -738,13 +1008,19 @@ describe("astToHtml", () => {
 		it("converts strong to <strong> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Strong,
-						children: [{ type: NodeType.Text, value: "bold" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Strong,
+								children: [
+									{ type: NodeType.Text, value: "bold" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<strong>bold</strong>");
 		});
@@ -752,13 +1028,19 @@ describe("astToHtml", () => {
 		it("converts emphasis to <em> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Emphasis,
-						children: [{ type: NodeType.Text, value: "italic" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Emphasis,
+								children: [
+									{ type: NodeType.Text, value: "italic" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<em>italic</em>");
 		});
@@ -766,13 +1048,19 @@ describe("astToHtml", () => {
 		it("converts strong+emphasis to <strong><em>", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.StrongEmphasis,
-						children: [{ type: NodeType.Text, value: "both" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.StrongEmphasis,
+								children: [
+									{ type: NodeType.Text, value: "both" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<strong><em>both</em></strong>");
 		});
@@ -780,13 +1068,22 @@ describe("astToHtml", () => {
 		it("converts highlight to <mark> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Highlight,
-						children: [{ type: NodeType.Text, value: "highlighted" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Highlight,
+								children: [
+									{
+										type: NodeType.Text,
+										value: "highlighted",
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<mark>highlighted</mark>");
 		});
@@ -794,13 +1091,19 @@ describe("astToHtml", () => {
 		it("converts strike to <del> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Strike,
-						children: [{ type: NodeType.Text, value: "struck" }]
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Strike,
+								children: [
+									{ type: NodeType.Text, value: "struck" },
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<del>struck</del>");
 		});
@@ -810,11 +1113,13 @@ describe("astToHtml", () => {
 		it("converts code block to <pre><code> tags", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.CodeBlock,
-					lang: "javascript",
-					value: "console.log('hello');"
-				}]
+				children: [
+					{
+						type: NodeType.CodeBlock,
+						lang: "javascript",
+						value: "console.log('hello');",
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain('<pre><code class="language-javascript">');
@@ -825,10 +1130,12 @@ describe("astToHtml", () => {
 		it("converts code block without language", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.CodeBlock,
-					value: "plain code"
-				}]
+				children: [
+					{
+						type: NodeType.CodeBlock,
+						value: "plain code",
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("<pre><code>plain code</code></pre>");
@@ -839,30 +1146,42 @@ describe("astToHtml", () => {
 		it("converts link to <a> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Link,
-						label: "Click here",
-						url: "https://example.com"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Link,
+								label: "Click here",
+								url: "https://example.com",
+							},
+						],
+					},
+				],
 			};
-			expect(astToHtml(node)).toContain('<a href="https://example.com">Click here</a>');
+			expect(astToHtml(node)).toContain(
+				'<a href="https://example.com">Click here</a>',
+			);
 		});
 
 		it("converts autolink to <a> tag with URL as text", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.AutoLink,
-						url: "https://example.com"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.AutoLink,
+								url: "https://example.com",
+							},
+						],
+					},
+				],
 			};
-			expect(astToHtml(node)).toContain('<a href="https://example.com">https://example.com</a>');
+			expect(astToHtml(node)).toContain(
+				'<a href="https://example.com">https://example.com</a>',
+			);
 		});
 	});
 
@@ -870,30 +1189,40 @@ describe("astToHtml", () => {
 		it("converts image to <img> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Image,
-						alt: "alt text",
-						url: "image.png"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Image,
+								alt: "alt text",
+								url: "image.png",
+							},
+						],
+					},
+				],
 			};
-			expect(astToHtml(node)).toContain('<img src="image.png" alt="alt text">');
+			expect(astToHtml(node)).toContain(
+				'<img src="image.png" alt="alt text">',
+			);
 		});
 
 		it("includes title attribute when present", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Image,
-						alt: "alt text",
-						url: "image.png",
-						title: "Image Title"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Image,
+								alt: "alt text",
+								url: "image.png",
+								title: "Image Title",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain('title="Image Title"');
 		});
@@ -903,22 +1232,28 @@ describe("astToHtml", () => {
 		it("converts unordered list to <ul> tags", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: false,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [{ type: NodeType.Text, value: "Item 1" }]
-						},
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [{ type: NodeType.Text, value: "Item 2" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: false,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Item 1" },
+								],
+							},
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Item 2" },
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("<ul>");
@@ -930,22 +1265,28 @@ describe("astToHtml", () => {
 		it("converts ordered list to <ol> tags", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: true,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [{ type: NodeType.Text, value: "First" }]
-						},
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [{ type: NodeType.Text, value: "Second" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: true,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "First" },
+								],
+							},
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Second" },
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("<ol>");
@@ -955,55 +1296,72 @@ describe("astToHtml", () => {
 		it("converts task list with checkbox", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: false,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							task: true,
-							children: [{ type: NodeType.Text, value: "Done" }]
-						},
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							task: false,
-							children: [{ type: NodeType.Text, value: "Pending" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: false,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								task: true,
+								children: [
+									{ type: NodeType.Text, value: "Done" },
+								],
+							},
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								task: false,
+								children: [
+									{ type: NodeType.Text, value: "Pending" },
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
-			expect(result).toContain('<input type="checkbox" checked disabled>');
+			expect(result).toContain(
+				'<input type="checkbox" checked disabled>',
+			);
 			expect(result).toContain('<input type="checkbox" disabled>');
 		});
 
 		it("converts nested list", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.List,
-					ordered: false,
-					children: [
-						{
-							type: NodeType.ListItem,
-							level: 0,
-							children: [
-								{ type: NodeType.Text, value: "Item 1" },
-								{
-									type: NodeType.List,
-									ordered: false,
-									children: [{
-										type: NodeType.ListItem,
-										level: 1,
-										children: [{ type: NodeType.Text, value: "Nested" }]
-									}]
-								}
-							]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.List,
+						ordered: false,
+						children: [
+							{
+								type: NodeType.ListItem,
+								level: 0,
+								children: [
+									{ type: NodeType.Text, value: "Item 1" },
+									{
+										type: NodeType.List,
+										ordered: false,
+										children: [
+											{
+												type: NodeType.ListItem,
+												level: 1,
+												children: [
+													{
+														type: NodeType.Text,
+														value: "Nested",
+													},
+												],
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("<ul>");
@@ -1016,15 +1374,22 @@ describe("astToHtml", () => {
 		it("converts blockquote to <blockquote> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.BlockQuote,
-					children: [
-						{
-							type: NodeType.Paragraph,
-							children: [{ type: NodeType.Text, value: "Quote text" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.BlockQuote,
+						children: [
+							{
+								type: NodeType.Paragraph,
+								children: [
+									{
+										type: NodeType.Text,
+										value: "Quote text",
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<blockquote>");
 			expect(astToHtml(node)).toContain("</blockquote>");
@@ -1035,21 +1400,27 @@ describe("astToHtml", () => {
 		it("converts callout to div structure", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Callout,
-					calloutType: "note",
-					children: [
-						{
-							type: NodeType.Paragraph,
-							role: "title",
-							children: [{ type: NodeType.Text, value: "Title" }]
-						},
-						{
-							type: NodeType.Paragraph,
-							children: [{ type: NodeType.Text, value: "Content" }]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.Callout,
+						calloutType: "note",
+						children: [
+							{
+								type: NodeType.Paragraph,
+								role: "title",
+								children: [
+									{ type: NodeType.Text, value: "Title" },
+								],
+							},
+							{
+								type: NodeType.Paragraph,
+								children: [
+									{ type: NodeType.Text, value: "Content" },
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain('<div class="callout callout-note">');
@@ -1062,38 +1433,60 @@ describe("astToHtml", () => {
 		it("converts table to HTML table structure", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Table,
-					align: ["left", "center"],
-					children: [
-						{
-							type: NodeType.TableRow,
-							children: [
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Header 1" }]
-								},
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Header 2" }]
-								}
-							]
-						},
-						{
-							type: NodeType.TableRow,
-							children: [
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Cell 1" }]
-								},
-								{
-									type: NodeType.TableCell,
-									children: [{ type: NodeType.Text, value: "Cell 2" }]
-								}
-							]
-						}
-					]
-				}]
+				children: [
+					{
+						type: NodeType.Table,
+						align: ["left", "center"],
+						children: [
+							{
+								type: NodeType.TableRow,
+								children: [
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Header 1",
+											},
+										],
+									},
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Header 2",
+											},
+										],
+									},
+								],
+							},
+							{
+								type: NodeType.TableRow,
+								children: [
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Cell 1",
+											},
+										],
+									},
+									{
+										type: NodeType.TableCell,
+										children: [
+											{
+												type: NodeType.Text,
+												value: "Cell 2",
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("<table>");
@@ -1108,10 +1501,17 @@ describe("astToHtml", () => {
 		it("escapes special HTML characters in text", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{ type: NodeType.Text, value: "<script>alert('xss')</script>" }]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Text,
+								value: "<script>alert('xss')</script>",
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("&lt;script&gt;");
@@ -1121,10 +1521,12 @@ describe("astToHtml", () => {
 		it("escapes ampersand in text", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{ type: NodeType.Text, value: "A & B" }]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [{ type: NodeType.Text, value: "A & B" }],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("A &amp; B");
@@ -1133,14 +1535,18 @@ describe("astToHtml", () => {
 		it("escapes quotes in URLs", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Link,
-						label: "Link",
-						url: 'https://example.com?q="test"'
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Link,
+								label: "Link",
+								url: 'https://example.com?q="test"',
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("&quot;test&quot;");
@@ -1151,10 +1557,12 @@ describe("astToHtml", () => {
 		it("converts math block to div with class", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.MathBlock,
-					value: "x^2 + y^2 = z^2"
-				}]
+				children: [
+					{
+						type: NodeType.MathBlock,
+						value: "x^2 + y^2 = z^2",
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain('<div class="math-block">');
 		});
@@ -1162,13 +1570,17 @@ describe("astToHtml", () => {
 		it("converts math span to span with class", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.MathSpan,
-						value: "e=mc^2"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.MathSpan,
+								value: "e=mc^2",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain('<span class="math-inline">');
 		});
@@ -1178,13 +1590,17 @@ describe("astToHtml", () => {
 		it("converts wikilink to span with class", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.WikiLink,
-						value: "Note Title"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.WikiLink,
+								value: "Note Title",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain('<span class="wiki-link">');
 		});
@@ -1192,13 +1608,17 @@ describe("astToHtml", () => {
 		it("converts embed to span with class", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.Embed,
-						value: "EmbeddedNote"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.Embed,
+								value: "EmbeddedNote",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain('<span class="embed">');
 		});
@@ -1208,13 +1628,17 @@ describe("astToHtml", () => {
 		it("converts footnote reference to sup link", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.FootnoteRef,
-						id: "ref1"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.FootnoteRef,
+								id: "ref1",
+							},
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain("<sup>");
@@ -1224,11 +1648,15 @@ describe("astToHtml", () => {
 		it("converts footnote definition to div with id", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.FootnoteDef,
-					id: "def1",
-					children: [{ type: NodeType.Text, value: "Footnote content" }]
-				}]
+				children: [
+					{
+						type: NodeType.FootnoteDef,
+						id: "def1",
+						children: [
+							{ type: NodeType.Text, value: "Footnote content" },
+						],
+					},
+				],
 			};
 			const result = astToHtml(node);
 			expect(result).toContain('id="fn-def1"');
@@ -1240,9 +1668,11 @@ describe("astToHtml", () => {
 		it("converts horizontal rule to <hr>", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.HorizontalRule
-				}]
+				children: [
+					{
+						type: NodeType.HorizontalRule,
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<hr>");
 		});
@@ -1252,13 +1682,17 @@ describe("astToHtml", () => {
 		it("converts inline code to <code> tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.InlineCode,
-						value: "code"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.InlineCode,
+								value: "code",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<code>code</code>");
 		});
@@ -1266,13 +1700,17 @@ describe("astToHtml", () => {
 		it("escapes special characters in inline code", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.InlineCode,
-						value: "<tag>"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.InlineCode,
+								value: "<tag>",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("&lt;tag&gt;");
 		});
@@ -1282,10 +1720,12 @@ describe("astToHtml", () => {
 		it("converts front matter to pre tag", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.FrontMatter,
-					value: "title: Test"
-				}]
+				children: [
+					{
+						type: NodeType.FrontMatter,
+						value: "title: Test",
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain('<pre class="frontmatter">');
 		});
@@ -1295,13 +1735,17 @@ describe("astToHtml", () => {
 		it("converts escaped character", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.EscapedChar,
-						value: "*"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.EscapedChar,
+								value: "*",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("*");
 		});
@@ -1311,13 +1755,17 @@ describe("astToHtml", () => {
 		it("passes through html inline without escaping", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.Paragraph,
-					children: [{
-						type: NodeType.HtmlInline,
-						value: "<span>HTML</span>"
-					}]
-				}]
+				children: [
+					{
+						type: NodeType.Paragraph,
+						children: [
+							{
+								type: NodeType.HtmlInline,
+								value: "<span>HTML</span>",
+							},
+						],
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<span>HTML</span>");
 		});
@@ -1325,10 +1773,12 @@ describe("astToHtml", () => {
 		it("passes through html block without escaping", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
-				children: [{
-					type: NodeType.HtmlBlock,
-					value: "<div>HTML Block</div>"
-				}]
+				children: [
+					{
+						type: NodeType.HtmlBlock,
+						value: "<div>HTML Block</div>",
+					},
+				],
 			};
 			expect(astToHtml(node)).toContain("<div>HTML Block</div>");
 		});

@@ -2,6 +2,7 @@ import { NodeType, MarkdownNode, CalloutNode } from "components/ast/node";
 import { RuleBuilder, RuleContext } from "components/ast/rule";
 import { ASTProcessor } from "components/ast/main";
 
+// Blowfish已经支持原生的Obsidian callout块，已经不用转换了，保留这个规则以备不时之需
 interface CalloutRuleData {
 	processor?: ASTProcessor;
 	[key: string]: unknown;
@@ -21,13 +22,18 @@ export const calloutRuleHugo = new RuleBuilder("callout转换")
 		if (callout.children && processor) {
 			await Promise.all(
 				callout.children.map(async (child) => {
-					const childWithRole = child as MarkdownNode & { role?: string };
+					const childWithRole = child as MarkdownNode & {
+						role?: string;
+					};
 					if (childWithRole.role === "title") {
 						// 如果是标题节点，直接跳过
 						return;
 					}
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-					const processed = await (processor as any).executor.execute(child, context);
+					const processed = await (processor as any).executor.execute(
+						child,
+						context,
+					);
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 					callout_children.push(processed); // 递归解析
 				}),

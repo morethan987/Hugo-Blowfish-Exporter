@@ -37,9 +37,9 @@ const context = await esbuild.context({
 	logLevel: "info",
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	// outfile: "main.js",
-	outfile:
-		"/mnt/E/Obsidian/Dev/.obsidian/plugins/Hugo-Blowfish-Exporter/main.js",
+	outfile: "main.js",
+	// outfile:
+	// "/mnt/E/Obsidian/Dev/.obsidian/plugins/Hugo-Blowfish-Exporter/main.js",
 	minify: prod,
 });
 

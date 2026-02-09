@@ -20,7 +20,9 @@ author: John Doe
 			const result = parseMarkdown(md);
 			expect(result.children).toHaveLength(2);
 			expect(result.children![0]!.type).toBe(NodeType.FrontMatter);
-			expect(result.children![0]!.value).toContain("title: Test Document");
+			expect(result.children![0]!.value).toContain(
+				"title: Test Document",
+			);
 		});
 
 		it("parses ATX heading with level 1", () => {
@@ -93,6 +95,27 @@ $$`;
 			expect(result.children).toHaveLength(1);
 			expect(result.children![0]!.type).toBe(NodeType.Callout);
 			expect(result.children![0]!.calloutType).toBe("note");
+			expect(result.children![0]!.auto_fold).toBe(undefined);
+		});
+
+		it("parses callout with auto fold on", () => {
+			const md = `> [!note]- Important Note
+> This is the content`;
+			const result = parseMarkdown(md);
+			expect(result.children).toHaveLength(1);
+			expect(result.children![0]!.type).toBe(NodeType.Callout);
+			expect(result.children![0]!.calloutType).toBe("note");
+			expect(result.children![0]!.auto_fold).toBe(true);
+		});
+
+		it("parses callout with auto fold off", () => {
+			const md = `> [!note]+ Important Note
+> This is the content`;
+			const result = parseMarkdown(md);
+			expect(result.children).toHaveLength(1);
+			expect(result.children![0]!.type).toBe(NodeType.Callout);
+			expect(result.children![0]!.calloutType).toBe("note");
+			expect(result.children![0]!.auto_fold).toBe(false);
 		});
 
 		it("parses block quote", () => {
@@ -299,7 +322,9 @@ $$`;
 			const paraNode = result.children![0]!;
 			const linkNode = paraNode.children![0]!;
 			expect(linkNode.type).toBe(NodeType.WikiLink);
-			expect((linkNode as WikiLinkNode & { heading?: string }).heading).toBe("heading");
+			expect(
+				(linkNode as WikiLinkNode & { heading?: string }).heading,
+			).toBe("heading");
 		});
 
 		it("parses embed", () => {
@@ -371,7 +396,7 @@ $$`;
 			expect(paraNode.type).toBe(NodeType.Paragraph);
 			expect(paraNode.children).toBeDefined();
 			const hasHtmlInline = paraNode.children!.some(
-				(n) => n.type === NodeType.HtmlInline
+				(n) => n.type === NodeType.HtmlInline,
 			);
 			expect(hasHtmlInline).toBe(true);
 		});
