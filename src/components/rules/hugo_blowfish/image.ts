@@ -1,14 +1,24 @@
-import { RuleBuilder } from 'src/components/ast/rule';
-import { NodeType } from 'src/components/ast/node';
-import { copyImageFile } from 'src/components/rules/utils';
+import { RuleBuilder, RuleContext } from "components/ast/rule";
+import { NodeType, MarkdownNode, ImageNode } from "components/ast/node";
+import { HugoBlowfishExporterSettings } from "types/settings";
+import { App } from "obsidian";
+import { copyImageFile } from "components/rules/utils";
 
+export const imageRuleHugo = new RuleBuilder("图片链接转换")
+	.describe("将图片链接转换为对应的hugo简码")
+	.matchType(NodeType.Image)
+	.transform(async (node: MarkdownNode, context?: RuleContext) => {
+		const image = node as ImageNode;
+		const app = context?.data?.app as App | undefined;
+		const settings = context?.data?.settings as
+			| HugoBlowfishExporterSettings
+			| undefined;
+		const slug = context?.data?.slug as string | undefined;
 
-export const imageRuleHugo = new RuleBuilder('图片链接转换')
-    .describe('将图片链接转换为对应的hugo简码')
-    .matchType(NodeType.Image)
-    .transform(async (node, context) => {
-        copyImageFile(context.data.app, node.url as string, context.data.settings, context.data.slug);
-        node.url = context.data.settings.imageExportPath + '/' + node.url
-        return node;
-    })
-    .build();
+		if (app && settings && slug && image.url) {
+			await copyImageFile(app, image.url, settings, slug);
+			image.url = settings.imageExportPath + "/" + image.url;
+		}
+		return image;
+	})
+	.build();

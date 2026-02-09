@@ -11,7 +11,7 @@
 
   --md-code-bg: #0b0c10;
   --md-code-fg: #e6edf3;
-  --md-inline-code-bg: #f6f8fa;
+  --md-inline-code-bg: #eaf5ff;
 
   --md-radius: 12px;
   --md-shadow: 0 6px 18px rgba(0,0,0,.06);
@@ -42,13 +42,84 @@
 
 /* 标题 */
 .md-doc h1,.md-doc h2,.md-doc h3,.md-doc h4,.md-doc h5,.md-doc h6{
-  line-height:1.25; font-weight:800; margin:2rem 0 .75rem;
+  line-height:1.25;
+  font-weight:800;
+  margin:2rem 0 .75rem;
+  color: var(--md-title, #111111);
+  word-break: break-word;
 }
-.md-doc h1{font-size:2rem;}
-.md-doc h2{font-size:1.6rem; border-bottom:1px solid var(--md-border); padding-bottom:.4rem;}
-.md-doc h3{font-size:1.3rem;}
-.md-doc h4{font-size:1.1rem;}
-.md-doc h5,.md-doc h6{font-size:1rem; color:var(--md-fg-muted);}
+
+/* ========= H1：渐变下划强调 ========= */
+.md-doc h1{
+  font-size: 2rem;          /* ~32px */
+  position: relative;
+  padding-bottom: .5rem;
+}
+.md-doc h1::after{
+  content:"";
+  display:block;
+  margin-top:.5rem;
+  width:72px; height:6px;
+  border-radius:3px;
+  background: linear-gradient(90deg,
+              var(--md-accent, #0F4C81),
+              var(--md-accent-2, #7C3AED));
+  /* 细微浮雕质感（兼容差时也不影响） */
+  box-shadow: 0 1px 0 rgba(0,0,0,.06);
+}
+
+/* ========= H2：左侧色带 + 底部分隔 ========= */
+.md-doc h2{
+  font-size:1.6rem;         /* ~25.6px */
+  position: relative;
+  padding:.2rem 0 .5rem 1rem;   /* 留出左侧色带空间 */
+  border-bottom:1px solid var(--md-border, rgba(0,0,0,.08));
+}
+.md-doc h2::before{
+  content:"";
+  position:absolute;
+  left:0; top:.15rem; bottom:.6rem;
+  width:6px; border-radius:3px;
+  background: linear-gradient(180deg,
+              var(--md-accent, #0F4C81),
+              var(--md-accent-2, #7C3AED));
+}
+
+/* ========= H3：圆点领航符 ========= */
+.md-doc h3{
+  font-size:1.3rem;         /* ~20.8px */
+  position:relative;
+  padding-left:1rem;
+}
+.md-doc h3::before{
+  content:"";
+  position:absolute;
+  left:0; top:.6em;
+  width:.5rem; height:.5rem;
+  border-radius:50%;
+  background: var(--md-accent, #0F4C81);
+  transform: translateY(-50%);
+}
+
+/* ========= H4：浅底胶囊（整段可换行） ========= */
+.md-doc h4{
+  font-size:1.1rem;         /* ~17.6px */
+  display:block;     /* 长标题换行也能保持块状背景 */
+  padding:.15rem .6rem;
+  border:1px solid var(--md-border, rgba(0,0,0,.08));
+  border-radius:999px;
+  background: linear-gradient(90deg, #fafafa, #ffffff);
+  font-weight:700;
+}
+
+/* ========= H5/H6：次级、静音色 + 上间距更紧凑 ========= */
+.md-doc h5,.md-doc h6{
+  font-size:1rem;
+  color: var(--md-fg-muted, #667085);
+  letter-spacing:.02em;
+  text-transform:none;      /* 如需全大写可设 uppercase */
+  margin-top:1.25rem;
+}
 
 /* 段落/分隔线 */
 .md-doc p{margin:0 0 1rem;}
@@ -107,7 +178,7 @@
   background: transparent;
   color: #c9d1d9;
   font-family: "Fira Code", Menlo, Consolas, Monaco, monospace;
-  font-size: 11.5px;
+  font-size: 12.5px;
   line-height: 1.75;
   text-align: left;
 }
@@ -147,7 +218,15 @@
 .md-doc .token.inserted { color: #3fb950; }
 .md-doc .token.deleted  { color: #f85149; }
 
-
+/* 内联代码块 */
+.md-doc .inline-code {
+  font-family: var(--md-font-mono);
+  font-size: .95em;
+  background: var(--md-inline-code-bg);
+  padding: .15em .35em;
+  border-radius: 6px;
+  vertical-align:middle;
+}
 
 /* 数学 */
 /* Inline math: 与文本同行、可横向滚动保护、对齐基线 */

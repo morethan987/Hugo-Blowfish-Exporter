@@ -19,24 +19,20 @@ export class ExportNameModal extends Modal {
 
         // 创建输入框
         const inputContainer = contentEl.createDiv();
-        inputContainer.style.margin = '1em 0';
+        inputContainer.addClass("hbe-my-md");
 
         const label = inputContainer.createEl('label', {text: '请输入导出文件名：'});
-        label.style.display = 'block';
-        label.style.marginBottom = '0.5em';
+        label.addClass("hbe-block", "hbe-mb-sm");
 
         this.inputEl = inputContainer.createEl('input', {
             type: 'text',
             value: this.fileName
         });
-        this.inputEl.style.width = '100%';
-        this.inputEl.style.marginBottom = '1em';
+        this.inputEl.addClass("hbe-input-full", "hbe-mb-md");
 
         // 创建按钮容器
         const buttonContainer = contentEl.createDiv();
-        buttonContainer.style.display = 'flex';
-        buttonContainer.style.justifyContent = 'flex-end';
-        buttonContainer.style.gap = '10px';
+        buttonContainer.addClass("hbe-flex-end", "hbe-gap-sm");
 
         // 添加取消和确认按钮
         const cancelButton = buttonContainer.createEl('button', {text: '取消'});

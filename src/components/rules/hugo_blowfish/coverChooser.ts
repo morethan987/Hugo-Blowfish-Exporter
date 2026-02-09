@@ -1,10 +1,11 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import { HugoBlowfishExporterSettings } from "types/settings";
 
 export class CoverChooser {
     constructor() {}
 
-    async chooseCover( settings: any, slugDir: string) {
+    async chooseCover(settings: HugoBlowfishExporterSettings, slugDir: string): Promise<void> {
         // settings.exportPath和settings.coverPath拼接形成封面图片文件夹的绝对路径
         const exportDir = path.resolve(settings.exportPath);
         const coverDir = path.join(
@@ -38,13 +39,15 @@ export class CoverChooser {
         // 复制到目标路径下，并重命名为featured.svg
         try {
             const files = await fs.promises.readdir(coverDir);
-            const svgFiles = files.filter(file => 
+            const svgFiles = files.filter((file) => 
                 file.endsWith('.svg') && file !== 'background.svg'
             );
             
             if (svgFiles.length > 0) {
-                const randomSvg = svgFiles[Math.floor(Math.random() * svgFiles.length)];
-                await fs.promises.copyFile(path.join(coverDir, randomSvg), featuredTarget);
+                const randomSvg = svgFiles[Math.floor(Math.random() * svgFiles.length)] || "";
+                if (randomSvg) {
+                    await fs.promises.copyFile(path.join(coverDir, randomSvg), featuredTarget);
+                }
             }
         } catch (error) {
             console.error("复制封面图片失败:", error);

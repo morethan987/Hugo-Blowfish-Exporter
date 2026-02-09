@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Plugin } from 'obsidian';
+import { App, Modal, Notice, Plugin, FileSystemAdapter } from 'obsidian';
 import * as path from 'path';
 import * as fs from 'fs';
 import { CssEditorModal } from './cssEditorModal';
@@ -46,72 +46,57 @@ export class WechatStyleModal extends Modal {
         this.htmlContent = htmlContent;
         this.onStyleSelected = onStyleSelected;
         
-        // 动态获取插件目录下的styles文件夹路径
-        // @ts-ignore - 访问adapter的basePath
-        const vaultPath = this.app.vault.adapter.basePath || '';
-        const pluginRelativePath = this.plugin.manifest.dir;
-        this.cssDir = `${vaultPath}/${pluginRelativePath}/styles`;
+         // 动态获取插件目录下的styles文件夹路径
+         const adapter = this.app.vault.adapter;
+         let vaultPath = '';
+         if (adapter instanceof FileSystemAdapter) {
+             vaultPath = adapter.getBasePath();
+         }
+         const pluginRelativePath = this.plugin.manifest.dir;
+         this.cssDir = `${vaultPath}/${pluginRelativePath}/styles`;
 
         this.loadStylesConfig();
     }
 
-    private loadStylesConfig() {
-        try {
-            const configPath = path.join(this.cssDir, 'styles.json');
-            const configContent = fs.readFileSync(configPath, 'utf8');
-            this.stylesConfig = JSON.parse(configContent);
-        } catch (error) {
-            console.error('加载样式配置失败:', error);
-            this.stylesConfig = { templates: [], devicePresets: [] };
-        }
-    }
+     private loadStylesConfig() {
+         try {
+             const configPath = path.join(this.cssDir, 'styles.json');
+             const configContent = fs.readFileSync(configPath, 'utf8');
+             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+             const parsed = JSON.parse(configContent);
+             if (typeof parsed === 'object' && parsed !== null && 'templates' in parsed && 'devicePresets' in parsed) {
+                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                 this.stylesConfig = parsed;
+             } else {
+                 this.stylesConfig = { templates: [], devicePresets: [] };
+             }
+         } catch (error) {
+             console.error('加载样式配置失败:', error);
+             this.stylesConfig = { templates: [], devicePresets: [] };
+         }
+     }
 
     onOpen() {
         const { contentEl } = this;
         contentEl.empty();
         
         // 设置模态框样式
-        this.modalEl.style.width = '90vw';
-        this.modalEl.style.height = '90vh';
-        this.modalEl.style.maxWidth = '1400px';
-        this.modalEl.style.maxHeight = '900px';
+        this.modalEl.addClass("hbe-modal-xl");
 
         // 主标题
         contentEl.createEl('h3', { text: '样式选择' });
 
         // 创建主要布局容器
         const mainContainer = contentEl.createDiv();
-        // mainContainer.style.cssText = `
-        //     display: flex;
-        //     height: calc(100% - 100px);
-        //     gap: 20px;
-        // `;
-        mainContainer.style.cssText = `
-            display: flex;
-            height: calc(100% - 120px);
-            gap: 20px;
-        `;
+        mainContainer.addClass("hbe-panel-container");
 
         // 左侧面板 - 样式选择和设备预设
         const leftPanel = mainContainer.createDiv();
-        leftPanel.style.cssText = `
-            width: 300px;
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 8px;
-            padding: 16px;
-            overflow-y: auto;
-        `;
+        leftPanel.addClass("hbe-panel-sidebar");
 
         // 右侧面板 - 预览区域
         const rightPanel = mainContainer.createDiv();
-        rightPanel.style.cssText = `
-            flex: 1;
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-        `;
+        rightPanel.addClass("hbe-panel-main");
 
         this.createLeftPanel(leftPanel);
         this.createRightPanel(rightPanel);
@@ -132,12 +117,7 @@ export class WechatStyleModal extends Modal {
         deviceSection.createEl('h4', { text: '设备预设' });
         
         const deviceSelect = deviceSection.createEl('select');
-        deviceSelect.style.cssText = `
-            width: 100%;
-            margin-bottom: 20px;
-            padding: 8px;
-            border-radius: 2px;
-        `;
+        deviceSelect.addClass("hbe-select-full", "hbe-mb-lg", "hbe-p-sm", "hbe-rounded");
 
         this.stylesConfig.devicePresets.forEach(preset => {
             const option = deviceSelect.createEl('option', {
@@ -166,16 +146,12 @@ export class WechatStyleModal extends Modal {
             const templatesInCategory = this.stylesConfig.templates.filter(t => t.category === category);
 
             // 跳过内置空白模板
-            if (templatesInCategory.length === 1 && templatesInCategory[0].id === 'blank') return;
+            if (templatesInCategory.length === 1 && templatesInCategory[0]?.id === 'blank') return;
 
             const categoryDiv = templateSection.createDiv();
-            categoryDiv.style.marginBottom = '16px';
+            categoryDiv.addClass("hbe-mb-md");
             const categoryTitle = categoryDiv.createEl('h4', { text: category });
-            categoryTitle.style.cssText = `
-                margin: 8px 0;
-                color: var(--text-muted);
-                font-size: 0.9em;
-            `;
+            categoryTitle.addClass("hbe-category-title");
 
             templatesInCategory.forEach(template => {
 
@@ -183,56 +159,26 @@ export class WechatStyleModal extends Modal {
                 if (template.id === 'blank') return;
 
                 const templateItem = categoryDiv.createDiv();
-                templateItem.style.cssText = `
-                    border: 1px solid var(--background-modifier-border);
-                    border-radius: 6px;
-                    padding: 12px;
-                    margin-bottom: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                `;
+                templateItem.addClass("hbe-template-item");
                 templateItem.setAttribute('data-template-id', template.id);
 
                 const templateName = templateItem.createEl('div', { text: template.name });
-                templateName.style.fontWeight = 'bold';
+                templateName.addClass("hbe-font-bold");
 
                 const templateDesc = templateItem.createEl('div', { text: template.description });
-                templateDesc.style.cssText = `
-                    font-size: 0.85em;
-                    color: var(--text-muted);
-                    margin-top: 4px;
-                `;
+                templateDesc.addClass("hbe-text-sm", "hbe-text-muted", "hbe-mt-xs");
 
                 // 操作按钮
                 const actionsDiv = templateItem.createDiv();
-                actionsDiv.style.cssText = `
-                    margin-top: 8px;
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                `;
+                actionsDiv.addClass("hbe-mt-sm", "hbe-flex-row", "hbe-gap-sm", "hbe-items-center");
 
                 // 默认模板标识
                 if (template.default) {
                     const defaultBadge = actionsDiv.createEl('span', { text: '默认' });
-                    defaultBadge.style.cssText = `
-                        padding: 2px 6px;
-                        font-size: 0.7em;
-                        border-radius: 3px;
-                        background: var(--interactive-accent);
-                        color: white;
-                    `;
+                    defaultBadge.addClass("hbe-btn-xs", "hbe-rounded", "hbe-btn-accent");
                 } else {
                     const setDefaultBtn = actionsDiv.createEl('button', { text: '设为默认' });
-                    setDefaultBtn.style.cssText = `
-                        padding: 3px 6px;
-                        font-size: 0.8em;
-                        border-radius: 4px;
-                        border: 1px solid var(--interactive-accent);
-                        background: transparent;
-                        color: var(--interactive-accent);
-                        cursor: pointer;
-                    `;
+                    setDefaultBtn.addClass("hbe-btn-outline", "hbe-text-accent", "hbe-btn-xs", "hbe-rounded");
                     setDefaultBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.setAsDefault(template);
@@ -241,30 +187,14 @@ export class WechatStyleModal extends Modal {
 
                 if (template.deletable) {
                     const editBtn = actionsDiv.createEl('button', { text: '编辑' });
-                    editBtn.style.cssText = `
-                        padding: 3px 6px;
-                        font-size: 0.8em;
-                        border-radius: 4px;
-                        border: 1px solid var(--text-warning);
-                        background: transparent;
-                        color: var(--text-warning);
-                        cursor: pointer;
-                    `;
+                    editBtn.addClass("hbe-btn-outline", "hbe-text-warning", "hbe-btn-xs", "hbe-rounded");
                     editBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.editTemplate(template);
                     });
 
                     const deleteBtn = actionsDiv.createEl('button', { text: '删除' });
-                    deleteBtn.style.cssText = `
-                        padding: 3px 6px;
-                        font-size: 0.8em;
-                        border-radius: 4px;
-                        border: 1px solid var(--text-error);
-                        background: transparent;
-                        color: var(--text-error);
-                        cursor: pointer;
-                    `;
+                    deleteBtn.addClass("hbe-btn-outline", "hbe-text-error", "hbe-btn-xs", "hbe-rounded");
                     deleteBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
                         this.deleteTemplate(template);
@@ -280,109 +210,46 @@ export class WechatStyleModal extends Modal {
 
         // 新建模板按钮
         const newTemplateBtn = templateSection.createEl('button', { text: '+ 新建自定义模板' });
-        newTemplateBtn.style.cssText = `
-            width: 100%;
-            padding: 12px;
-            margin-top: 16px;
-            border: 2px dashed var(--interactive-accent);
-            background: transparent;
-            color: var(--interactive-accent);
-            border-radius: 6px;
-            cursor: pointer;
-        `;
+        newTemplateBtn.addClass("hbe-btn-dashed", "hbe-full-width", "hbe-p-sm", "hbe-mt-md", "hbe-rounded-lg");
         newTemplateBtn.addEventListener('click', () => this.createNewTemplate());
     }
 
     private createRightPanel(container: HTMLElement) {
         // 预览标题和控制
         const previewHeader = container.createDiv();
-        previewHeader.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        `;
+        previewHeader.addClass("hbe-flex-between", "hbe-items-center", "hbe-mb-md");
 
         previewHeader.createEl('h3', { text: '预览效果' });
 
         const refreshBtn = previewHeader.createEl('button', { text: '刷新预览' });
-        refreshBtn.style.cssText = `
-            padding: 6px 12px;
-            border-radius: 4px;
-            border: 1px solid var(--interactive-accent);
-            background: var(--interactive-accent);
-            color: white;
-            cursor: pointer;
-        `;
+        refreshBtn.addClass("hbe-btn-accent", "hbe-rounded", "hbe-p-sm");
         refreshBtn.addEventListener('click', () => this.updatePreview());
 
         // 预览容器
         this.previewContainer = container.createDiv();
-        this.previewContainer.style.cssText = `
-            flex: 1;
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 6px;
-            overflow: hidden;
-            background: #d5d5d5ff;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-        `;
+        this.previewContainer.addClass("hbe-preview-container");
 
         // 预览frame容器（用于控制宽度）
         const frameContainer = this.previewContainer.createDiv();
-        frameContainer.style.cssText = `
-            width: ${this.currentDeviceWidth};
-            min-height: 400px;
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            overflow: hidden;
-            transition: width 0.3s ease;
-        `;
+        frameContainer.addClass("hbe-preview-frame-wrapper");
+        frameContainer.style.width = this.currentDeviceWidth;
 
         // 创建iframe
         this.previewFrame = frameContainer.createEl('iframe');
-        this.previewFrame.style.cssText = `
-            width: 100%;
-            height: 600px;
-            border: none;
-            background: white;
-        `;
+        this.previewFrame.addClass("hbe-preview-iframe");
     }
 
     private createBottomButtons(container: HTMLElement) {
         const buttonContainer = container.createDiv();
-        buttonContainer.style.cssText = `
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid var(--background-modifier-border);
-        `;
+        buttonContainer.addClass("hbe-modal-footer");
 
         const cancelBtn = buttonContainer.createEl('button', { text: '取消' });
-        cancelBtn.style.cssText = `
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: 1px solid var(--background-modifier-border);
-            background: transparent;
-            cursor: pointer;
-        `;
+        cancelBtn.addClass("hbe-btn-ghost", "hbe-rounded", "hbe-p-sm");
         cancelBtn.addEventListener('click', () => this.close());
 
         const confirmBtn = buttonContainer.createEl('button', { text: '确定使用此样式' });
-        confirmBtn.style.cssText = `
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            background: var(--interactive-accent);
-            color: white;
-            cursor: pointer;
-        `;
-        confirmBtn.addEventListener('click', () => this.confirmSelection());
+        confirmBtn.addClass("hbe-btn-accent", "hbe-rounded", "hbe-p-sm");
+        confirmBtn.addEventListener('click', () => { void this.confirmSelection(); });
     }
 
     private selectTemplate(template: StyleTemplate) {
@@ -403,15 +270,13 @@ export class WechatStyleModal extends Modal {
         // 更新UI中的选中状态
         const templateItems = this.contentEl.querySelectorAll('[data-template-id]');
         templateItems.forEach((item: HTMLElement) => {
-            item.style.backgroundColor = '';
-            item.style.borderColor = 'var(--background-modifier-border)';
+            item.removeClass("is-selected");
         });
 
         if (this.selectedTemplate) {
             const selectedItem = this.contentEl.querySelector(`[data-template-id="${this.selectedTemplate.id}"]`) as HTMLElement;
             if (selectedItem) {
-                selectedItem.style.backgroundColor = 'var(--background-modifier-hover)';
-                selectedItem.style.borderColor = 'var(--interactive-accent)';
+                selectedItem.addClass("is-selected");
             }
         }
     }
@@ -617,27 +482,16 @@ class CustomTemplateModal extends Modal {
         contentEl.createEl('h2', { text: '创建自定义模板' });
 
         const inputContainer = contentEl.createDiv();
-        inputContainer.style.margin = '1em 0';
+        inputContainer.addClass("hbe-my-md");
 
         const label = inputContainer.createEl('label', { text: '请输入模板名称：' });
-        label.style.display = 'block';
-        label.style.marginBottom = '0.5em';
+        label.addClass("hbe-block", "hbe-mb-sm");
 
         const input = inputContainer.createEl('input', { type: 'text' });
-        input.style.cssText = `
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 4px;
-        `;
+        input.addClass("hbe-input", "hbe-input-full", "hbe-p-sm", "hbe-rounded");
 
         const buttonContainer = contentEl.createDiv();
-        buttonContainer.style.cssText = `
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 1em;
-        `;
+        buttonContainer.addClass("hbe-flex-end", "hbe-gap-sm", "hbe-mt-md");
 
         const cancelBtn = buttonContainer.createEl('button', { text: '取消' });
         const confirmBtn = buttonContainer.createEl('button', { text: '创建' });
@@ -683,23 +537,13 @@ class ConfirmDeleteModal extends Modal {
         contentEl.createEl('p', { text: `确定要删除模板 "${this.templateName}" 吗？此操作不可撤销。` });
 
         const buttonContainer = contentEl.createDiv();
-        buttonContainer.style.cssText = `
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 1em;
-        `;
+        buttonContainer.addClass("hbe-flex-end", "hbe-gap-sm", "hbe-mt-md");
 
         const cancelBtn = buttonContainer.createEl('button', { text: '取消' });
         const confirmBtn = buttonContainer.createEl('button', { text: '删除' });
-        confirmBtn.style.cssText = `
-            background: var(--text-error);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        `;
+        confirmBtn.addClass("hbe-btn-accent", "hbe-rounded", "hbe-p-sm", "hbe-cursor-pointer");
+        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
+        confirmBtn.style.background = "var(--text-error)";
 
         cancelBtn.onclick = () => this.close();
         confirmBtn.onclick = () => {

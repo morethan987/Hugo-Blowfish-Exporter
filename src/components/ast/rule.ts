@@ -11,7 +11,7 @@ export interface RuleCondition {
   // 节点类型匹配
   type?: NodeType | NodeType[];
   // 属性匹配（支持嵌套属性）
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   // 自定义匹配函数
   test?: (node: MarkdownNode, context: RuleContext) => boolean;
   // 子节点匹配
@@ -27,7 +27,7 @@ export interface RuleTransform {
   // 节点类型转换
   type?: NodeType;
   // 属性设置
-  set?: Record<string, any>;
+  set?: Record<string, unknown>;
   // 属性删除
   remove?: string[];
   // 自定义转换函数
@@ -49,7 +49,7 @@ export interface RuleContext {
   // 根节点
   root: MarkdownNode;
   // 全局数据
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 /**
@@ -118,7 +118,7 @@ export class RuleBuilder {
   /**
    * 匹配具有特定属性的节点
    */
-  matchProperty(key: string, value: any): RuleBuilder {
+  matchProperty(key: string, value: unknown): RuleBuilder {
     this.rule.condition = {
       ...this.rule.condition,
       properties: { ...this.rule.condition?.properties, [key]: value }
@@ -145,7 +145,7 @@ export class RuleBuilder {
   /**
    * 设置节点属性
    */
-  setProperty(key: string, value: any): RuleBuilder {
+  setProperty(key: string, value: unknown): RuleBuilder {
     this.rule.transform = {
       ...this.rule.transform,
       set: { ...this.rule.transform?.set, [key]: value }

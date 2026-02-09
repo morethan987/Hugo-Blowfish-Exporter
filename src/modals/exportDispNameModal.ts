@@ -16,23 +16,18 @@ export class ExportDispNameModal extends Modal {
         contentEl.createEl('h2', {text: '选择语言版本'});
 
         const inputContainer = contentEl.createDiv();
-        inputContainer.style.margin = '1em 0';
+        inputContainer.addClass("hbe-my-md");
 
         const label = inputContainer.createEl('p', {text: '检测到展示性链接，请选择该链接指向的内容语言版本：'});
-        label.style.marginBottom = '1em';
+        label.addClass("hbe-mb-md");
 
         // 创建单选按钮组
         const radioGroup = inputContainer.createDiv();
-        radioGroup.style.display = 'flex';
-        radioGroup.style.flexDirection = 'column';
-        radioGroup.style.gap = '10px';
-        radioGroup.style.marginBottom = '1em';
+        radioGroup.addClass("hbe-flex-col", "hbe-gap-sm", "hbe-mb-md");
 
         // 中文选项
         const zhContainer = radioGroup.createDiv();
-        zhContainer.style.display = 'flex';
-        zhContainer.style.alignItems = 'center';
-        zhContainer.style.gap = '8px';
+        zhContainer.addClass("hbe-flex-row", "hbe-items-center", "hbe-gap-sm");
         const zhRadio = zhContainer.createEl('input', {
             type: 'radio',
             value: 'zh-cn',
@@ -43,9 +38,7 @@ export class ExportDispNameModal extends Modal {
 
         // 英文选项
         const enContainer = radioGroup.createDiv();
-        enContainer.style.display = 'flex';
-        enContainer.style.alignItems = 'center';
-        enContainer.style.gap = '8px';
+        enContainer.addClass("hbe-flex-row", "hbe-items-center", "hbe-gap-sm");
         const enRadio = enContainer.createEl('input', {
             type: 'radio',
             value: 'en',
@@ -63,10 +56,7 @@ export class ExportDispNameModal extends Modal {
 
         // 按钮容器
         const buttonContainer = contentEl.createDiv();
-        buttonContainer.style.display = 'flex';
-        buttonContainer.style.justifyContent = 'flex-end';
-        buttonContainer.style.gap = '10px';
-        buttonContainer.style.marginTop = '1em';
+        buttonContainer.addClass("hbe-flex-end", "hbe-gap-sm", "hbe-mt-md");
 
         // 添加按钮
         const cancelButton = buttonContainer.createEl('button', {text: '取消'});

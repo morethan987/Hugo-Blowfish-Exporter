@@ -35,125 +35,58 @@ export class CssEditorModal extends Modal {
         contentEl.empty();
 
         // 设置模态框大小
-        this.modalEl.style.width = '80vw';
-        this.modalEl.style.height = '90vh';
-        this.modalEl.style.maxWidth = '1000px';
-        this.modalEl.style.maxHeight = '700px';
+        this.modalEl.addClass("hbe-modal-wide");
+        contentEl.addClass("hbe-flex-col", "hbe-full-height");
 
         // 标题
         const header = contentEl.createDiv();
-        header.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--background-modifier-border);
-        `;
+        header.addClass("hbe-flex-between", "hbe-items-center", "hbe-mb-md", "hbe-pb-sm", "hbe-border-bottom");
 
         header.createEl('h3', { text: `编辑模板: ${this.templateName}` });
 
         // 工具栏
         const toolbar = header.createDiv();
-        toolbar.style.cssText = `
-            display: flex;
-            gap: 8px;
-        `;
+        toolbar.addClass("hbe-flex-row", "hbe-gap-sm");
 
         const resetBtn = toolbar.createEl('button', { text: '重置' });
-        resetBtn.style.cssText = `
-            padding: 6px 12px;
-            border: 1px solid var(--background-modifier-border);
-            background: transparent;
-            border-radius: 4px;
-            cursor: pointer;
-        `;
+        resetBtn.addClass("hbe-btn-ghost", "hbe-rounded", "hbe-p-sm");
         resetBtn.addEventListener('click', () => this.resetContent());
 
         const formatBtn = toolbar.createEl('button', { text: '格式化' });
-        formatBtn.style.cssText = `
-            padding: 6px 12px;
-            border: 1px solid var(--interactive-accent);
-            background: transparent;
-            color: var(--interactive-accent);
-            border-radius: 4px;
-            cursor: pointer;
-        `;
+        formatBtn.addClass("hbe-btn-outline", "hbe-text-accent", "hbe-rounded", "hbe-p-sm");
         formatBtn.addEventListener('click', () => this.formatCss());
 
         // 编辑器容器
         const editorContainer = contentEl.createDiv();
-        editorContainer.style.cssText = `
-            height: calc(100% - 140px);
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 8px;
-            overflow: hidden;
-        `;
+        editorContainer.addClass("hbe-panel-main");
+        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
+        editorContainer.style.overflow = "hidden"; // Keep overflow hidden for rounded corners
 
         // 文本编辑器
         this.textArea = editorContainer.createEl('textarea');
-        this.textArea.style.cssText = `
-            width: 100%;
-            height: 100%;
-            border: none;
-            outline: none;
-            padding: 16px;
-            font-family: 'SF Mono', Monaco, 'Inconsolata', 'Fira Code', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
-            font-size: 14px;
-            line-height: 1.5;
-            resize: none;
-            background: var(--background-primary);
-            color: var(--text-normal);
-        `;
+        this.textArea.addClass("hbe-textarea-full", "hbe-text-mono");
         this.textArea.value = this.cssContent;
 
         // 底部按钮
         const buttonContainer = contentEl.createDiv();
-        buttonContainer.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid var(--background-modifier-border);
-        `;
+        buttonContainer.addClass("hbe-flex-between", "hbe-items-center", "hbe-mt-md", "hbe-pt-sm", "hbe-border-top");
 
         // 左侧帮助文本
         const helpText = buttonContainer.createEl('div', { 
             text: '提示: 使用 Ctrl+S 快速保存' 
         });
-        helpText.style.cssText = `
-            font-size: 0.85em;
-            color: var(--text-muted);
-        `;
+        helpText.addClass("hbe-text-sm", "hbe-text-muted");
 
         // 右侧按钮组
         const buttons = buttonContainer.createDiv();
-        buttons.style.cssText = `
-            display: flex;
-            gap: 12px;
-        `;
+        buttons.addClass("hbe-flex-row", "hbe-gap-sm");
 
         const cancelBtn = buttons.createEl('button', { text: '取消' });
-        cancelBtn.style.cssText = `
-            padding: 8px 16px;
-            border: 1px solid var(--background-modifier-border);
-            background: transparent;
-            border-radius: 6px;
-            cursor: pointer;
-        `;
+        cancelBtn.addClass("hbe-btn-ghost", "hbe-rounded", "hbe-p-sm");
         cancelBtn.addEventListener('click', () => this.close());
 
         const saveBtn = buttons.createEl('button', { text: '保存并应用' });
-        saveBtn.style.cssText = `
-            padding: 8px 16px;
-            border: none;
-            background: var(--interactive-accent);
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-        `;
+        saveBtn.addClass("hbe-btn-accent", "hbe-rounded", "hbe-p-sm", "hbe-text-bold");
         saveBtn.addEventListener('click', () => this.saveCss());
 
         // 快捷键支持
@@ -209,11 +142,11 @@ export class CssEditorModal extends Modal {
             formatted = formatted.trim();
             
             this.textArea.value = formatted;
-            new Notice('CSS已格式化');
-            
-        } catch (error) {
-            new Notice('格式化失败');
-        }
+             new Notice('CSS已格式化');
+             
+         } catch {
+             new Notice('格式化失败');
+         }
     }
 
     private saveCss() {

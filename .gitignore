@@ -1,5 +1,5 @@
 # vscode
-.vscode 
+.vscode
 
 # Intellij
 *.iml
@@ -24,3 +24,7 @@ data.json
 TODO.md
 
 .roo
+
+.ruff_cache
+
+coverage
