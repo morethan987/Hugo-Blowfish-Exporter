@@ -16,7 +16,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		containerEl.createEl("h1", { text: "环境设置" });
+		new Setting(containerEl).setName("环境设置").setHeading();
 
 		new Setting(containerEl)
 			.setName("当前操作系统")
@@ -25,7 +25,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 				text.setValue(this.plugin.currentOS).setDisabled(true),
 			);
 
-		containerEl.createEl("h1", { text: "翻译设置" });
+		new Setting(containerEl).setName("翻译设置").setHeading();
 
 		new Setting(containerEl)
 			.setName("翻译文件导出路径")
@@ -131,7 +131,7 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 			)
 			.settingEl.addClass("direct-export-setting");
 
-		containerEl.createEl("h1", { text: "导出设置" });
+		new Setting(containerEl).setName("导出设置").setHeading();
 
 		new Setting(containerEl)
 			.setName("网站内容目录")

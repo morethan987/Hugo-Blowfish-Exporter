@@ -11,6 +11,7 @@ import {
 	WechatStyleModal,
 } from "modals";
 import { ASTProcessor } from "components/ast/main";
+import { HugoBlowfishExporterSettings } from "types/settings";
 import {
 	imageRuleHugo,
 	mathRuleHugo,
@@ -24,6 +25,18 @@ import {
 	wikiLinkRuleWechat,
 	codeRuleWechat,
 } from "components/rules/wechat_post";
+
+interface ProcessorContext {
+	data: {
+		app: App;
+		settings: HugoBlowfishExporterSettings;
+		slug: string;
+		lang: string;
+		imageFiles?: unknown[];
+	};
+	processor?: ASTProcessor;
+	[key: string]: unknown;
+}
 
 export class Exporter {
 	constructor(
@@ -113,31 +126,35 @@ export class Exporter {
 	}
 
 	async exportAllNotesToHugo() {
-		new ConfirmationModal(this.app, async () => {
-			try {
-				const batchExporter = new BatchExportModal(
-					this.app,
-					this.plugin.settings,
-					this.convertToHugoMd.bind(this),
-				);
-				await batchExporter.export();
-			} catch (error) {
-				new Notice(`导出失败: ${get_error_message(error)}`);
-				console.error("Export error:", error);
-			}
+		new ConfirmationModal(this.app, () => {
+			void this.handleBatchExport();
 		}).open();
+	}
+
+	private async handleBatchExport(): Promise<void> {
+		try {
+			const batchExporter = new BatchExportModal(
+				this.app,
+				this.plugin.settings,
+				this.convertToHugoMd.bind(this),
+			);
+			await batchExporter.export();
+		} catch (error) {
+			new Notice(`导出失败: ${get_error_message(error)}`);
+			console.error("Export error:", error);
+		}
 	}
 
 	async convertToHugoMd(
 		content: string,
-		frontmatter: Record<string, any>,
+		frontmatter: Record<string, unknown>,
 	): Promise<string> {
 		try {
 			// 构造 context
 			const slug = frontmatter.slug as string;
 			const lang = frontmatter.language as string;
 			// 1. 先创建 context（不带 processor）
-			const context: any = {
+			const context: ProcessorContext = {
 				data: {
 					app: this.app,
 					settings: this.plugin.settings,
@@ -196,58 +213,66 @@ export class Exporter {
 			);
 			// console.log("htmlContent:\n", htmlContent);
 
-			// 打开样式选择模态框
-			const styleModal = new WechatStyleModal(
-				this.app,
-				this.plugin.plugin, // 传递插件实例
-				htmlContent,
-				async (selectedCss: string) => {
-					try {
-						// 使用juice处理HTML和CSS
-						const result = juice.inlineContent(
-							htmlContent,
-							selectedCss,
-						);
+		// 打开样式选择模态框
+		const styleModal = new WechatStyleModal(
+			this.app,
+			this.plugin.plugin, // 传递插件实例
+			htmlContent,
+			(selectedCss: string) => {
+				void this.handleWechatExport(htmlContent, selectedCss);
+			},
+		);
 
-						// 复制到剪贴板
-						const clipData = new ClipboardItem({
-							"text/html": new Blob([result], {
-								type: "text/html",
-							}),
-						});
-
-						await navigator.clipboard.write([clipData]);
-						new Notice(`✅ 导出成功！已复制到剪贴板`, 5000);
-					} catch (clipboardError) {
-						console.error(
-							"Clipboard error:",
-							get_error_stack(clipboardError),
-						);
-						new Notice(
-							`❌ 复制到剪贴板失败: ${get_error_message(clipboardError)}`,
-							5000,
-						);
-					}
-				},
-			);
-
-			styleModal.open();
+		styleModal.open();
 		} catch (error) {
 			new Notice(`❌ 导出失败: ${get_error_message(error)}`, 5000);
 			console.error("Export error:", error);
 		}
 	}
 
+	private async handleWechatExport(
+		htmlContent: string,
+		selectedCss: string,
+	): Promise<void> {
+		try {
+			// 使用juice处理HTML和CSS
+			const result = juice.inlineContent(
+				htmlContent,
+				selectedCss,
+			);
+
+			// 复制到剪贴板
+			const clipData = new ClipboardItem({
+				"text/html": new Blob([result], {
+					type: "text/html",
+				}),
+			});
+
+			await navigator.clipboard.write([clipData]);
+			new Notice(`✅ 导出成功！已复制到剪贴板`, 5000);
+		} catch (clipboardError) {
+			console.error(
+				"Clipboard error:",
+				get_error_stack(clipboardError),
+			);
+			new Notice(
+				`❌ 复制到剪贴板失败: ${get_error_message(clipboardError)}`,
+				5000,
+			);
+		}
+	}
+	/////////////////// Wechat End ///////////////////
+
 	async convertToWechatHtml(
 		content: string,
-		frontmatter: Record<string, any>,
+		frontmatter: Record<string, unknown>,
 	): Promise<string> {
 		try {
 			// 构造 context
 			const slug = frontmatter.slug as string;
 			const lang = frontmatter.language as string;
 			// 1. 先创建 context（不带 processor）
-			const context: any = {
+			const context: ProcessorContext = {
 				data: {
 					app: this.app,
 					settings: this.plugin.settings,

@@ -136,7 +136,7 @@ export class LineAlignment {
 			} else {
 				// 源文件是非空行，从目标文件的非空行中取下一行
 				if (targetIndex < targetNonEmptyLines.length) {
-					alignedLines.push(targetNonEmptyLines[targetIndex]);
+					alignedLines.push(targetNonEmptyLines[targetIndex]!);
 					targetIndex++;
 				} else {
 					// 如果目标文件的非空行用完了，保持原始源文件行
@@ -151,11 +151,11 @@ export class LineAlignment {
 
 		// 如果目标文件还有剩余的非空行，追加到末尾
 		while (targetIndex < targetNonEmptyLines.length) {
-			alignedLines.push(targetNonEmptyLines[targetIndex]);
+			alignedLines.push(targetNonEmptyLines[targetIndex]!);
 			targetIndex++;
 			console.warn(
 				"⚠️ [LineAlignment] 追加剩余目标行:",
-				targetNonEmptyLines[targetIndex - 1],
+				targetNonEmptyLines[targetIndex - 1]!,
 			);
 		}
 

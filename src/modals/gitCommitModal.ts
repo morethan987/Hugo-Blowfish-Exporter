@@ -29,7 +29,7 @@ export class GitCommitModal extends Modal {
 
 		const { contentEl } = this;
 		contentEl.empty();
-		contentEl.createEl("h2", { text: "Git 提交" });
+		new Setting(contentEl).setName("Git 提交").setHeading();
 
 		// 2. 使用 Obsidian 的 Setting 组件构建 UI，这样代码更整洁且类型安全
 		new Setting(contentEl)
@@ -44,14 +44,11 @@ export class GitCommitModal extends Modal {
 				);
 
 				// 样式调整
-				this.inputEl.style.width = "100%";
+				this.inputEl.addClass("hbe-input-full");
 			});
 
 		const buttonContainer = contentEl.createDiv();
-		buttonContainer.style.display = "flex";
-		buttonContainer.style.justifyContent = "flex-end";
-		buttonContainer.style.gap = "10px";
-		buttonContainer.style.marginTop = "20px";
+		buttonContainer.addClass("hbe-flex-end", "hbe-gap-sm", "hbe-mt-lg");
 
 		const cancelButton = buttonContainer.createEl("button", {
 			text: "取消",

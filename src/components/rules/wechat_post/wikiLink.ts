@@ -6,10 +6,9 @@ export const wikiLinkRuleWechat = [
 		.describe("将wiki链接转换为HTML链接")
 		.matchType(NodeType.WikiLink)
 		.transform(async (node, context) => {
-			const heading = (node.heading as string) || "";
-			const alias = (node.alias as string) || "";
-			const linkType = node.linkType as string;
-			const file_name = (node.file as string) || "";
+		const heading = (node.heading as string) || "";
+		const alias = (node.alias as string) || "";
+		const file_name = (node.file as string) || "";
 
 			// 对于微信公众号，wiki链接转换为简单的文本链接样式
 			const linkText = alias || heading || file_name;

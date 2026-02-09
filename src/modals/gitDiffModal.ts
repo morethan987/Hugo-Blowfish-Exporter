@@ -7,10 +7,7 @@ export class GitDiffModal extends Modal {
     ) {
         super(app);
         this.modalEl.className = 'modal mod-sidebar-layout';
-        this.modalEl.style.width = '90vw';  // *******可调整*********
-        this.modalEl.style.height = '90vh'; // *******可调整*********
-        this.modalEl.style.maxWidth = '100%';
-        this.modalEl.style.maxHeight = '100%';
+        this.modalEl.addClass("hbe-modal-full");
     }
 
     private getChangeStats(content: string): { modified: number; new: number } {
@@ -36,28 +33,17 @@ export class GitDiffModal extends Modal {
         contentEl.empty();
 
         // 设置内容元素样式
-        Object.assign(contentEl.style, {
-            display: 'block',
-            width: '100%',
-            height: '100%',
-            padding: '20px',
-            overflow: 'auto',
-            maxHeight: '120vh'
-        });
+        contentEl.addClass("hbe-block", "hbe-full-width", "hbe-full-height", "hbe-p-lg", "hbe-overflow-auto");
         
         const headerDiv = contentEl.createDiv();
-        headerDiv.style.marginBottom = '20px';
+        headerDiv.addClass("hbe-mb-lg");
         headerDiv.createEl('h2', {
-            text: '文件变更',
-            attr: { style: 'margin: 0; color: var(--text-normal); border-bottom: 2px solid var(--background-modifier-border); padding-bottom: 10px;' }
-        });
+            text: '文件变更'
+        }).addClass("hbe-text-normal", "hbe-border-bottom", "hbe-pb-sm");
 
         if (this.diffContent.trim() === '') {
             const noChangesDiv = contentEl.createDiv({
-                cls: 'no-changes-message',
-                attr: {
-                    style: 'text-align: center; padding: 40px; color: var(--text-muted);'
-                }
+                cls: 'hbe-diff-empty'
             });
             noChangesDiv.createEl('div', { text: '没有发现任何 Markdown 文件的更改' });
             return;
@@ -66,23 +52,18 @@ export class GitDiffModal extends Modal {
         // 变更统计
         const stats = this.getChangeStats(this.diffContent);
         const statsDiv = contentEl.createDiv({
-            cls: 'diff-stats',
-            attr: {
-                style: 'display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background-color: var(--background-primary-alt); border-radius: 8px;'
-            }
+            cls: 'hbe-diff-stats'
         });
 
         if (stats.modified > 0) {
             statsDiv.createEl('div', {
-                text: `已修改: ${stats.modified} 个文件`,
-                attr: { style: 'color: var(--text-normal);' }
+                text: `已修改: ${stats.modified} 个文件`
             });
         }
         if (stats.new > 0) {
             statsDiv.createEl('div', {
-                text: `新增: ${stats.new} 个文件`,
-                attr: { style: 'color: var(--text-accent);' }
-            });
+                text: `新增: ${stats.new} 个文件`
+            }).addClass("hbe-text-accent");
         }
 
         // 将差异内容按文件分组
@@ -92,6 +73,7 @@ export class GitDiffModal extends Modal {
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
+            if (!line) continue;
             if (line.startsWith('diff --git')) {
                 if (currentFile) {
                     files.push(currentFile);
@@ -113,69 +95,51 @@ export class GitDiffModal extends Modal {
 
         // 为每个文件创建独立的区块
         for (const file of files) {
-            // 文件容器，******调整这里就可以改变显示文本的大小******
+            // 文件容器
             const fileContainer = contentEl.createDiv({
-                attr: {
-                    style: `
-                        background-color: var(--background-secondary);
-                        border-radius: 8px;
-                        overflow: hidden;
-                        height: 500px;
-                        margin-bottom: 20px;
-                        display: block;
-                        margin-top: 20px;
-                    `
-                }
+                cls: 'hbe-diff-file'
             });
 
             // 文件标题
             const titleContainer = fileContainer.createDiv({
-                attr: {
-                    style: 'padding: 10px 15px; background-color: var(--background-secondary-alt); border-bottom: 1px solid var(--background-modifier-border); font-weight: 500;'
-                }
+                cls: 'hbe-diff-file-header'
             });
+            titleContainer.addClass("hbe-flex-row", "hbe-items-center", "hbe-gap-sm");
+
             titleContainer.createSpan({
-                text: file.fileName,
-                attr: { style: 'color: var(--text-normal);' }
+                text: file.fileName
             });
             if (file.isNew) {
                 titleContainer.createSpan({
-                    text: ' (新文件)',
-                    attr: { style: 'color: var(--text-accent); margin-left: 8px; font-size: 0.9em;' }
-                });
+                    text: ' (新文件)'
+                }).addClass("hbe-text-accent", "hbe-text-sm");
             }
 
             // 文件内容
-            const contentContainer = fileContainer.createEl('pre', {
-                attr: {
-                    style: `
-                        margin: 0;
-                        padding: 15px;
-                        font-family: var(--font-monospace);
-                        font-size: 0.9em;
-                        line-height: 1.5;
-                        white-space: pre-wrap;
-                        word-wrap: break-word;
-                        overflow: auto;
-                        height: 100%;
-                    `
-                }
-            });
+             const contentContainer = fileContainer.createEl('pre', {
+                 cls: 'hbe-diff-pre'
+             });
 
-            let formattedContent = '';
-            for (const line of file.content) {
-                if (line.startsWith('+++') || line.startsWith('---')) {
-                    // 直接去掉文件头信息行
-                    continue;
-                } else if (line.startsWith('+')) {
-                    formattedContent += `<span style="display: block; background-color: rgba(0, 255, 0, 0.1);">${line}</span>`;
-                } else if (line.startsWith('-')) {
-                    formattedContent += `<span style="display: block; background-color: rgba(255, 0, 0, 0.1);">${line}</span>`;
-                } else {
-                    formattedContent += line + '\n';
-                }
-            }
-            contentContainer.innerHTML = formattedContent;
+             for (const line of file.content) {
+                 if (line.startsWith('+++') || line.startsWith('---')) {
+                     // 直接去掉文件头信息行
+                     continue;
+                 } else if (line.startsWith('+')) {
+                     contentContainer.createEl('span', {
+                         text: line,
+                         cls: 'hbe-diff-added'
+                     });
+                 } else if (line.startsWith('-')) {
+                     contentContainer.createEl('span', {
+                         text: line,
+                         cls: 'hbe-diff-removed'
+                     });
+                 } else {
+                     contentContainer.createEl('span', {
+                         text: line + '\n'
+                     });
+                 }
+             }
         }
     }
 

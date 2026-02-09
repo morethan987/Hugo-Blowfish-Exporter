@@ -162,7 +162,7 @@ export class Translator {
 			);
 
 			// 检查是否需要直接导出
-			if (this.plugin.settings.directExportAfterTranslation) {
+			if (this.plugin.settings.directExportAfterTranslation && metadata) {
 				await this.directExport.executeDirectExport(
 					correctedContent,
 					metadata,

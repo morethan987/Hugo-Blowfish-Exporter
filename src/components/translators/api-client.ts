@@ -29,7 +29,7 @@ export class TranslationApiClient {
 			temperature: 0.3,
 		});
 
-		return completion.choices[0].message.content || "Default Title";
+		return completion.choices[0]?.message.content || "Default Title";
 	}
 
 	/**
@@ -61,6 +61,6 @@ export class TranslationApiClient {
 			max_tokens: 8000,
 		});
 
-		return completion.choices[0].message.content || "";
+		return completion.choices[0]?.message.content || "";
 	}
 }

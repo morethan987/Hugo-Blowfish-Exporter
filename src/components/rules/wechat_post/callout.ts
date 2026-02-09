@@ -1,12 +1,21 @@
 import { NodeType, MarkdownNode } from "components/ast/node";
 import { RuleBuilder } from "components/ast/rule";
 
+interface ProcessorService {
+	executor: { execute: (node: MarkdownNode, context: unknown) => Promise<MarkdownNode> };
+	astToHtml: (node: MarkdownNode) => string;
+}
+
+interface CalloutChild extends MarkdownNode {
+	role?: string;
+}
+
 export const calloutRuleWechat = new RuleBuilder("callout转换")
 	.describe("将callout块转换为对应的Wechat Html Tag")
 	.matchType(NodeType.Callout)
 	.transform(async (node, context) => {
 		const type = (node.calloutType as string) || "note";
-		const processor = (context as any).processor;
+		const processor = (context.data?.processor as ProcessorService | undefined);
 
 		// 提取标题和内容
 		let title = "";
@@ -15,19 +24,20 @@ export const calloutRuleWechat = new RuleBuilder("callout转换")
 		if (node.children && processor) {
 			// 查找标题节点
 			const titleNode = node.children.find(
-				(child: any) => child.role === "title",
+				(child: CalloutChild) => child.role === "title",
 			);
-			if (
-				titleNode &&
-				titleNode.children &&
-				titleNode.children.length > 0
-			) {
-				title = titleNode.children[0].value || "";
+			if (titleNode) {
+				const titleNodeTyped = titleNode as CalloutChild;
+				const titleChildren = titleNodeTyped.children;
+				if (titleChildren && titleChildren.length > 0) {
+					const titleChild = titleChildren[0];
+					title = (titleChild?.value as string) || "";
+				}
 			}
 
 			// 处理内容节点
 			const contentNodes = node.children.filter(
-				(child: any) => child.role !== "title",
+				(child: CalloutChild) => child.role !== "title",
 			);
 			if (contentNodes.length > 0) {
 				// 递归处理内容节点，生成HTML

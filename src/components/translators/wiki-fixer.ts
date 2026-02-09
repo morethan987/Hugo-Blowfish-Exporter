@@ -1,5 +1,4 @@
 import { App } from "obsidian";
-import * as fs from "fs";
 import HugoBlowfishExporter from "core/plugin";
 
 /**

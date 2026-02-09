@@ -16,7 +16,7 @@ export class ApiKeyModal extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 
-		contentEl.createEl("h2", { text: "设置API密钥" });
+		new Setting(contentEl).setName("设置API密钥").setHeading();
 
 		new Setting(contentEl)
 			.setName("API密钥")

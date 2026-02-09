@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { App } from "obsidian";
+import { App, TFile } from "obsidian";
 import HugoBlowfishExporter from "core/plugin";
 import { get_error_message } from "utils";
 
@@ -407,7 +407,7 @@ export class FileUpdater {
 		try {
 			// 如果是vault内的文件，使用Obsidian API
 			const file = this.app.vault.getAbstractFileByPath(filePath);
-			if (file && "path" in file) {
+			if (file instanceof TFile) {
 				// 更可靠的类型检查：检查是否具有文件的基本属性
 				return await this.app.vault.read(file);
 			}
@@ -430,7 +430,7 @@ export class FileUpdater {
 		try {
 			// 如果是vault内的文件，使用Obsidian API
 			const file = this.app.vault.getAbstractFileByPath(filePath);
-			if (file && "path" in file) {
+			if (file instanceof TFile) {
 				// 更可靠的类型检查：检查是否具有文件的基本属性
 				await this.app.vault.modify(file, content);
 				return;
@@ -481,7 +481,7 @@ export class FileUpdater {
 
 			// 检查是否是外部文件
 			return fs.existsSync(filePath);
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}

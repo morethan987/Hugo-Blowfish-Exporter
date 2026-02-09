@@ -2,7 +2,26 @@ import { MarkdownNode,  } from './node';
 import { parseMarkdown } from './parser';
 import { Rule } from './rule';
 import { RuleExecutor, createExecutor } from './executor';
+import { RuleContext } from './rule';
 import { astToString, astToHtml } from './stringifier';
+import type { App } from 'obsidian';
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * 类型定义
+ * ────────────────────────────────────────────────────────────────────────── */
+
+export interface ProcessorContext {
+  processor?: ASTProcessor;
+  app?: App;
+  settings?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+function isRuleContext(context: unknown): context is RuleContext {
+  if (typeof context !== 'object' || context === null) return false;
+  const ctx = context as Record<string, unknown>;
+  return 'path' in ctx && 'root' in ctx && 'data' in ctx;
+}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * AST 处理主控制器
@@ -11,11 +30,15 @@ import { astToString, astToHtml } from './stringifier';
 export class ASTProcessor {
   private executor: RuleExecutor;
   private customRules: Rule[] = [];
-  private context?: any;
+  private context?: ProcessorContext;
 
-  constructor(context?: any) {
+  constructor(context?: ProcessorContext) {
     this.context = context;
-    this.executor = context ? new RuleExecutor(context) : createExecutor();
+    if (context && isRuleContext(context)) {
+      this.executor = new RuleExecutor(context);
+    } else {
+      this.executor = createExecutor();
+    }
   }
 
   /**
@@ -45,33 +68,36 @@ export class ASTProcessor {
     return this;
   }
 
-  /**
-   * 处理 Markdown 文本
-   */
-  async process(markdown: string, context?: any): Promise<MarkdownNode> {
-    // 1. 解析为 AST
-    const ast = parseMarkdown(markdown);
-    // console.dir(ast, {depth: null});
-    
-    // 2. 应用规则转换
-    return this.executor.execute(ast, context || this.context);
-  }
+   /**
+    * 处理 Markdown 文本
+    */
+   async process(markdown: string, context?: ProcessorContext): Promise<MarkdownNode> {
+     const ast = parseMarkdown(markdown);
+     
+     if (context && isRuleContext(context)) {
+       return this.executor.execute(ast, context);
+     } else if (this.context && isRuleContext(this.context)) {
+       return this.executor.execute(ast, this.context);
+     } else {
+       return this.executor.execute(ast);
+     }
+   }
 
-  /**
-   * 获取处理后的 Markdown 文本
-   */
-  async processToString(markdown: string, context?: any): Promise<string> {
-    const ast = await this.process(markdown, context);
-    return this.astToString(ast);
-  }
+   /**
+    * 获取处理后的 Markdown 文本
+    */
+   async processToString(markdown: string, context?: ProcessorContext): Promise<string> {
+     const ast = await this.process(markdown, context);
+     return this.astToString(ast);
+   }
 
-  /**
-   * 获取处理后的 Html 文本
-   */
-  async processToHtml(markdown: string, context?: any): Promise<string> {
-    const ast = await this.process(markdown, context);
-    return this.astToHtml(ast);
-  }
+   /**
+    * 获取处理后的 Html 文本
+    */
+   async processToHtml(markdown: string, context?: ProcessorContext): Promise<string> {
+     const ast = await this.process(markdown, context);
+     return this.astToHtml(ast);
+   }
 
   /**
    * 将 AST 转换回 Markdown 文本

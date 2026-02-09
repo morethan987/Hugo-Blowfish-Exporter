@@ -1,4 +1,9 @@
-import { NodeType, MarkdownNode, TableNode, TableHeaderNode, TableRowNode, TableCellNode } from './node';
+import { 
+  NodeType, MarkdownNode, TableRowNode, TableCellNode,
+  HeadingNode, CodeBlockNode, CalloutNode, CalloutChildNode,
+  LinkNode, ImageNode, FootnoteRefNode, FootnoteDefNode, AutoLinkNode,
+  ListNode, ListItemNode
+} from './node';
 
 /**
  * 将 AST 转换回 Markdown 文本
@@ -29,58 +34,71 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
     case NodeType.Nop:
       return node.children?.map(child => nodeToString(child)).join('') || '';
 
-    case NodeType.Paragraph:
-      const content = node.children?.map(child => nodeToString(child)).join('') || '';
-      return content + '\n';
+     case NodeType.Paragraph: {
+       const content = node.children?.map(child => nodeToString(child)).join('') || '';
+       return content + '\n';
+     }
 
-    case NodeType.Heading:
-      const level = (node.level as number) || 1;
-      const headingContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return '#'.repeat(level) + ' ' + headingContent + '\n';
+     case NodeType.Heading: {
+       const heading = node as HeadingNode;
+       const level = heading.level || 1;
+       const headingContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return '#'.repeat(level) + ' ' + headingContent + '\n';
+     }
 
     case NodeType.Text:
       return node.value || '';
 
-    case NodeType.Strong:
-      const strongContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return `**${strongContent}**`;
+     case NodeType.Strong: {
+       const strongContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return `**${strongContent}**`;
+     }
 
-    case NodeType.Emphasis:
-      const emphasisContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return `*${emphasisContent}*`;
+     case NodeType.Emphasis: {
+       const emphasisContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return `*${emphasisContent}*`;
+     }
 
     case NodeType.InlineCode:
       return `\`${node.value || ''}\``;
 
-    case NodeType.CodeBlock:
-      const lang = node.lang ? `\`\`\`${node.lang}\n` : '```\n';
-      return lang + (node.value || '') + '\n```\n';
+     case NodeType.CodeBlock: {
+       const codeBlock = node as CodeBlockNode;
+       const lang = codeBlock.lang ? `\`\`\`${codeBlock.lang}\n` : '```\n';
+       return lang + (node.value || '') + '\n```\n';
+     }
 
-    case NodeType.Link:
-      return `[${node.label || ''}](${node.url || ''})`;
+     case NodeType.Link: {
+       const link = node as LinkNode;
+       return `[${link.label || ''}](${link.url || ''})`;
+     }
 
-    case NodeType.Image:
-      if (node.title) {
-        return node.embed ? `![${node.alt || node.url}](${node.url || ''} "${node.title || ''}" )` : `[${node.alt || ''}](${node.url || ''} "${node.title || ''}")`;
-      } else {
-        return node.embed ? `![${node.alt || node.url}](${node.url || ''})` : `[${node.alt || ''}](${node.url || ''})`;
-      }
+     case NodeType.Image: {
+       const image = node as ImageNode;
+       if (image.title) {
+         return image.embed ? `![${image.alt || image.url}](${image.url || ''} "${image.title || ''}" )` : `[${image.alt || ''}](${image.url || ''} "${image.title || ''}")`;
+       } else {
+         return image.embed ? `![${image.alt || image.url}](${image.url || ''})` : `[${image.alt || ''}](${image.url || ''})`;
+       }
+     }
 
     case NodeType.List: {
-      const ordered = !!node.ordered;
+      const list = node as ListNode;
+      const ordered = !!list.ordered;
       const children = node.children as MarkdownNode[];
       return children?.map((child, idx) => nodeToString(child, { ordered, index: idx + 1 })).join('') || '';
     }
     case NodeType.ListItem: {
-      const level = typeof node.level === 'number' ? node.level : 0;
+      const listItem = node as ListItemNode;
+      const level = typeof listItem.level === 'number' ? listItem.level : 0;
       const indent = ' '.repeat(level * 4);
       let prefix = '- ';
-      if (node.task !== undefined) {
-        prefix = node.task ? '- [x] ' : '- [ ] ';
+      if (listItem.task !== undefined) {
+        prefix = listItem.task ? '- [x] ' : '- [ ] ';
       } else if (options?.ordered) {
         // 优先使用用户编号
-        if (typeof node.number === 'number') {
-          prefix = `${node.number}. `;
+        if (typeof listItem.number === 'number') {
+          prefix = `${listItem.number}. `;
         } else {
           prefix = `${options.index || 1}. `;
         }
@@ -90,7 +108,7 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
       let nestedListContent = '';
       if (node.children && node.children.length > 0) {
         for (const child of node.children) {
-          if (child.type === 'List') {
+          if (child.type === NodeType.List) {
             nestedListContent += nodeToString(child);
           } else {
             inlineContent += nodeToString(child);
@@ -103,24 +121,26 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
       }
       return result;
     }
-    case NodeType.BlockQuote:
-      const quoteContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';
+     case NodeType.BlockQuote: {
+       const quoteContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return quoteContent.split('\n').map(line => line ? `> ${line}` : '').join('\n') + '\n';
+     }
 
     case NodeType.Callout: {
-      const calloutType = node.calloutType || 'note';
+      const callout = node as CalloutNode;
+      const calloutType = callout.calloutType || 'note';
       let title = '';
       let content = '';
       
       if (node.children && node.children.length > 0) {
         // 查找标题节点（role为title的段落）
-        const titleNode = node.children.find((child: any) => child.role === 'title');
+        const titleNode = node.children.find((child): child is CalloutChildNode => 'role' in child && child.role === 'title');
         if (titleNode && titleNode.children) {
-          title = titleNode.children.map((n: any) => nodeToString(n)).join('');
+          title = titleNode.children.map((n) => nodeToString(n)).join('');
         }
         
         // 处理其他内容节点
-        const contentNodes = node.children.filter((child: any) => child.role !== 'title');
+        const contentNodes = node.children.filter((child): child is CalloutChildNode => !('role' in child) || child.role !== 'title');
         if (contentNodes.length > 0) {
           content = contentNodes.map(child => nodeToString(child)).join('').replace(/\n$/, '');
         }
@@ -158,30 +178,39 @@ function nodeToString(node: MarkdownNode, options?: { ordered?: boolean, index?:
     case NodeType.Embed:
       return `![[${node.value || ''}]]`;
 
-    case NodeType.Highlight:
-      const highlightContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return `==${highlightContent}==`;
+     case NodeType.Highlight: {
+       const highlightContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return `==${highlightContent}==`;
+     }
 
-    case NodeType.Strike:
-      const strikeContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return `~~${strikeContent}~~`;
+     case NodeType.Strike: {
+       const strikeContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return `~~${strikeContent}~~`;
+     }
 
-    case NodeType.StrongEmphasis:
-      const strongEmphasisContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return `***${strongEmphasisContent}***`;
+     case NodeType.StrongEmphasis: {
+       const strongEmphasisContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return `***${strongEmphasisContent}***`;
+     }
 
-    case NodeType.AutoLink:
-      return (node.url as string) || '';
+     case NodeType.AutoLink: {
+       const autoLink = node as AutoLinkNode;
+       return autoLink.url || '';
+     }
 
     case NodeType.EscapedChar:
       return `\\${node.value || ''}`;
 
-    case NodeType.FootnoteRef:
-      return `[^${node.id || ''}]`;
+    case NodeType.FootnoteRef: {
+      const ref = node as FootnoteRefNode;
+      return `[^${ref.id || ''}]`;
+    }
 
-    case NodeType.FootnoteDef:
-      const footnoteContent = node.children?.map(child => nodeToString(child)).join('') || '';
-      return `[^${node.id || ''}]: ${footnoteContent}\n`;
+     case NodeType.FootnoteDef: {
+       const def = node as FootnoteDefNode;
+       const footnoteContent = node.children?.map(child => nodeToString(child)).join('') || '';
+       return `[^${def.id || ''}]: ${footnoteContent}\n`;
+     }
 
     case NodeType.HtmlComment:
     case NodeType.FrontMatter:
@@ -222,43 +251,54 @@ function nodeToHtml(node: MarkdownNode, options?: { ordered?: boolean, index?: n
     case NodeType.Text:
       return escapeHtml(node.value || '');
 
-    case NodeType.Heading:
-      const level = Math.min(Math.max((node.level as number) || 1, 1), 6);
-      const headingContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<h${level}>${headingContent}</h${level}>`;
+     case NodeType.Heading: {
+       const heading = node as HeadingNode;
+       const level = Math.min(Math.max(heading.level || 1, 1), 6);
+       const headingContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<h${level}>${headingContent}</h${level}>`;
+     }
 
     case NodeType.HtmlBlock:
     case NodeType.HtmlInline:
       return node.value || '';
 
-    case NodeType.Strong:
-      const strongContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<strong>${strongContent}</strong>`;
+     case NodeType.Strong: {
+       const strongContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<strong>${strongContent}</strong>`;
+     }
 
-    case NodeType.Emphasis:
-      const emphasisContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<em>${emphasisContent}</em>`;
+     case NodeType.Emphasis: {
+       const emphasisContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<em>${emphasisContent}</em>`;
+     }
 
     case NodeType.InlineCode:
       return `<code>${escapeHtml(node.value || '')}</code>`;
 
-    case NodeType.CodeBlock:
-      const lang = node.lang ? ` class="language-${escapeHtml(String(node.lang))}"` : '';
-      return `<pre><code${lang}>${escapeHtml(node.value || '')}</code></pre>`;
+     case NodeType.CodeBlock: {
+       const codeBlock = node as CodeBlockNode;
+       const lang = codeBlock.lang ? ` class="language-${escapeHtml(String(codeBlock.lang))}"` : '';
+       return `<pre><code${lang}>${escapeHtml(node.value || '')}</code></pre>`;
+     }
 
-    case NodeType.Link:
-      const url = escapeHtml(String(node.url || ''));
-      const label = node.label || '';
-      return `<a href="${url}">${label}</a>`;
+     case NodeType.Link: {
+       const link = node as LinkNode;
+       const url = escapeHtml(String(link.url || ''));
+       const label = link.label || '';
+       return `<a href="${url}">${label}</a>`;
+     }
 
-    case NodeType.Image:
-      const imgUrl = escapeHtml(String(node.url || ''));
-      const alt = escapeHtml(String(node.alt || ''));
-      const title = node.title ? ` title="${escapeHtml(String(node.title))}"` : '';
-      return `<img src="${imgUrl}" alt="${alt}"${title}>`;
+     case NodeType.Image: {
+       const image = node as ImageNode;
+       const imgUrl = escapeHtml(String(image.url || ''));
+       const alt = escapeHtml(String(image.alt || ''));
+       const title = image.title ? ` title="${escapeHtml(String(image.title))}"` : '';
+       return `<img src="${imgUrl}" alt="${alt}"${title}>`;
+     }
 
     case NodeType.List: {
-      const ordered = !!node.ordered;
+      const list = node as ListNode;
+      const ordered = !!list.ordered;
       const tag = ordered ? 'ol' : 'ul';
       const children = node.children as MarkdownNode[];
       const listItems = children?.map((child, idx) => nodeToHtml(child, { ordered, index: idx + 1 })).join('') || '';
@@ -266,12 +306,13 @@ function nodeToHtml(node: MarkdownNode, options?: { ordered?: boolean, index?: n
     }
 
     case NodeType.ListItem: {
+      const listItem = node as ListItemNode;
       let inlineContent = '';
       let nestedListContent = '';
       
       if (node.children && node.children.length > 0) {
         for (const child of node.children) {
-          if (child.type === 'List') {
+          if (child.type === NodeType.List) {
             nestedListContent += nodeToHtml(child);
           } else {
             inlineContent += nodeToHtml(child);
@@ -280,32 +321,34 @@ function nodeToHtml(node: MarkdownNode, options?: { ordered?: boolean, index?: n
       }
       
       // 处理任务列表
-      if (node.task !== undefined) {
-        const checked = node.task ? ' checked' : '';
+      if (listItem.task !== undefined) {
+        const checked = listItem.task ? ' checked' : '';
         inlineContent = `<input type="checkbox"${checked} disabled> ${inlineContent}`;
       }
       
       return `<li>${inlineContent}${nestedListContent}</li>`;
     }
 
-    case NodeType.BlockQuote:
-      const quoteContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<blockquote>${quoteContent}</blockquote>`;
+     case NodeType.BlockQuote: {
+       const quoteContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<blockquote>${quoteContent}</blockquote>`;
+     }
 
     case NodeType.Callout: {
-      const calloutType = escapeHtml(String(node.calloutType || 'note'));
+      const callout = node as CalloutNode;
+      const calloutType = escapeHtml(String(callout.calloutType || 'note'));
       let title = '';
       let content = '';
       
       if (node.children && node.children.length > 0) {
         // 查找标题节点
-        const titleNode = node.children.find((child: any) => child.role === 'title');
+        const titleNode = node.children.find((child): child is CalloutChildNode => 'role' in child && child.role === 'title');
         if (titleNode && titleNode.children) {
-          title = titleNode.children.map((n: any) => nodeToHtml(n)).join('');
+          title = titleNode.children.map((n) => nodeToHtml(n)).join('');
         }
         
         // 处理其他内容节点
-        const contentNodes = node.children.filter((child: any) => child.role !== 'title');
+        const contentNodes = node.children.filter((child): child is CalloutChildNode => !('role' in child) || child.role !== 'title');
         if (contentNodes.length > 0) {
           content = contentNodes.map(child => nodeToHtml(child)).join('');
         }
@@ -328,7 +371,7 @@ function nodeToHtml(node: MarkdownNode, options?: { ordered?: boolean, index?: n
       if (!children || children.length === 0) return '';
       
       // 表头
-      const headerRow = children[0];
+      const headerRow = children[0]!;
       const headerCells = headerRow.children.map((cell: TableCellNode) =>
         `<th>${cell.children.map((n: MarkdownNode) => nodeToHtml(n)).join('')}</th>`
       ).join('');
@@ -350,33 +393,42 @@ function nodeToHtml(node: MarkdownNode, options?: { ordered?: boolean, index?: n
     case NodeType.Embed:
       return `<span class="embed">${escapeHtml(node.value || '')}</span>`;
 
-    case NodeType.Highlight:
-      const highlightContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<mark>${highlightContent}</mark>`;
+     case NodeType.Highlight: {
+       const highlightContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<mark>${highlightContent}</mark>`;
+     }
 
-    case NodeType.Strike:
-      const strikeContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<del>${strikeContent}</del>`;
+     case NodeType.Strike: {
+       const strikeContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<del>${strikeContent}</del>`;
+     }
 
-    case NodeType.StrongEmphasis:
-      const strongEmphasisContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<strong><em>${strongEmphasisContent}</em></strong>`;
+     case NodeType.StrongEmphasis: {
+       const strongEmphasisContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<strong><em>${strongEmphasisContent}</em></strong>`;
+     }
 
-    case NodeType.AutoLink:
-      const autoUrl = escapeHtml((node.url as string) || '');
-      return `<a href="${autoUrl}">${autoUrl}</a>`;
+     case NodeType.AutoLink: {
+       const autoLink = node as AutoLinkNode;
+       const autoUrl = escapeHtml(autoLink.url || '');
+       return `<a href="${autoUrl}">${autoUrl}</a>`;
+     }
 
     case NodeType.EscapedChar:
       return escapeHtml(node.value || '');
 
-    case NodeType.FootnoteRef:
-      const refId = escapeHtml(String(node.id || ''));
-      return `<sup><a href="#fn-${refId}" id="fnref-${refId}">${refId}</a></sup>`;
+     case NodeType.FootnoteRef: {
+       const ref = node as FootnoteRefNode;
+       const refId = escapeHtml(String(ref.id || ''));
+       return `<sup><a href="#fn-${refId}" id="fnref-${refId}">${refId}</a></sup>`;
+     }
 
-    case NodeType.FootnoteDef:
-      const defId = escapeHtml(String(node.id || ''));
-      const footnoteContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
-      return `<div id="fn-${defId}" class="footnote"><a href="#fnref-${defId}">${defId}</a>: ${footnoteContent}</div>`;
+     case NodeType.FootnoteDef: {
+       const def = node as FootnoteDefNode;
+       const defId = escapeHtml(String(def.id || ''));
+       const footnoteContent = node.children?.map(child => nodeToHtml(child)).join('') || '';
+       return `<div id="fn-${defId}" class="footnote"><a href="#fnref-${defId}">${defId}</a>: ${footnoteContent}</div>`;
+     }
       
     case NodeType.FrontMatter:
       return `<pre class="frontmatter">${escapeHtml(node.value || '')}</pre>`;

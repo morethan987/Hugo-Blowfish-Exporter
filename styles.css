@@ -60,3 +60,474 @@ If your plugin does not need CSS, delete this file.
     background-color: var(--background-secondary);
     margin-bottom: 12px;
 }
+
+/* ==========================================================================
+   Modal Styles (hbe- prefix)
+   ========================================================================== */
+
+/* Modal Sizing */
+.hbe-modal-wide {
+    width: 80vw;
+    height: 90vh;
+    max-width: 1000px;
+    max-height: 700px;
+}
+
+.hbe-modal-full {
+    width: 90vw;
+    height: 90vh;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.hbe-modal-xl {
+    width: 90vw;
+    height: 95vh;
+    max-width: 1400px;
+    max-height: 900px;
+}
+
+.hbe-modal-medium {
+    width: 60vw;
+    max-width: 800px;
+}
+
+/* Layout */
+.hbe-flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.hbe-flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.hbe-flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hbe-flex-end {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.hbe-flex-between {
+    display: flex;
+    justify-content: space-between;
+}
+
+.hbe-items-center {
+    align-items: center;
+}
+
+.hbe-flex-wrap {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.hbe-block {
+    display: block;
+}
+
+.hbe-hidden {
+    display: none;
+}
+
+.hbe-full-width {
+    width: 100%;
+}
+
+.hbe-full-height {
+    height: 100%;
+}
+
+.hbe-scroll-y {
+    overflow-y: auto;
+}
+
+.hbe-overflow-auto {
+    overflow: auto;
+}
+
+/* Spacing */
+.hbe-gap-sm {
+    gap: 8px;
+}
+
+.hbe-gap-md {
+    gap: 16px;
+}
+
+.hbe-gap-lg {
+    gap: 24px;
+}
+
+.hbe-mt-xs {
+    margin-top: 4px;
+}
+
+.hbe-mt-sm {
+    margin-top: 8px;
+}
+
+.hbe-mt-md {
+    margin-top: 16px;
+}
+
+.hbe-mt-lg {
+    margin-top: 20px;
+}
+
+.hbe-mb-sm {
+    margin-bottom: 8px;
+}
+
+.hbe-mb-md {
+    margin-bottom: 16px;
+}
+
+.hbe-mb-lg {
+    margin-bottom: 20px;
+}
+
+.hbe-my-md {
+    margin: 16px 0;
+}
+
+.hbe-p-sm {
+    padding: 8px;
+}
+
+.hbe-p-md {
+    padding: 16px;
+}
+
+.hbe-p-lg {
+    padding: 20px;
+}
+
+.hbe-pt-sm {
+    padding-top: 12px;
+}
+
+.hbe-pb-sm {
+    padding-bottom: 12px;
+}
+
+/* Typography */
+.hbe-text-bold {
+    font-weight: bold;
+}
+
+.hbe-text-sm {
+    font-size: 0.85em;
+}
+
+.hbe-text-xs {
+    font-size: 0.75em;
+}
+
+.hbe-text-mono {
+    font-family: var(--font-monospace);
+}
+
+.hbe-text-muted {
+    color: var(--text-muted);
+}
+
+.hbe-text-error {
+    color: var(--text-error);
+}
+
+.hbe-text-warning {
+    color: var(--text-warning);
+}
+
+.hbe-text-accent {
+    color: var(--text-accent);
+}
+
+/* Borders */
+.hbe-border {
+    border: 1px solid var(--background-modifier-border);
+}
+
+.hbe-border-top {
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.hbe-border-bottom {
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.hbe-rounded {
+    border-radius: 4px;
+}
+
+.hbe-rounded-lg {
+    border-radius: 8px;
+}
+
+/* Buttons */
+.hbe-btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.hbe-btn-ghost {
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+}
+
+.hbe-btn-accent {
+    background: var(--interactive-accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.hbe-btn-dashed {
+    border: 2px dashed var(--interactive-accent);
+    color: var(--interactive-accent);
+    background: transparent;
+    cursor: pointer;
+}
+
+.hbe-btn-xs {
+    padding: 2px 6px;
+    font-size: 0.8em;
+}
+
+.hbe-btn-outline {
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+}
+
+.hbe-cursor-pointer {
+    cursor: pointer;
+}
+
+/* Forms */
+.hbe-input {
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+}
+
+.hbe-input-full {
+    width: 100%;
+}
+
+.hbe-textarea {
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+}
+
+.hbe-textarea-full {
+    width: 100%;
+    height: 100%;
+    resize: none;
+    border: none;
+    outline: none;
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.hbe-textarea-lg {
+    min-height: 200px;
+}
+
+.hbe-select-full {
+    width: 100%;
+}
+
+/* Diff Viewer */
+.hbe-diff-stats {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--background-primary-alt);
+    border-radius: 8px;
+}
+
+.hbe-diff-container {
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    display: block;
+    height: 500px;
+}
+
+.hbe-diff-header {
+    padding: 10px 15px;
+    background-color: var(--background-secondary-alt);
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-weight: 500;
+}
+
+.hbe-diff-content {
+    margin: 0;
+    padding: 15px;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: auto;
+    height: 100%;
+}
+
+.hbe-diff-added {
+    display: block;
+    background-color: rgba(0, 255, 0, 0.1);
+}
+
+.hbe-diff-removed {
+    display: block;
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.hbe-diff-line-num {
+    color: var(--text-muted);
+    padding-right: 10px;
+    user-select: none;
+}
+
+.hbe-diff-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.hbe-diff-file {
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+    height: 500px;
+    margin-bottom: 20px;
+    display: block;
+    margin-top: 20px;
+}
+
+.hbe-diff-file-header {
+    padding: 10px 15px;
+    background-color: var(--background-secondary-alt);
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-weight: 500;
+}
+
+.hbe-diff-pre {
+    margin: 0;
+    padding: 15px;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: auto;
+    height: 100%;
+}
+
+/* Panels (WeChat Modal) */
+.hbe-panel-container {
+    display: flex;
+    height: calc(100% - 120px);
+    gap: 20px;
+}
+
+.hbe-panel-sidebar {
+    width: 300px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.hbe-panel-main {
+    flex: 1;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+.hbe-template-item {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hbe-template-item:hover,
+.hbe-template-item.is-selected {
+    background-color: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+
+.hbe-preview-container {
+    flex: 1;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #d5d5d5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.hbe-preview-frame-wrapper {
+    min-height: 400px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: width 0.3s ease;
+}
+
+.hbe-preview-iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+    background: white;
+}
+
+.hbe-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.hbe-category-title {
+    margin: 8px 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.hbe-font-bold {
+    font-weight: bold;
+}
+
+/* Colors */
+.hbe-bg-secondary {
+    background-color: var(--background-secondary);
+}
+
+.hbe-bg-primary {
+    background-color: var(--background-primary);
+}

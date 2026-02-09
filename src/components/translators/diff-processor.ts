@@ -35,6 +35,9 @@ export class DiffProcessor {
 
 		for (let i = 0; i < changes.length; i++) {
 			const change = changes[i];
+			if (!change) {
+				continue;
+			}
 			const {
 				oldStart,
 				oldCount,
@@ -129,7 +132,7 @@ export class DiffProcessor {
 
 		const toTranslate: string[] = [];
 		const skipLines: boolean[] = [];
-		const translatedLines: string[] = new Array(lines.length);
+		const translatedLines: string[] = Array.from({ length: lines.length }, () => "");
 
 		// 确定哪些行需要翻译
 		for (let i = 0; i < lines.length; i++) {
@@ -185,26 +188,27 @@ export class DiffProcessor {
 					translatedParts,
 				);
 
-				// 将翻译结果放回对应位置
-				let translatedIndex = 0;
-				for (let i = 0; i < lines.length; i++) {
-					if (skipLines[i]) {
-						// 对于不需要翻译的行，保持原样
-						translatedLines[i] = lines[i];
-						console.debug(
-							`⏭️  [DiffProcessor] 第${i + 1}行跳过翻译:`,
-							JSON.stringify(lines[i]),
-						);
-					} else {
-						// 对于需要翻译的行，使用翻译结果
-						translatedLines[i] =
-							translatedParts[translatedIndex++] || lines[i];
-						console.debug(`🔄 [DiffProcessor] 第${i + 1}行翻译:`, {
-							original: JSON.stringify(lines[i]),
-							translated: JSON.stringify(translatedLines[i]),
-						});
-					}
+			// 将翻译结果放回对应位置
+			let translatedIndex = 0;
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i];
+				if (!line || skipLines[i]) {
+					// 对于不需要翻译的行，保持原样
+					translatedLines[i] = line || "";
+					console.debug(
+						`⏭️  [DiffProcessor] 第${i + 1}行跳过翻译:`,
+						JSON.stringify(line),
+					);
+				} else {
+					// 对于需要翻译的行，使用翻译结果
+					translatedLines[i] =
+						translatedParts[translatedIndex++] || line;
+					console.debug(`🔄 [DiffProcessor] 第${i + 1}行翻译:`, {
+						original: JSON.stringify(line),
+						translated: JSON.stringify(translatedLines[i]),
+					});
 				}
+			}
 			} catch (error) {
 				console.error(
 					"❌ [DiffProcessor] 翻译失败:",

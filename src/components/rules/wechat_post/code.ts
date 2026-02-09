@@ -1,6 +1,7 @@
 import { RuleBuilder } from "components/ast/rule";
 import { NodeType } from "components/ast/node"; // 需要引入 NodeType
 import { getCodeBlock } from "components/rules/utils";
+import { App } from "obsidian";
 
 // 导出所有code相关规则
 export const codeRuleWechat = [
@@ -12,7 +13,7 @@ export const codeRuleWechat = [
 			return {
 				type: NodeType.HtmlBlock,
 				value: await getCodeBlock(
-					context.data.app,
+					context.data.app as App,
 					node.value as string,
 					node.lang as string,
 				),

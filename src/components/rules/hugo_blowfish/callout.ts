@@ -1,35 +1,45 @@
-import { NodeType, MarkdownNode } from "components/ast/node";
-import { RuleBuilder } from "components/ast/rule";
+import { NodeType, MarkdownNode, CalloutNode } from "components/ast/node";
+import { RuleBuilder, RuleContext } from "components/ast/rule";
+import { ASTProcessor } from "components/ast/main";
+
+interface CalloutRuleData {
+	processor?: ASTProcessor;
+	[key: string]: unknown;
+}
 
 export const calloutRuleHugo = new RuleBuilder("callout转换")
 	.describe("将callout块转换为对应的hugo简码")
 	.matchType(NodeType.Callout)
-	.transform(async (node, context) => {
-		const type = (node.calloutType as string) || "note";
-		const processor = (context as any).processor;
+	.transform(async (node: MarkdownNode, context?: RuleContext) => {
+		const callout = node as CalloutNode;
+		const type = callout.calloutType || "note";
+		const data = context?.data as CalloutRuleData | undefined;
+		const processor = data?.processor;
 
 		// 统一处理children
 		let callout_children: MarkdownNode[] = [];
-		if (node.children && processor) {
+		if (callout.children && processor) {
 			await Promise.all(
-				node.children.map(async (child) => {
-					if (child.role === "title") {
+				callout.children.map(async (child) => {
+					const childWithRole = child as MarkdownNode & { role?: string };
+					if (childWithRole.role === "title") {
 						// 如果是标题节点，直接跳过
-						return "";
+						return;
 					}
-					callout_children.push(
-						await processor.executor.execute(child, context),
-					); // 递归解析
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+					const processed = await (processor as any).executor.execute(child, context);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					callout_children.push(processed); // 递归解析
 				}),
 			);
 		}
 
 		const attributes = getCalloutAttributes(type);
-		const front_wrapper = {
+		const front_wrapper: MarkdownNode = {
 			type: NodeType.Text,
 			value: `\n{{< alert ${attributes} >}}\n`,
 		};
-		const back_wrapper = {
+		const back_wrapper: MarkdownNode = {
 			type: NodeType.Text,
 			value: `{{< /alert >}}\n`,
 		};
@@ -37,7 +47,7 @@ export const calloutRuleHugo = new RuleBuilder("callout转换")
 		return {
 			type: NodeType.Nop,
 			children: [front_wrapper, ...callout_children, back_wrapper],
-		};
+		} as MarkdownNode;
 	})
 	.build();
 

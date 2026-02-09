@@ -1,4 +1,4 @@
-import { App, Modal, Notice } from "obsidian";
+import { App, Modal, Setting } from "obsidian";
 
 export class ConfirmationModal extends Modal {
 	constructor(
@@ -10,7 +10,7 @@ export class ConfirmationModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.createEl("h2", { text: "确认导出" });
+		new Setting(contentEl).setName("确认导出").setHeading();
 		contentEl.createEl("p", {
 			text: "是否确认导出所有文件？提前请检查被笔记中是否有slug属性",
 		});
@@ -19,9 +19,7 @@ export class ConfirmationModal extends Modal {
 		});
 
 		const buttonContainer = contentEl.createDiv();
-		buttonContainer.style.display = "flex";
-		buttonContainer.style.justifyContent = "flex-end";
-		buttonContainer.style.gap = "10px";
+		buttonContainer.addClass("hbe-flex-end", "hbe-gap-sm");
 
 		const cancelButton = buttonContainer.createEl("button", {
 			text: "取消",

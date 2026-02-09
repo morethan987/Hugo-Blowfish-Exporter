@@ -80,3 +80,113 @@ export interface TableCellNode extends MarkdownNode {
   type: NodeType.TableCell;
   children: MarkdownNode[];  // 单元格内容
 }
+
+// Heading node
+export interface HeadingNode extends MarkdownNode {
+  type: NodeType.Heading;
+  level: number;
+}
+
+// Code block node
+export interface CodeBlockNode extends MarkdownNode {
+  type: NodeType.CodeBlock;
+  lang?: string;
+}
+
+// Callout node with typed children
+export interface CalloutNode extends MarkdownNode {
+  type: NodeType.Callout;
+  calloutType: string;
+  children?: CalloutChildNode[];
+}
+
+export interface CalloutChildNode extends MarkdownNode {
+  role?: 'title' | 'content';
+}
+
+// List nodes
+export interface ListNode extends MarkdownNode {
+  type: NodeType.List;
+  ordered: boolean;
+}
+
+export interface ListItemNode extends MarkdownNode {
+  type: NodeType.ListItem;
+  level: number;
+  task?: boolean;
+  number?: number;
+}
+
+// Link and Image nodes
+export interface LinkNode extends MarkdownNode {
+  type: NodeType.Link;
+  url: string;
+  label?: string;
+}
+
+export interface ImageNode extends MarkdownNode {
+  type: NodeType.Image;
+  url: string;
+  alt?: string;
+  title?: string;
+  embed?: boolean;
+}
+
+// Wiki and Embed nodes
+export interface WikiLinkNode extends MarkdownNode {
+  type: NodeType.WikiLink;
+  target?: string;
+  alias?: string;
+}
+
+export interface EmbedNode extends MarkdownNode {
+  type: NodeType.Embed;
+  target?: string;
+}
+
+// Footnote nodes
+export interface FootnoteRefNode extends MarkdownNode {
+  type: NodeType.FootnoteRef;
+  id: string;
+}
+
+export interface FootnoteDefNode extends MarkdownNode {
+  type: NodeType.FootnoteDef;
+  id: string;
+}
+
+// Other inline nodes
+export interface AutoLinkNode extends MarkdownNode {
+  type: NodeType.AutoLink;
+  url: string;
+}
+
+export interface MathBlockNode extends MarkdownNode {
+  type: NodeType.MathBlock;
+}
+
+export interface MathSpanNode extends MarkdownNode {
+  type: NodeType.MathSpan;
+}
+
+// Union type for type narrowing
+export type TypedMarkdownNode =
+  | HeadingNode
+  | CodeBlockNode
+  | CalloutNode
+  | ListNode
+  | ListItemNode
+  | LinkNode
+  | ImageNode
+  | WikiLinkNode
+  | EmbedNode
+  | FootnoteRefNode
+  | FootnoteDefNode
+  | AutoLinkNode
+  | MathBlockNode
+  | MathSpanNode
+  | TableNode
+  | TableHeaderNode
+  | TableRowNode
+  | TableCellNode
+  | MarkdownNode;  // fallback for untyped nodes

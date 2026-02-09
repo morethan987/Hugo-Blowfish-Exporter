@@ -40,7 +40,7 @@ export async function determineTargetFilePath(
 		if (targetFile) {
 			return path.join(translatedExportPath, targetFile);
 		}
-	} catch (error) {
+	} catch {
 		return null;
 	}
 

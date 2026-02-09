@@ -1,19 +1,7 @@
 import { ASTProcessor } from "./main";
-import { NodeType } from "./node";
 import {
-	calloutRuleHugo,
-	imageRuleHugo,
 	mathRuleHugo,
-	wikiLinkRuleHugo,
-	mermaidRuleHugo,
 } from "components/rules/hugo_blowfish";
-import {
-	calloutRuleWechat,
-	imageRuleWechat,
-	mathRuleWechat,
-	wikiLinkRuleWechat,
-	mermaidRuleWechat,
-} from "components/rules/wechat_post";
 
 // 测试用的 Markdown 文本
 const testMarkdown = `---
@@ -55,7 +43,7 @@ title: 测试文档
 | $Score$        | 推理路径评价函数            |
 | $a$            | 从动作空间中采样得到的一个动作     |
 | $s_{d}$        | 终止推理步，包含问题的答案       |
-| $\hat{M}$      | "同伴"小模型             |
+| $\\hat{M}$      | "同伴"小模型             |
 | $T_{validate}$ | 经过路径评估函数剪枝后的 $T$    |
 | $Estimate$     | 路径评估函数              |
 
@@ -141,41 +129,33 @@ $x = y + z$
 
 `;
 
-const miniTestMarkdown = `---
-title: 测试文档
----
 
-| 符号             | 含义                  |
-| -------------- | ------------------- |
-| $x$            | 目标问题                |
-| $M$            | 目标小模型               |
-`;
 
-async function testWikiLink() {
-	console.log("=== wikiLink功能测试 ===");
+async function testWikiLink(): Promise<void> {
+	console.debug("=== wikiLink功能测试 ===");
 	// processor.addRules(wikiLinkRule);
-	const context: any = {};
+	const context: Record<string, unknown> = {};
 	const processor = new ASTProcessor(context);
 	context.processor = processor;
 	processor.addRules([...mathRuleHugo]);
 	const result = await processor.processToString(testMarkdown);
-	console.log("\n处理后的文档:");
-	console.log(result);
+	console.debug("\n处理后的文档:");
+	console.debug(result);
 }
 
 /**
  * 运行所有测试
  */
-async function runTests() {
+async function runTests(): Promise<void> {
 	// testBasicFunctionality();
 	// testRuleSystem();
 	await testWikiLink();
-	console.log("\n=== 测试完成 ===");
+	console.debug("\n=== 测试完成 ===");
 }
 
 // 如果直接运行此文件，执行测试
 if (require.main === module) {
-	runTests();
+	void runTests();
 }
 
 export { runTests };

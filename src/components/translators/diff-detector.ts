@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+import { FileSystemAdapter } from "obsidian";
 import HugoBlowfishExporter from "core/plugin";
 import { get_error_message } from "utils";
 
@@ -16,13 +17,20 @@ export class DiffDetector {
 	async detectGitDiff(filePath: string): Promise<GitDiffResult> {
 		console.debug("🔍 [DiffDetector] 开始检测文件差异:", filePath);
 
+		const adapter = this.plugin.app.vault.adapter;
+		if (!(adapter instanceof FileSystemAdapter)) {
+			return { hasChanges: false, changes: [] };
+		}
+		const basePath = adapter.getBasePath();
+		if (!basePath) {
+			return { hasChanges: false, changes: [] };
+		}
+
 		try {
 			// 获取文件的git状态
 			const gitStatus = execSync(`git status --porcelain "${filePath}"`, {
 				encoding: "utf8",
-				cwd:
-					(this.plugin.app.vault.adapter as any).basePath ||
-					process.cwd(),
+				cwd: basePath,
 			}).trim();
 
 			console.debug("📊 [DiffDetector] Git状态:", gitStatus || "无变化");
@@ -36,9 +44,7 @@ export class DiffDetector {
 			// 使用 -U0 参数，只显示修改的行，不显示上下文
 			const diffOutput = execSync(`git diff -U0 HEAD "${filePath}"`, {
 				encoding: "utf8",
-				cwd:
-					(this.plugin.app.vault.adapter as any).basePath ||
-					process.cwd(),
+				cwd: basePath,
 			});
 
 			console.debug("📝 [DiffDetector] Git diff 原始输出:");
@@ -127,33 +133,33 @@ export class DiffDetector {
 					/@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@.*$/,
 				);
 
-				if (match) {
-					console.debug("✨ [DiffDetector] 解析匹配结果:", match);
+			if (match && match[1] && match[3]) {
+				console.debug("✨ [DiffDetector] 解析匹配结果:", match);
 
-					// 如果之前有未完成的差异块，先将其保存
-					if (currentChange) {
-						console.debug(
-							"💾 [DiffDetector] 保存前一个差异块:",
-							JSON.stringify(currentChange, null, 2),
-						);
-						changes.push(currentChange);
-					}
+				// 如果之前有未完成的差异块，先将其保存
+				if (currentChange) {
+					console.debug(
+						"💾 [DiffDetector] 保存前一个差异块:",
+						JSON.stringify(currentChange, null, 2),
+					);
+					changes.push(currentChange);
+				}
 
-					// 创建新的差异块对象
-					currentChange = {
-						// 原文件的起始行号（从1开始计数）
-						oldStart: parseInt(match[1]),
-						// 原文件的行数，如果没有指定则默认为1
-						oldCount: match[2] === "" ? 1 : parseInt(match[2]), // 修复：空字符串表示1行
-						// 新文件的起始行号（从1开始计数）
-						newStart: parseInt(match[3]),
-						// 新文件的行数，如果没有指定则默认为1
-						newCount: match[4] === "" ? 1 : parseInt(match[4]), // 修复：空字符串表示1行
-						// 存储被删除的行内容
-						removedLines: [],
-						// 存储新增的行内容
-						addedLines: [],
-					};
+				// 创建新的差异块对象
+				currentChange = {
+					// 原文件的起始行号（从1开始计数）
+					oldStart: parseInt(match[1]),
+					// 原文件的行数，如果没有指定则默认为1
+					oldCount: !match[2] ? 1 : parseInt(match[2]), // 修复：空字符串表示1行
+					// 新文件的起始行号（从1开始计数）
+					newStart: parseInt(match[3]),
+					// 新文件的行数，如果没有指定则默认为1
+					newCount: !match[4] ? 1 : parseInt(match[4]), // 修复：空字符串表示1行
+					// 存储被删除的行内容
+					removedLines: [],
+					// 存储新增的行内容
+					addedLines: [],
+				};
 
 					console.debug(
 						"🆕 [DiffDetector] 创建新差异块:",

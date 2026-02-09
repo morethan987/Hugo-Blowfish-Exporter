@@ -1,6 +1,7 @@
 import { NodeType } from "components/ast/node";
 import { RuleBuilder } from "components/ast/rule";
 import { getCodeBlock } from "components/rules/utils";
+import { App } from "obsidian";
 
 export const mermaidRuleWechat = new RuleBuilder("代码块转换")
 	.describe("将代码块转换为HTML格式")
@@ -19,7 +20,7 @@ export const mermaidRuleWechat = new RuleBuilder("代码块转换")
 
 		// 其他代码块使用工具函数生成HTML
 		const codeBlockHtml = await getCodeBlock(
-			context.data.app,
+			context.data.app as App,
 			content,
 			language,
 		);

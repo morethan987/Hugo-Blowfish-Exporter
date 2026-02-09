@@ -42,12 +42,17 @@ export class DirectExportHelper {
 			}
 
 			// 创建slug目录
-			const slugDir = this.fileOps.createSlugDirectory(
-				metadata.frontmatter.slug,
-			);
+			const frontmatter = metadata.frontmatter;
+			if (!frontmatter || typeof frontmatter.slug !== "string") {
+				throw new Error("Invalid slug type");
+			}
+			const slugDir = this.fileOps.createSlugDirectory(frontmatter.slug);
 
 			// 处理内容
 			notice.setMessage("正在处理内容...");
+			if (!metadata.frontmatter) {
+				throw new Error("无法获取文件 frontmatter");
+			}
 			const modifiedContent = await this.plugin.exporter.convertToHugoMd(
 				translatedContent,
 				metadata.frontmatter,
