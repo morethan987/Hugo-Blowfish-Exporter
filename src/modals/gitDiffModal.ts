@@ -1,150 +1,186 @@
-import { App, Modal } from 'obsidian';
+import { App, Modal } from "obsidian";
+
+// 定义文件结构接口，方便类型推断
+interface DiffFile {
+	fileName: string;
+	content: string[];
+	isNew: boolean;
+}
 
 export class GitDiffModal extends Modal {
-    constructor(
-        app: App,
-        private diffContent: string
-    ) {
-        super(app);
-        this.modalEl.className = 'modal mod-sidebar-layout';
-        this.modalEl.addClass("hbe-modal-full");
-    }
+	constructor(
+		app: App,
+		private diffContent: string,
+	) {
+		super(app);
+		// 使用宽模态框样式
+		this.modalEl.addClass("hbe-modal-xl");
+	}
 
-    private getChangeStats(content: string): { modified: number; new: number } {
-        const lines = content.split('\n');
-        let modified = 0;
-        let newFiles = 0;
+	private getChangeStats(content: string): { modified: number; new: number } {
+		const lines = content.split("\n");
+		let modified = 0;
+		let newFiles = 0;
 
-        for (const line of lines) {
-            if (line.startsWith('diff --git')) {
-                if (lines[lines.indexOf(line) + 1]?.includes('new file')) {
-                    newFiles++;
-                } else {
-                    modified++;
-                }
-            }
-        }
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (!line) continue;
 
-        return { modified, new: newFiles };
-    }
+			if (line.startsWith("diff --git")) {
+				const nextLine = lines[i + 1];
+				if (nextLine?.includes("new file")) {
+					newFiles++;
+				} else {
+					modified++;
+				}
+			}
+		}
+		return { modified, new: newFiles };
+	}
 
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.empty();
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
 
-        // 设置内容元素样式
-        contentEl.addClass("hbe-block", "hbe-full-width", "hbe-full-height", "hbe-p-lg", "hbe-overflow-auto");
-        
-        const headerDiv = contentEl.createDiv();
-        headerDiv.addClass("hbe-mb-lg");
-        headerDiv.createEl('h2', {
-            text: '文件变更'
-        }).addClass("hbe-text-normal", "hbe-border-bottom", "hbe-pb-sm");
+		// 容器样式
+		contentEl.addClass(
+			"hbe-block",
+			"hbe-full-width",
+			"hbe-full-height",
+			"hbe-p-lg",
+			"hbe-overflow-auto",
+		);
 
-        if (this.diffContent.trim() === '') {
-            const noChangesDiv = contentEl.createDiv({
-                cls: 'hbe-diff-empty'
-            });
-            noChangesDiv.createEl('div', { text: '没有发现任何 Markdown 文件的更改' });
-            return;
-        }
+		// 标题区
+		const headerDiv = contentEl.createDiv();
+		headerDiv.addClass("hbe-mb-lg");
+		headerDiv
+			.createEl("h2", { text: "文件变更" })
+			.addClass("hbe-text-normal", "hbe-border-bottom", "hbe-pb-sm");
 
-        // 变更统计
-        const stats = this.getChangeStats(this.diffContent);
-        const statsDiv = contentEl.createDiv({
-            cls: 'hbe-diff-stats'
-        });
+		if (!this.diffContent || this.diffContent.trim() === "") {
+			contentEl.createDiv({
+				cls: "hbe-diff-empty",
+				text: "没有发现任何 Markdown 文件的更改",
+			});
+			return;
+		}
 
-        if (stats.modified > 0) {
-            statsDiv.createEl('div', {
-                text: `已修改: ${stats.modified} 个文件`
-            });
-        }
-        if (stats.new > 0) {
-            statsDiv.createEl('div', {
-                text: `新增: ${stats.new} 个文件`
-            }).addClass("hbe-text-accent");
-        }
+		// 统计信息
+		const stats = this.getChangeStats(this.diffContent);
+		const statsDiv = contentEl.createDiv({ cls: "hbe-diff-stats" });
 
-        // 将差异内容按文件分组
-        const files: { fileName: string; content: string[]; isNew: boolean }[] = [];
-        const lines = this.diffContent.split('\n');
-        let currentFile: { fileName: string; content: string[]; isNew: boolean } | null = null;
+		if (stats.modified > 0)
+			statsDiv.createEl("div", {
+				text: `已修改: ${stats.modified} 个文件`,
+			});
+		if (stats.new > 0)
+			statsDiv
+				.createEl("div", { text: `新增: ${stats.new} 个文件` })
+				.addClass("hbe-text-accent");
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (!line) continue;
-            if (line.startsWith('diff --git')) {
-                if (currentFile) {
-                    files.push(currentFile);
-                }
-                const fileName = line.match(/b\/(.*?)$/)?.[1] || '';
-                currentFile = {
-                    fileName,
-                    content: [],
-                    isNew: lines[i + 1]?.includes('new file') || false
-                };
-                i++; // 跳过下一行的 new file/deleted file/index 信息
-            } else if (currentFile && !line.startsWith('index')) {
-                currentFile.content.push(line);
-            }
-        }
-        if (currentFile) {
-            files.push(currentFile);
-        }
+		// 解析 diff 内容
+		const files: DiffFile[] = [];
+		const lines = this.diffContent.split("\n");
 
-        // 为每个文件创建独立的区块
-        for (const file of files) {
-            // 文件容器
-            const fileContainer = contentEl.createDiv({
-                cls: 'hbe-diff-file'
-            });
+		let currentFile: DiffFile | null = null;
 
-            // 文件标题
-            const titleContainer = fileContainer.createDiv({
-                cls: 'hbe-diff-file-header'
-            });
-            titleContainer.addClass("hbe-flex-row", "hbe-items-center", "hbe-gap-sm");
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			if (line === undefined) continue;
 
-            titleContainer.createSpan({
-                text: file.fileName
-            });
-            if (file.isNew) {
-                titleContainer.createSpan({
-                    text: ' (新文件)'
-                }).addClass("hbe-text-accent", "hbe-text-sm");
-            }
+			if (line.startsWith("diff --git")) {
+				if (currentFile) {
+					files.push(currentFile);
+				}
 
-            // 文件内容
-             const contentContainer = fileContainer.createEl('pre', {
-                 cls: 'hbe-diff-pre'
-             });
+				const match = line.match(/b\/(.*)$/);
+				const rawFileName =
+					match?.[1] ?? line.replace("diff --git ", "");
 
-             for (const line of file.content) {
-                 if (line.startsWith('+++') || line.startsWith('---')) {
-                     // 直接去掉文件头信息行
-                     continue;
-                 } else if (line.startsWith('+')) {
-                     contentContainer.createEl('span', {
-                         text: line,
-                         cls: 'hbe-diff-added'
-                     });
-                 } else if (line.startsWith('-')) {
-                     contentContainer.createEl('span', {
-                         text: line,
-                         cls: 'hbe-diff-removed'
-                     });
-                 } else {
-                     contentContainer.createEl('span', {
-                         text: line + '\n'
-                     });
-                 }
-             }
-        }
-    }
+				const nextLine = lines[i + 1];
+				const isNew = nextLine?.includes("new file mode") ?? false;
 
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
+				currentFile = {
+					fileName: rawFileName.trim(),
+					content: [],
+					isNew: isNew,
+				};
+			} else if (currentFile) {
+				currentFile.content.push(line);
+			}
+		}
+		if (currentFile) {
+			files.push(currentFile);
+		}
+
+		// 渲染逻辑
+		for (const file of files) {
+			const fileContainer = contentEl.createDiv({ cls: "hbe-diff-file" });
+
+			// 1. 文件头
+			const titleContainer = fileContainer.createDiv({
+				cls: "hbe-diff-file-header",
+			});
+			const leftTitle = titleContainer.createDiv({
+				cls: "hbe-flex-row hbe-items-center hbe-gap-sm",
+			});
+			leftTitle.createEl("span", { text: file.fileName });
+
+			if (file.isNew) {
+				leftTitle.createEl("span", {
+					text: "(新文件)",
+					cls: "hbe-text-accent hbe-text-sm",
+				});
+			}
+
+			// 2. 内容区
+			const contentWrapper = fileContainer.createDiv({
+				cls: "hbe-diff-content-wrapper",
+			});
+
+			for (const line of file.content) {
+				// 过滤元数据
+				if (
+					line.startsWith("index ") ||
+					line.startsWith("new file mode") ||
+					line.startsWith("deleted file mode") ||
+					line.startsWith("---") ||
+					line.startsWith("+++")
+				) {
+					continue;
+				}
+
+				const lineDiv = contentWrapper.createDiv({
+					cls: "hbe-diff-line",
+				});
+
+				// === 核心修改区 ===
+				if (line.startsWith("@@")) {
+					// 块信息保留原样
+					lineDiv.addClass("hbe-diff-chunk");
+					lineDiv.setText(line);
+				} else if (line.startsWith("+")) {
+					// 新增行：去除开头的 '+'
+					lineDiv.addClass("hbe-diff-added");
+					lineDiv.setText(line.substring(1));
+				} else if (line.startsWith("-")) {
+					// 删除行：去除开头的 '-'
+					lineDiv.addClass("hbe-diff-removed");
+					lineDiv.setText(line.substring(1));
+				} else {
+					// 普通行：Git Diff 中普通行通常以空格开头
+					// 为了和去除符号后的新增/删除行对齐，我们也把这个开头的空格去掉
+					lineDiv.addClass("hbe-text-muted");
+					lineDiv.setText(
+						line.startsWith(" ") ? line.substring(1) : line,
+					);
+				}
+			}
+		}
+	}
+
+	onClose() {
+		this.contentEl.empty();
+	}
 }
