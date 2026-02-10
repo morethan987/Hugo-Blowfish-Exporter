@@ -14,7 +14,8 @@ export const wikiLinkRuleHugo = [
 			const heading = wikiLink.heading || "";
 			const formated_heading = heading
 				.toLowerCase()
-				.replace(/[^\p{L}\p{N}-]/gu, "-");
+				.replace(/\s+/g, "-")
+				.replace(/[^\p{L}\p{N}_-]/gu, ""); // 除了字母、数字、下划线、连字符，剩下的全部删除
 			const alias = (wikiLink.alias as string) || "";
 			const linkType = wikiLink.linkType as string;
 			const file_name = (wikiLink.file as string) || "";
