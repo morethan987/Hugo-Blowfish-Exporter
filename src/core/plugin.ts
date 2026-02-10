@@ -47,11 +47,7 @@ export default class HugoBlowfishExporter {
 		this.coverChooser = new CoverChooser();
 
 		// 初始化OpenAI客户端
-		this.client = new OpenAI({
-			baseURL: this.settings.BaseURL,
-			apiKey: this.settings.ApiKey || "",
-			dangerouslyAllowBrowser: true,
-		});
+		this.reinitializeClient();
 
 		// 初始化导出器、翻译器和Git处理器
 		this.exporter = new Exporter(this.app, this);
@@ -141,5 +137,29 @@ export default class HugoBlowfishExporter {
 
 	async saveSettings() {
 		await this.plugin.saveData(this.settings);
+	}
+
+	getApiKey(): string {
+		return (
+			this.app.secretStorage.getSecret(this.settings.secretId) ?? ""
+		);
+	}
+
+	setApiKey(apiKey: string): void {
+		this.app.secretStorage.setSecret(this.settings.secretId, apiKey);
+		this.reinitializeClient();
+	}
+
+	deleteApiKey(): void {
+		this.app.secretStorage.setSecret(this.settings.secretId, "");
+		this.reinitializeClient();
+	}
+
+	reinitializeClient(): void {
+		this.client = new OpenAI({
+			baseURL: this.settings.BaseURL,
+			apiKey: this.getApiKey() || "",
+			dangerouslyAllowBrowser: true,
+		});
 	}
 }

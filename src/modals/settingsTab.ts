@@ -28,6 +28,20 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("翻译设置").setHeading();
 
 		new Setting(containerEl)
+			.setName("密钥存储ID")
+			.setDesc("设置密钥存储键名，仅允许小写字母、数字和短横线")
+			.addText((text) =>
+				text
+					.setPlaceholder("Your secret ID")
+					.setValue(this.plugin.settings.secretId)
+					.onChange(async (value) => {
+						this.plugin.settings.secretId = value;
+						await this.plugin.saveSettings();
+					}),
+			)
+			.settingEl.addClass("secret-id-setting");
+
+		new Setting(containerEl)
 			.setName("翻译文件导出路径")
 			.setDesc("设置翻译后的文件保存路径（绝对路径）")
 			.addText((text) =>
@@ -70,14 +84,12 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 		const apiKeySetting = new Setting(containerEl)
 			.setName("API密钥")
 			.setDesc(
-				`设置用于翻译功能的大模型API密钥${this.plugin.settings.ApiKey ? " (已设置)" : " (未设置)"}`,
+				`设置用于翻译功能的大模型API密钥${this.plugin.getApiKey() ? " (已设置)" : " (未设置)"}`,
 			)
 			.addButton((button) =>
 				button
 					.setButtonText(
-						this.plugin.settings.ApiKey
-							? "修改API密钥"
-							: "设置API密钥",
+						this.plugin.getApiKey() ? "修改API密钥" : "设置API密钥",
 					)
 					.setCta()
 					.onClick(() => {
@@ -295,15 +307,13 @@ export class HugoBlowfishExporterSettingTab extends PluginSettingTab {
 	}
 
 	private refreshApiKeySetting(apiKeySetting: Setting) {
-		// 更新描述文本
 		apiKeySetting.setDesc(
-			`设置用于翻译功能的大模型API密钥${this.plugin.settings.ApiKey ? " (已设置)" : " (未设置)"}`,
+			`设置用于翻译功能的大模型API密钥${this.plugin.getApiKey() ? " (已设置)" : " (未设置)"}`,
 		);
 
-		// 更新按钮文本
 		const buttonEl = apiKeySetting.controlEl.querySelector("button");
 		if (buttonEl) {
-			buttonEl.textContent = this.plugin.settings.ApiKey
+			buttonEl.textContent = this.plugin.getApiKey()
 				? "修改API密钥"
 				: "设置API密钥";
 		}

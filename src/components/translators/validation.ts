@@ -12,7 +12,7 @@ export class TranslationValidator {
 	 * @returns 如果验证通过返回 true，否则返回 false
 	 */
 	validateConfiguration(): boolean {
-		if (!this.plugin.settings.ApiKey) {
+		if (!this.plugin.getApiKey()) {
 			new Notice("请先配置API密钥");
 			return false;
 		}

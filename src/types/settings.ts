@@ -6,8 +6,8 @@ export interface HugoBlowfishExporterSettings {
 	translatedExportPath: string; // 翻译文件导出路径配置
 	translatedExportPathWindows: string; // Windows系统下的翻译文件导出路径
 	translatedExportPathLinux: string; // Linux系统下的翻译文件导出路径
+	secretId: string; // SecretStorage中存储API密钥的键名
 	BaseURL: string; // 大模型BaseURL
-	ApiKey: string; // API密钥
 	ModelName: string; // 模型名称
 	directExportAfterTranslation: boolean; // 翻译后直接导出
 	targetLanguage: string; // 目标翻译语言

@@ -178,8 +178,8 @@ describe("copyImageFile", () => {
 		translatedExportPath: "",
 		translatedExportPathWindows: "",
 		translatedExportPathLinux: "",
+		secretId: "api-key",
 		BaseURL: "",
-		ApiKey: "",
 		ModelName: "",
 		directExportAfterTranslation: false,
 		targetLanguage: "",
@@ -224,7 +224,8 @@ describe("copyImageFile", () => {
 	it("returns false when image file is not found in vault", async () => {
 		const mockApp = createMockApp(null);
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		const getFirstLinkpathDestMock = mockApp.metadataCache.getFirstLinkpathDest;
+		const getFirstLinkpathDestMock =
+			mockApp.metadataCache.getFirstLinkpathDest;
 
 		const result = await copyImageFile(
 			mockApp,
@@ -343,7 +344,12 @@ describe("copyImageFile", () => {
 			imageExportPath: "images",
 		};
 
-		await copyImageFile(mockApp, "diagram.svg", customSettings, "my-article");
+		await copyImageFile(
+			mockApp,
+			"diagram.svg",
+			customSettings,
+			"my-article",
+		);
 
 		expect(fs.mkdirSync).toHaveBeenCalledWith(
 			expect.stringContaining("blog/articles"),
