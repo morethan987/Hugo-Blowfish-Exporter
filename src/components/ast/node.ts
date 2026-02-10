@@ -129,19 +129,32 @@ export interface ImageNode extends MarkdownNode {
 	url: string;
 	alt?: string;
 	title?: string;
+	wiki: boolean;
 	embed?: boolean;
+}
+
+export enum LinkType {
+	Internal_Heading = "internal-heading",
+	External_Heading = "external-heading",
+	Embed = "embed",
+	Article = "article",
 }
 
 // Wiki and Embed nodes
 export interface WikiLinkNode extends MarkdownNode {
 	type: NodeType.WikiLink;
-	target?: string;
+	linkType?: LinkType;
 	alias?: string;
+	file?: string;
+	heading?: string;
 }
 
 export interface EmbedNode extends MarkdownNode {
 	type: NodeType.Embed;
-	target?: string;
+	linkType?: LinkType;
+	alias?: string;
+	file?: string;
+	heading?: string;
 }
 
 // Footnote nodes
