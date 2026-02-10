@@ -1,6 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "./parser";
-import { NodeType, TableNode, WikiLinkNode, FootnoteDefNode } from "./node";
+import {
+	NodeType,
+	TableNode,
+	WikiLinkNode,
+	FootnoteDefNode,
+	LinkType,
+	EmbedNode,
+	ImageNode,
+} from "./node";
 
 describe("parseMarkdown", () => {
 	describe("block-level parsing", () => {
@@ -305,8 +313,13 @@ $$`;
 		it("parses wiki link", () => {
 			const result = parseMarkdown("[[file]]");
 			const paraNode = result.children![0]!;
+			const linkNode = paraNode.children![0]! as WikiLinkNode;
 			expect(paraNode.children).toHaveLength(1);
-			expect(paraNode.children![0]!.type).toBe(NodeType.WikiLink);
+			expect(linkNode.type).toBe(NodeType.WikiLink);
+			expect(linkNode.linkType).toBe(LinkType.Article);
+			expect(linkNode.alias).toBeUndefined();
+			expect(linkNode.file).toBe("file");
+			expect(linkNode.heading).toBeUndefined();
 		});
 
 		it("parses wiki link with alias", () => {
@@ -314,31 +327,68 @@ $$`;
 			const paraNode = result.children![0]!;
 			const linkNode = paraNode.children![0]! as WikiLinkNode;
 			expect(linkNode.type).toBe(NodeType.WikiLink);
+			expect(linkNode.linkType).toBe(LinkType.Article);
 			expect(linkNode.alias).toBe("alias");
+			expect(linkNode.file).toBe("file");
+			expect(linkNode.heading).toBeUndefined();
 		});
 
 		it("parses wiki link with heading reference", () => {
 			const result = parseMarkdown("[[file#heading]]");
 			const paraNode = result.children![0]!;
-			const linkNode = paraNode.children![0]!;
+			const linkNode = paraNode.children![0]! as WikiLinkNode;
 			expect(linkNode.type).toBe(NodeType.WikiLink);
-			expect(
-				(linkNode as WikiLinkNode & { heading?: string }).heading,
-			).toBe("heading");
+			expect(linkNode.linkType).toBe(LinkType.External_Heading);
+			expect(linkNode.alias).toBeUndefined();
+			expect(linkNode.file).toBe("file");
+			expect(linkNode.heading).toBe("heading");
+		});
+
+		it("parses wiki link with heading reference without file", () => {
+			const result = parseMarkdown("[[#heading]]");
+			const paraNode = result.children![0]!;
+			const linkNode = paraNode.children![0]! as WikiLinkNode;
+			expect(linkNode.type).toBe(NodeType.WikiLink);
+			expect(linkNode.linkType).toBe(LinkType.Internal_Heading);
+			expect(linkNode.alias).toBeUndefined();
+			expect(linkNode.file).toBeUndefined();
+			expect(linkNode.heading).toBe("heading");
+		});
+
+		it("parses wiki link with heading reference without file with alias", () => {
+			const result = parseMarkdown("[[#heading|alias]]");
+			const paraNode = result.children![0]!;
+			const linkNode = paraNode.children![0]! as WikiLinkNode;
+			expect(linkNode.type).toBe(NodeType.WikiLink);
+			expect(linkNode.linkType).toBe(LinkType.Internal_Heading);
+			expect(linkNode.alias).toBe("alias");
+			expect(linkNode.file).toBeUndefined();
+			expect(linkNode.heading).toBe("heading");
 		});
 
 		it("parses embed", () => {
 			const result = parseMarkdown("![[file]]");
 			const paraNode = result.children![0]!;
+			const embedNode = paraNode.children![0]! as EmbedNode;
 			expect(paraNode.children).toHaveLength(1);
-			expect(paraNode.children![0]!.type).toBe(NodeType.Embed);
+			expect(embedNode.type).toBe(NodeType.Embed);
+			expect(embedNode.linkType).toBe(LinkType.Embed);
+			expect(embedNode.alias).toBeUndefined();
+			expect(embedNode.file).toBe("file");
+			expect(embedNode.heading).toBeUndefined();
 		});
 
 		it("parses image embed from wiki", () => {
 			const result = parseMarkdown("![[image.png]]");
 			const paraNode = result.children![0]!;
+			const imageNode = paraNode.children![0]! as ImageNode;
 			expect(paraNode.children).toHaveLength(1);
-			expect(paraNode.children![0]!.type).toBe(NodeType.Image);
+			expect(imageNode.type).toBe(NodeType.Image);
+			expect(imageNode.url).toBe("image.png");
+			expect(imageNode.alt).toBeUndefined();
+			expect(imageNode.title).toBeUndefined();
+			expect(imageNode.wiki).toBe(true);
+			expect(imageNode.embed).toBe(true);
 		});
 
 		it("parses standard link", () => {

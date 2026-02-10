@@ -11,20 +11,26 @@ export const wikiLinkRuleHugo = [
 		.matchType(NodeType.WikiLink)
 		.transform(async (node: MarkdownNode, context?: RuleContext) => {
 			const wikiLink = node as WikiLinkNode;
-			const heading = (wikiLink.heading as string) || "";
+			const heading = wikiLink.heading || "";
 			const formated_heading = heading
-				.replace(/[A-Z]/g, (char: string) => char.toLowerCase())
+				.toLowerCase()
 				.replace(/\s+/g, "-")
-				.replace(/[^\w\-\u4e00-\u9fa5]/g, ""); // 保留中文汉字，但移除特殊标点符号
+				.replace(/[^\p{L}\p{N}_-]/gu, ""); // 除了字母、数字、下划线、连字符，剩下的全部删除
 			const alias = (wikiLink.alias as string) || "";
 			const linkType = wikiLink.linkType as string;
 			const file_name = (wikiLink.file as string) || "";
-			const settings = context?.data?.settings as HugoBlowfishExporterSettings | undefined;
+			const settings = context?.data?.settings as
+				| HugoBlowfishExporterSettings
+				| undefined;
 			const app = context?.data?.app as App | undefined;
 
 			let hugoLink = "";
-			if (settings && app && file_name) {
-				if (linkType === "external-heading" || linkType === "article") {
+			if (settings && app) {
+				if (
+					(linkType === "external-heading" ||
+						linkType === "article") &&
+					file_name
+				) {
 					hugoLink = `[${alias || heading}]({{< ref "/${settings.blogPath}/${getSlugByName(app, file_name)}/${formated_heading ? "#" + formated_heading : ""}" >}})`;
 				} else if (linkType === "internal-heading") {
 					hugoLink = `[${alias || heading}]({{< relref "#${formated_heading}" >}})`;
@@ -41,7 +47,9 @@ export const wikiLinkRuleHugo = [
 		.describe("将展示型wiki链接转换为对应的hugo简码")
 		.matchType(NodeType.Embed)
 		.transform(async (_node: MarkdownNode, context?: RuleContext) => {
-			const settings = context?.data?.settings as HugoBlowfishExporterSettings | undefined;
+			const settings = context?.data?.settings as
+				| HugoBlowfishExporterSettings
+				| undefined;
 			const lang = context?.data?.lang as string | undefined;
 			const slug = context?.data?.slug as string | undefined;
 
@@ -49,7 +57,10 @@ export const wikiLinkRuleHugo = [
 			if (lang === "en" && settings) {
 				fileName = settings.defaultDispName_en;
 			}
-			const hugoLink = settings && slug ? `{{< mdimporter url="content/${settings.blogPath}/${slug}/${fileName}" >}}` : "";
+			const hugoLink =
+				settings && slug
+					? `{{< mdimporter url="content/${settings.blogPath}/${slug}/${fileName}" >}}`
+					: "";
 
 			return {
 				type: NodeType.Text,

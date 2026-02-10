@@ -178,8 +178,8 @@ describe("copyImageFile", () => {
 		translatedExportPath: "",
 		translatedExportPathWindows: "",
 		translatedExportPathLinux: "",
+		secretId: "api-key",
 		BaseURL: "",
-		ApiKey: "",
 		ModelName: "",
 		directExportAfterTranslation: false,
 		targetLanguage: "",
@@ -197,7 +197,7 @@ describe("copyImageFile", () => {
 	const createMockApp = (
 		attachmentFile: MockTFile | null,
 		imageData: ArrayBuffer = new ArrayBuffer(8),
-	): App => {
+	) => {
 		return {
 			metadataCache: {
 				getFirstLinkpathDest: vi.fn().mockReturnValue(attachmentFile),
@@ -205,7 +205,7 @@ describe("copyImageFile", () => {
 			vault: {
 				readBinary: vi.fn().mockResolvedValue(imageData),
 			},
-		} as unknown as App;
+		};
 	};
 
 	const createMockTFile = (name: string): MockTFile => {
@@ -223,18 +223,16 @@ describe("copyImageFile", () => {
 
 	it("returns false when image file is not found in vault", async () => {
 		const mockApp = createMockApp(null);
-		// eslint-disable-next-line @typescript-eslint/unbound-method
-		const getFirstLinkpathDestMock = mockApp.metadataCache.getFirstLinkpathDest;
 
 		const result = await copyImageFile(
-			mockApp,
+			mockApp as unknown as App,
 			"nonexistent.png",
 			mockSettings,
 			"test-slug",
 		);
 
 		expect(result).toBe(false);
-		expect(getFirstLinkpathDestMock).toHaveBeenCalledWith(
+		expect(mockApp.metadataCache.getFirstLinkpathDest).toHaveBeenCalledWith(
 			"nonexistent.png",
 			"",
 		);
@@ -245,7 +243,7 @@ describe("copyImageFile", () => {
 		const mockApp = createMockApp(mockTFile);
 		vi.mocked(fs.existsSync).mockReturnValue(false);
 
-		await copyImageFile(mockApp, "test-image.png", mockSettings, "my-post");
+		await copyImageFile(mockApp as unknown as App, "test-image.png", mockSettings, "my-post");
 
 		expect(fs.mkdirSync).toHaveBeenCalledWith(
 			expect.stringContaining("my-post"),
@@ -258,7 +256,7 @@ describe("copyImageFile", () => {
 		const mockApp = createMockApp(mockTFile);
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 
-		await copyImageFile(mockApp, "test-image.png", mockSettings, "my-post");
+		await copyImageFile(mockApp as unknown as App, "test-image.png", mockSettings, "my-post");
 
 		expect(fs.mkdirSync).not.toHaveBeenCalled();
 	});
@@ -269,7 +267,7 @@ describe("copyImageFile", () => {
 		const mockApp = createMockApp(mockTFile, mockImageData);
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 
-		await copyImageFile(mockApp, "GRU.png", mockSettings, "deep-learning");
+		await copyImageFile(mockApp as unknown as App, "GRU.png", mockSettings, "deep-learning");
 
 		expect(fs.writeFileSync).toHaveBeenCalledWith(
 			expect.stringMatching(/deep-learning.*img.*GRU\.png$/),
@@ -283,7 +281,7 @@ describe("copyImageFile", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 
 		const result = await copyImageFile(
-			mockApp,
+			mockApp as unknown as App,
 			"success.jpg",
 			mockSettings,
 			"test-post",
@@ -304,7 +302,7 @@ describe("copyImageFile", () => {
 		} as unknown as App;
 
 		const result = await copyImageFile(
-			mockApp,
+			mockApp as unknown as App,
 			"error.png",
 			mockSettings,
 			"test-slug",
@@ -322,7 +320,7 @@ describe("copyImageFile", () => {
 		});
 
 		const result = await copyImageFile(
-			mockApp,
+			mockApp as unknown as App,
 			"write-error.png",
 			mockSettings,
 			"test-slug",
@@ -343,7 +341,12 @@ describe("copyImageFile", () => {
 			imageExportPath: "images",
 		};
 
-		await copyImageFile(mockApp, "diagram.svg", customSettings, "my-article");
+		await copyImageFile(
+			mockApp as unknown as App,
+			"diagram.svg",
+			customSettings,
+			"my-article",
+		);
 
 		expect(fs.mkdirSync).toHaveBeenCalledWith(
 			expect.stringContaining("blog/articles"),
@@ -365,7 +368,7 @@ describe("copyImageFile", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 
 		await copyImageFile(
-			mockApp,
+			mockApp as unknown as App,
 			"some/path/to/image.png",
 			mockSettings,
 			"test-slug",

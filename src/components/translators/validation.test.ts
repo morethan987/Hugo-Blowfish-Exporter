@@ -9,7 +9,8 @@ vi.mock("obsidian", () => ({
 }));
 
 const createMockPlugin = (
-	settings: Partial<HugoBlowfishExporterSettings>
+	settings: Partial<HugoBlowfishExporterSettings>,
+	apiKey: string = "",
 ): HugoBlowfishExporter => {
 	return {
 		settings: {
@@ -21,7 +22,6 @@ const createMockPlugin = (
 			translatedExportPathWindows: "",
 			translatedExportPathLinux: "",
 			BaseURL: "",
-			ApiKey: "",
 			ModelName: "",
 			directExportAfterTranslation: false,
 			targetLanguage: "",
@@ -36,6 +36,7 @@ const createMockPlugin = (
 			defaultDispName_en: "",
 			...settings,
 		},
+		getApiKey: vi.fn().mockReturnValue(apiKey),
 	} as unknown as HugoBlowfishExporter;
 };
 
@@ -49,11 +50,10 @@ describe("TranslationValidator", () => {
 	describe("validateConfiguration", () => {
 		it("returns true when all required settings are present", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -64,11 +64,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when ApiKey is missing (empty string)", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -83,8 +82,7 @@ describe("TranslationValidator", () => {
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
-			mockPlugin.settings.ApiKey = undefined as never;
+			}, "");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -95,11 +93,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when BaseURL is missing", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: "",
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -111,11 +108,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when BaseURL is undefined", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: undefined as never,
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -126,11 +122,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when ModelName is missing", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -142,11 +137,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when ModelName is undefined", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: undefined as never,
 				translatedExportPath: "/path/to/export",
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -157,11 +151,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when translatedExportPath is missing", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "gpt-4",
 				translatedExportPath: "",
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -175,11 +168,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when translatedExportPath is undefined", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "valid-api-key",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "gpt-4",
 				translatedExportPath: undefined as never,
-			});
+			}, "valid-api-key");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -192,11 +184,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false immediately on first missing setting (short-circuit)", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "",
 				BaseURL: "",
 				ModelName: "",
 				translatedExportPath: "",
-			});
+			}, "");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -208,11 +199,10 @@ describe("TranslationValidator", () => {
 
 		it("returns false when ApiKey contains only whitespace", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "   ",
 				BaseURL: "https://api.example.com/v1",
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "   ");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();
@@ -222,11 +212,10 @@ describe("TranslationValidator", () => {
 
 		it("shows only first error when multiple settings are missing", () => {
 			mockPlugin = createMockPlugin({
-				ApiKey: "",
 				BaseURL: "",
 				ModelName: "gpt-4",
 				translatedExportPath: "/path/to/export",
-			});
+			}, "");
 
 			const validator = new TranslationValidator(mockPlugin);
 			const result = validator.validateConfiguration();

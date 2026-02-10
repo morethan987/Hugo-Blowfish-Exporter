@@ -9,7 +9,7 @@ export class ApiKeyModal extends Modal {
 	constructor(app: App, plugin: HugoBlowfishExporter, onSave?: () => void) {
 		super(app);
 		this.plugin = plugin;
-		this.apiKey = this.plugin.settings.ApiKey || "";
+		this.apiKey = this.plugin.getApiKey();
 		this.onSave = onSave;
 	}
 
@@ -20,7 +20,7 @@ export class ApiKeyModal extends Modal {
 
 		new Setting(contentEl)
 			.setName("API密钥")
-			.setDesc("输入您的API密钥，它将被安全地保存在插件设置中")
+			.setDesc("输入您的API密钥，它将被安全地保存在 Obsidian 密钥库中")
 			.addText((text) =>
 				text
 					.setPlaceholder("Your API key")
@@ -35,27 +35,16 @@ export class ApiKeyModal extends Modal {
 				btn
 					.setButtonText("保存")
 					.setCta()
-					.onClick(async () => {
+					.onClick(() => {
 						if (!this.apiKey) {
 							new Notice("请输入API密钥");
 							return;
 						}
 
 						try {
-							// 保存到插件设置
-							this.plugin.settings.ApiKey = this.apiKey;
-							await this.plugin.saveSettings();
-
-							// 重新初始化OpenAI客户端
-							const OpenAI = (await import("openai")).default;
-							this.plugin.client = new OpenAI({
-								baseURL: this.plugin.settings.BaseURL,
-								apiKey: this.plugin.settings.ApiKey,
-								dangerouslyAllowBrowser: true,
-							});
-
+							this.plugin.setApiKey(this.apiKey);
 							new Notice("API密钥已保存成功");
-							this.onSave?.(); // 调用回调函数刷新设置页面
+							this.onSave?.();
 							this.close();
 						} catch (error) {
 							console.error("保存API密钥失败:", error);
@@ -69,26 +58,15 @@ export class ApiKeyModal extends Modal {
 				}),
 			);
 
-		// 如果已有API密钥，添加删除按钮
-		if (this.plugin.settings.ApiKey) {
+		if (this.plugin.getApiKey()) {
 			new Setting(contentEl).addButton((btn) =>
 				btn
 					.setButtonText("删除API密钥")
 					.setWarning()
-					.onClick(async () => {
-						this.plugin.settings.ApiKey = "";
-						await this.plugin.saveSettings();
-
-						// 重新初始化OpenAI客户端（使用空密钥）
-						const OpenAI = (await import("openai")).default;
-						this.plugin.client = new OpenAI({
-							baseURL: this.plugin.settings.BaseURL,
-							apiKey: "",
-							dangerouslyAllowBrowser: true,
-						});
-
+					.onClick(() => {
+						this.plugin.deleteApiKey();
 						new Notice("API密钥已删除");
-						this.onSave?.(); // 调用回调函数刷新设置页面
+						this.onSave?.();
 						this.close();
 					}),
 			);

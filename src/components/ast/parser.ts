@@ -16,6 +16,7 @@ import {
 	TableNode,
 	TableHeaderNode,
 	TableRowNode,
+	LinkType,
 } from "./node";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -510,21 +511,21 @@ function parseInline(text: string): MarkdownNode[] {
 					// 解析为标准Image结点
 					nodes.push({
 						type: NodeType.Image,
-						alt: alias || "",
+						alt: alias,
 						url: file,
-						title: "",
+						title: undefined,
 						wiki: true, // 标记来自wiki
 						embed: embed,
 					});
 				} else {
 					// 其他wiki链接保持结构化
-					let linkType: string = "article";
+					let linkType: LinkType = LinkType.Article;
 					if (embed) {
-						linkType = "embed";
+						linkType = LinkType.Embed;
 					} else if (heading && file) {
-						linkType = "external-heading";
+						linkType = LinkType.External_Heading;
 					} else if (heading && !file) {
-						linkType = "internal-heading";
+						linkType = LinkType.Internal_Heading;
 					}
 					nodes.push({
 						type: embed ? NodeType.Embed : NodeType.WikiLink,
