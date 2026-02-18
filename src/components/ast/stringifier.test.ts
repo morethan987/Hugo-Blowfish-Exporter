@@ -336,7 +336,7 @@ describe("astToString", () => {
 	});
 
 	describe("images", () => {
-		it("converts image with title", () => {
+		it("converts image with description", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
 				children: [
@@ -347,18 +347,18 @@ describe("astToString", () => {
 								type: NodeType.Image,
 								alt: "alt text",
 								url: "image.png",
-								title: "Image Title",
+								description: "description",
 							},
 						],
 					},
 				],
 			};
 			expect(astToString(node)).toBe(
-				'[alt text](image.png "Image Title")\n',
+				'[alt text](image.png "description")\n',
 			);
 		});
 
-		it("converts image without title", () => {
+		it("converts image without description", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
 				children: [
@@ -377,7 +377,7 @@ describe("astToString", () => {
 			expect(astToString(node)).toBe("[alt text](image.png)\n");
 		});
 
-		it("converts embedded image with title", () => {
+		it("converts embedded image with description", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
 				children: [
@@ -388,7 +388,7 @@ describe("astToString", () => {
 								type: NodeType.Image,
 								alt: "alt text",
 								url: "image.png",
-								title: "Image Title",
+								description: "description",
 								embed: true,
 							},
 						],
@@ -396,7 +396,7 @@ describe("astToString", () => {
 				],
 			};
 			expect(astToString(node)).toBe(
-				'![alt text](image.png "Image Title" )\n',
+				'![alt text](image.png "description" )\n',
 			);
 		});
 
@@ -733,7 +733,7 @@ describe("astToString", () => {
 	});
 
 	describe("tables", () => {
-		it("converts table with alignment", () => {
+		it("converts table with alignment correctly", () => {
 			const node: MarkdownNode = {
 				type: NodeType.Document,
 				children: [
@@ -749,7 +749,7 @@ describe("astToString", () => {
 										children: [
 											{
 												type: NodeType.Text,
-												value: "Left",
+												value: "Header L",
 											},
 										],
 									},
@@ -758,7 +758,7 @@ describe("astToString", () => {
 										children: [
 											{
 												type: NodeType.Text,
-												value: "Center",
+												value: "Header C",
 											},
 										],
 									},
@@ -767,7 +767,7 @@ describe("astToString", () => {
 										children: [
 											{
 												type: NodeType.Text,
-												value: "Right",
+												value: "Header R",
 											},
 										],
 									},
@@ -800,10 +800,21 @@ describe("astToString", () => {
 					},
 				],
 			};
+
 			const result = astToString(node);
-			expect(result).toContain("Left | Center | Right");
-			expect(result).toContain(":-----");
-			expect(result).toContain("-----:");
+
+			// 使用模板字符串定义精确的期望结果
+			// 注意：根据你的实现，可能需要调整空格的数量
+			const expected = [
+				"Header L | Header C | Header R",
+				":----- | :-----: | -----:",
+				"A | B | C",
+				"", // 如果你的转换器最后带换行符的话
+			]
+				.join("\n")
+				.trim();
+
+			expect(result.trim()).toBe(expected);
 		});
 	});
 
@@ -1218,13 +1229,13 @@ describe("astToHtml", () => {
 								type: NodeType.Image,
 								alt: "alt text",
 								url: "image.png",
-								title: "Image Title",
+								description: "description",
 							},
 						],
 					},
 				],
 			};
-			expect(astToHtml(node)).toContain('title="Image Title"');
+			expect(astToHtml(node)).toContain('title="description"');
 		});
 	});
 

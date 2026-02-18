@@ -103,10 +103,10 @@ function nodeToString(
 
 		case NodeType.Image: {
 			const image = node as ImageNode;
-			if (image.title) {
+			if (image.description) {
 				return image.embed
-					? `![${image.alt || image.url}](${image.url || ""} "${image.title || ""}" )`
-					: `[${image.alt || ""}](${image.url || ""} "${image.title || ""}")`;
+					? `![${image.alt || image.url}](${image.url || ""} "${image.description || ""}" )`
+					: `[${image.alt || ""}](${image.url || ""} "${image.description || ""}")`;
 			} else {
 				return image.embed
 					? `![${image.alt || image.url}](${image.url || ""})`
@@ -405,8 +405,8 @@ function nodeToHtml(
 			const image = node as ImageNode;
 			const imgUrl = escapeHtml(String(image.url || ""));
 			const alt = escapeHtml(String(image.alt || ""));
-			const title = image.title
-				? ` title="${escapeHtml(String(image.title))}"`
+			const title = image.description
+				? ` title="${escapeHtml(String(image.description))}"`
 				: "";
 			return `<img src="${imgUrl}" alt="${alt}"${title}>`;
 		}
