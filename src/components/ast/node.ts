@@ -55,6 +55,15 @@ export interface MarkdownNode {
 	[key: string]: unknown;
 }
 
+// FrontMatter和HtmlComment节点结构
+export interface FrontMatterNode extends MarkdownNode {
+	type: NodeType.FrontMatter;
+}
+
+export interface HtmlCommentNode extends MarkdownNode {
+	type: NodeType.HtmlComment;
+}
+
 // 表格节点结构
 export interface TableNode extends MarkdownNode {
 	type: NodeType.Table;
@@ -86,6 +95,10 @@ export interface HeadingNode extends MarkdownNode {
 	level: number;
 }
 
+export interface ParagraphNode extends MarkdownNode {
+	type: NodeType.Paragraph;
+}
+
 // Code block node
 export interface CodeBlockNode extends MarkdownNode {
 	type: NodeType.CodeBlock;
@@ -98,6 +111,15 @@ export interface CalloutNode extends MarkdownNode {
 	calloutType: string;
 	auto_fold: boolean | undefined;
 	children?: CalloutChildNode[];
+}
+
+export interface CalloutTitleNode extends MarkdownNode {
+	type: NodeType.Paragraph;
+	role: "title";
+}
+
+export interface BlockQuoteNode extends MarkdownNode {
+	type: NodeType.BlockQuote;
 }
 
 export interface CalloutChildNode extends MarkdownNode {
@@ -128,9 +150,9 @@ export interface ImageNode extends MarkdownNode {
 	type: NodeType.Image;
 	url: string;
 	alt?: string;
-	title?: string;
 	wiki: boolean;
 	embed?: boolean;
+	description?: string;
 }
 
 export enum LinkType {

@@ -386,7 +386,7 @@ $$`;
 			expect(imageNode.type).toBe(NodeType.Image);
 			expect(imageNode.url).toBe("image.png");
 			expect(imageNode.alt).toBeUndefined();
-			expect(imageNode.title).toBeUndefined();
+			expect(imageNode.description).toBeUndefined();
 			expect(imageNode.wiki).toBe(true);
 			expect(imageNode.embed).toBe(true);
 		});
@@ -401,8 +401,62 @@ $$`;
 		it("parses standard image", () => {
 			const result = parseMarkdown("![alt](image.png)");
 			const paraNode = result.children![0]!;
+			const imageNode = paraNode.children![0]! as ImageNode;
 			expect(paraNode.children).toHaveLength(1);
-			expect(paraNode.children![0]!.type).toBe(NodeType.Image);
+			expect(imageNode.type).toBe(NodeType.Image);
+			expect(imageNode.url).toBe("image.png");
+			expect(imageNode.alt).toBe("alt");
+			expect(imageNode.description).toBeUndefined();
+			expect(imageNode.wiki).toBe(false);
+			expect(imageNode.embed).toBe(true);
+		});
+
+		it("parses standard image without embedding", () => {
+			const result = parseMarkdown("[alt](image.png)");
+			const paraNode = result.children![0]!;
+			const imageNode = paraNode.children![0]! as ImageNode;
+			expect(paraNode.children).toHaveLength(1);
+			expect(imageNode.type).toBe(NodeType.Image);
+			expect(imageNode.url).toBe("image.png");
+			expect(imageNode.alt).toBe("alt");
+			expect(imageNode.description).toBeUndefined();
+			expect(imageNode.wiki).toBe(false);
+			expect(imageNode.embed).toBe(false);
+		});
+
+		it("parses standard image with description", () => {
+			const result = parseMarkdown(`![alt](image.png "description")`);
+			const paraNode = result.children![0]!;
+			const imageNode = paraNode.children![0]! as ImageNode;
+			expect(paraNode.children).toHaveLength(1);
+			expect(imageNode.type).toBe(NodeType.Image);
+			expect(imageNode.url).toBe("image.png");
+			expect(imageNode.alt).toBe("alt");
+			expect(imageNode.description).toBe("description");
+			expect(imageNode.wiki).toBe(false);
+			expect(imageNode.embed).toBe(true);
+		});
+
+		it("parses standard image with link in description", () => {
+			const result = parseMarkdown(
+				`![alt](image.png "description with a [link](https://example.com)")`,
+			);
+			const paraNode = result.children![0]!;
+			const imageNode = paraNode.children![0]! as ImageNode;
+			console.debug(
+				"========================================================",
+			);
+			console.debug(imageNode);
+			console.debug(paraNode);
+			expect(paraNode.children).toHaveLength(1);
+			expect(imageNode.type).toBe(NodeType.Image);
+			expect(imageNode.url).toBe("image.png");
+			expect(imageNode.alt).toBe("alt");
+			expect(imageNode.description).toBe(
+				"description with a [link](https://example.com)",
+			);
+			expect(imageNode.wiki).toBe(false);
+			expect(imageNode.embed).toBe(true);
 		});
 
 		it("parses highlight", () => {
@@ -530,15 +584,99 @@ Paragraph after`;
 			expect(result.children![0]!.type).toBe(NodeType.HtmlComment);
 		});
 
-		it("parses table with multiple rows", () => {
+		it("parses table with multiple rows and correct structure", () => {
 			const md = `| Header 1 | Header 2 |
 | --- | --- |
 | Row 1 Col 1 | Row 1 Col 2 |
 | Row 2 Col 1 | Row 2 Col 2 |`;
+
 			const result = parseMarkdown(md);
-			const tableNode = result.children![0]! as TableNode;
-			expect(tableNode.type).toBe(NodeType.Table);
-			expect(tableNode.children.length).toBeGreaterThan(1);
+			const table = result.children![0] as TableNode;
+
+			// 1. 验证基本结构
+			expect(table.type).toBe(NodeType.Table);
+			expect(table.children.length).toBe(3); // 1个Header + 2个Row
+			expect(table.align).toEqual(["none", "none"]);
+
+			// 2. 验证表头 (TableHeader)
+			const header = table.children[0];
+			expect(header.type).toBe(NodeType.TableHeader);
+			expect(header.children[0]!.children[0]!.value).toBe("Header 1");
+			expect(header.children[1]!.children[0]!.value).toBe("Header 2");
+
+			// 3. 验证行内容 (TableRow)
+			const row1 = table.children[1];
+			expect(row1!.type).toBe(NodeType.TableRow);
+			expect(row1!.children[0]!.children[0]!.value).toBe("Row 1 Col 1");
+
+			const row2 = table.children[2];
+			expect(row2!.children[1]!.children[0]!.value).toBe("Row 2 Col 2");
+		});
+
+		it("parses table column alignments correctly", () => {
+			const md = `| Left | Center | Right | None |
+| :--- | :----: | ---: | --- |
+| L | C | R | N |`;
+
+			const result = parseMarkdown(md);
+			const table = result.children![0] as TableNode;
+
+			// 验证对齐数组
+			expect(table.align).toEqual(["left", "center", "right", "none"]);
+		});
+
+		it("parses inline elements within table cells", () => {
+			const md = `| Name | Action |
+| --- | --- |
+| **Bold** | [Link](https://google.com) |`;
+
+			const result = parseMarkdown(md);
+			const table = result.children![0] as TableNode;
+			const firstRow = table.children[1];
+
+			// 验证第一行第一列是否被解析为加粗节点 (假设加粗是 Strong 类型)
+			const cell1 = firstRow!.children[0];
+			const strongNode = cell1!.children[0]!;
+			expect(strongNode.type).toBe(NodeType.Strong);
+			expect(strongNode.children![0]!.value).toBe("Bold");
+		});
+
+		it("handles messy whitespace and missing outer pipes", () => {
+			// 许多解析器支持省略首尾的 |
+			const md = `Header 1 | Header 2
+--- | ---
+Cell 1 | Cell 2`;
+
+			const result = parseMarkdown(md);
+			const table = result.children![0] as TableNode;
+			expect(table.type).toBe(NodeType.Table);
+			expect(table.children[0].children.length).toBe(2);
+		});
+
+		it("stops table parsing when a blank line appears", () => {
+			const md = `| H1 | H2 |
+| --- | --- |
+| R1 | R2 |
+
+This is a separate paragraph.`;
+
+			const result = parseMarkdown(md);
+			expect(result.children!.length).toBe(2); // Table and Paragraph
+			expect(result.children![0]!.type).toBe(NodeType.Table);
+			expect(result.children![1]!.type).toBe(NodeType.Paragraph);
+		});
+
+		it("handles empty cells", () => {
+			const md = `| H1 | H2 |
+| --- | --- |
+| | Row 1 Col 2 |`;
+			const result = parseMarkdown(md);
+			const table = result.children![0] as TableNode;
+			const row = table.children[1];
+
+			// 第一列应该是空的，或者包含一个空文本节点
+			expect(row!.children[0]!.children.length).toBe(0);
+			// 或者取决于你的 parseInline 实现，可能是 expect(row.children[0].children[0].value).toBe("");
 		});
 
 		it("preserves newlines in code block", () => {
